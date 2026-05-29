@@ -1,0 +1,35 @@
+import { permanentRedirect } from "next/navigation";
+
+import ShopListingPage, { type ShopListingSearchParams } from "@/components/shop/ShopListingPage";
+import {
+  buildShopListingUrl,
+  parseShopColorParams,
+  parseShopSizeParams,
+} from "@/lib/shop-category-filter";
+import { parseShopSortParam } from "@/lib/shop-sort";
+
+export const dynamic = "force-dynamic";
+
+type PageProps = {
+  searchParams?: Promise<ShopListingSearchParams>;
+};
+
+export default async function MagazinPage({ searchParams }: PageProps) {
+  const sp = (await searchParams) ?? {};
+  const rawCat = typeof sp.cat === "string" ? sp.cat.trim() : "";
+
+  if (rawCat) {
+    permanentRedirect(
+      buildShopListingUrl({
+        cat: rawCat,
+        page: Math.max(1, Number.parseInt(String(sp.page ?? "1"), 10) || 1),
+        colors: parseShopColorParams(typeof sp.color === "string" ? sp.color : undefined),
+        sizes: parseShopSizeParams(typeof sp.marime === "string" ? sp.marime : undefined),
+        search: typeof sp.q === "string" && sp.q.trim().length > 0 ? sp.q.trim() : null,
+        sort: parseShopSortParam(typeof sp.sort === "string" ? sp.sort : undefined),
+      }),
+    );
+  }
+
+  return <ShopListingPage searchParams={sp} />;
+}

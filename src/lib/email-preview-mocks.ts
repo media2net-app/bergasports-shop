@@ -1,0 +1,31 @@
+import type { OrderWithItems } from "@/lib/orders";
+
+/** Fallback when the catalog cannot be loaded (offline / empty DB). */
+export function mockOrderForEmailPreview(): OrderWithItems {
+  return {
+    id: 0,
+    order_number: "ESH-2026-1042",
+    status: "confirmed",
+    customer_name: "Maria Popescu",
+    customer_email: "client@example.com",
+    customer_phone: "+40 721 234 567",
+    shipping_address: "Str. Exemplu 12, bl. A, ap. 4",
+    shipping_city: "Cluj-Napoca",
+    shipping_county: "Cluj",
+    shipping_postal_code: "400000",
+    notes: "Sună înainte de livrare, te rog.",
+    payment_method: "cash_on_delivery",
+    currency: "RON",
+    subtotal: 0,
+    discount_total: 0,
+    total: 0,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    easy_sales_sync_status: null,
+    easy_sales_sync_error: null,
+    easy_sales_synced_at: null,
+    status_emails_sent: null,
+    marketing_consent: true,
+    items: [],
+  };
+}

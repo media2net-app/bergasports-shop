@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 340" role="img" aria-label="Hotelink.ro Hospitality supply">
+  <g fill="#000" stroke="none">
+    <!-- Embleem: H — hotel — H -->
+    <g transform="translate(210 72)">
+      <!-- Linker H -->
+      <path d="M-118 -42 V42 H-98 V8 H-78 V42 H-58 V-42 H-78 V-8 H-98 V-42 Z"/>
+      <!-- Rechter H -->
+      <path d="M58 -42 V42 H78 V8 H98 V42 H118 V-42 H98 V-8 H78 V-42 Z"/>
+      <!-- Ketting -->
+      <ellipse cx="0" cy="0" rx="14" ry="9" fill="none" stroke="#000" stroke-width="5"/>
+      <ellipse cx="-22" cy="0" rx="10" ry="7" fill="none" stroke="#000" stroke-width="4"/>
+      <ellipse cx="22" cy="0" rx="10" ry="7" fill="none" stroke="#000" stroke-width="4"/>
+      <!-- Hotel -->
+      <path d="M-16 2 H16 V28 H-16 Z M-10 8 H10 V12 H-10 Z M-10 16 H-4 V20 H-10 Z M6 16 H12 V20 H6 Z"/>
+      <path d="M-20 28 H20 V32 H-20 Z"/>
+      <!-- Kroon -->
+      <path d="M-12 -14 L-6 -26 L0 -18 L6 -26 L12 -14 L8 -14 L8 -8 L-8 -8 L-8 -14 Z"/>
+      <!-- Sterren -->
+      <circle cx="-14" cy="-34" r="2.5"/>
+      <circle cx="0" cy="-38" r="2.5"/>
+      <circle cx="14" cy="-34" r="2.5"/>
+    </g>
+    <!-- HOTELINK.RO -->
+    <text
+      x="210"
+      y="188"
+      text-anchor="middle"
+      font-family="Georgia, 'Times New Roman', serif"
+      font-size="46"
+      font-weight="700"
+      letter-spacing="0.04em"
+    >HOTELINK.RO</text>
+    <!-- HOSPITALITY SUPPLY -->
+    <line x1="72" y1="228" x2="128" y2="228" stroke="#000" stroke-width="1.5"/>
+    <text
+      x="210"
+      y="232"
+      text-anchor="middle"
+      font-family="Arial, Helvetica, sans-serif"
+      font-size="13"
+      font-weight="600"
+      letter-spacing="0.32em"
+    >HOSPITALITY SUPPLY</text>
+    <line x1="292" y1="228" x2="348" y2="228" stroke="#000" stroke-width="1.5"/>
+  </g>
+</svg>

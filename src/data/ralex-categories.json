@@ -1,0 +1,239 @@
+{
+  "source": "https://www.bergasports.com/",
+  "sourceApi": "https://www.bergasports.com/wp-json/wp/v2/product_cat",
+  "fetchedAt": "2026-05-29T09:41:53.894Z",
+  "totalCategories": 12,
+  "categories": [
+    {
+      "id": 171,
+      "name": "Accessories",
+      "slug": "accessories",
+      "parent": 0,
+      "count": 18,
+      "link": "/accessories"
+    },
+    {
+      "id": 72,
+      "name": "Bikes",
+      "slug": "bikes",
+      "parent": 0,
+      "count": 48,
+      "link": "/bikes"
+    },
+    {
+      "id": 179,
+      "name": "Cleats",
+      "slug": "cleats",
+      "parent": 171,
+      "count": 0,
+      "link": "/cleats"
+    },
+    {
+      "id": 184,
+      "name": "Cycling helmets",
+      "slug": "cycling-helmets",
+      "parent": 171,
+      "count": 10,
+      "link": "/cycling-helmets"
+    },
+    {
+      "id": 50,
+      "name": "Cycling shoes",
+      "slug": "cycling-shoes",
+      "parent": 0,
+      "count": 13,
+      "link": "/cycling-shoes"
+    },
+    {
+      "id": 63,
+      "name": "Glasses",
+      "slug": "glasses",
+      "parent": 0,
+      "count": 9,
+      "link": "/glasses"
+    },
+    {
+      "id": 178,
+      "name": "Group sets",
+      "slug": "group-sets",
+      "parent": 171,
+      "count": 0,
+      "link": "/group-sets"
+    },
+    {
+      "id": 104,
+      "name": "LaFuga wear",
+      "slug": "lafuga-wear",
+      "parent": 0,
+      "count": 9,
+      "link": "/lafuga-wear"
+    },
+    {
+      "id": 216,
+      "name": "Scope outlet",
+      "slug": "scope-outlet",
+      "parent": 0,
+      "count": 37,
+      "link": "/scope-outlet"
+    },
+    {
+      "id": 66,
+      "name": "Speed skates",
+      "slug": "speed-skates",
+      "parent": 0,
+      "count": 11,
+      "link": "/speed-skates"
+    },
+    {
+      "id": 204,
+      "name": "Used bikes",
+      "slug": "used-bikes",
+      "parent": 0,
+      "count": 0,
+      "link": "/used-bikes"
+    },
+    {
+      "id": 62,
+      "name": "Wheels",
+      "slug": "wheels",
+      "parent": 0,
+      "count": 12,
+      "link": "/wheels"
+    }
+  ],
+  "tree": [
+    {
+      "id": 171,
+      "name": "Accessories",
+      "slug": "accessories",
+      "parent": 0,
+      "count": 18,
+      "link": "/accessories",
+      "seoIntro": "Cycling Accessories Groupsets, Helmets, Power Meters &amp; More At Bergasports, we offer a wide range of cycling accessories from top brands like Kask, Favero Assioma Duo, and Campagnolo. Whether you&#8217;re looking to improve your performance, stay safe on the road, or upgrade your bike, we have everything you need. Explore these top accessories and more in our webshop at Bergasports. We’re here to help you find the perfect products to suit your cycling needs!",
+      "seoFooterHtml": "<h1>Cycling Accessories</h1>\r\nGroupsets, Helmets, Power Meters &amp; More\r\nAt Bergasports, we offer a wide range of cycling accessories from top brands like Kask, Favero Assioma Duo, and Campagnolo. Whether you&#8217;re looking to improve your performance, stay safe on the road, or upgrade your bike, we have everything you need.\r\n\r\nExplore these top accessories and more in our webshop at Bergasports. We’re here to help you find the perfect products to suit your cycling needs!",
+      "children": [
+        {
+          "id": 179,
+          "name": "Cleats",
+          "slug": "cleats",
+          "parent": 171,
+          "count": 0,
+          "link": "/cleats",
+          "seoIntro": null,
+          "seoFooterHtml": null,
+          "children": []
+        },
+        {
+          "id": 184,
+          "name": "Cycling helmets",
+          "slug": "cycling-helmets",
+          "parent": 171,
+          "count": 10,
+          "link": "/cycling-helmets",
+          "seoIntro": null,
+          "seoFooterHtml": null,
+          "children": []
+        },
+        {
+          "id": 178,
+          "name": "Group sets",
+          "slug": "group-sets",
+          "parent": 171,
+          "count": 0,
+          "link": "/group-sets",
+          "seoIntro": null,
+          "seoFooterHtml": null,
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": 72,
+      "name": "Bikes",
+      "slug": "bikes",
+      "parent": 0,
+      "count": 48,
+      "link": "/bikes",
+      "seoIntro": null,
+      "seoFooterHtml": null,
+      "children": []
+    },
+    {
+      "id": 50,
+      "name": "Cycling shoes",
+      "slug": "cycling-shoes",
+      "parent": 0,
+      "count": 13,
+      "link": "/cycling-shoes",
+      "seoIntro": null,
+      "seoFooterHtml": null,
+      "children": []
+    },
+    {
+      "id": 63,
+      "name": "Glasses",
+      "slug": "glasses",
+      "parent": 0,
+      "count": 9,
+      "link": "/glasses",
+      "seoIntro": null,
+      "seoFooterHtml": null,
+      "children": []
+    },
+    {
+      "id": 104,
+      "name": "LaFuga wear",
+      "slug": "lafuga-wear",
+      "parent": 0,
+      "count": 9,
+      "link": "/lafuga-wear",
+      "seoIntro": null,
+      "seoFooterHtml": null,
+      "children": []
+    },
+    {
+      "id": 216,
+      "name": "Scope outlet",
+      "slug": "scope-outlet",
+      "parent": 0,
+      "count": 37,
+      "link": "/scope-outlet",
+      "seoIntro": null,
+      "seoFooterHtml": null,
+      "children": []
+    },
+    {
+      "id": 66,
+      "name": "Speed skates",
+      "slug": "speed-skates",
+      "parent": 0,
+      "count": 11,
+      "link": "/speed-skates",
+      "seoIntro": null,
+      "seoFooterHtml": null,
+      "children": []
+    },
+    {
+      "id": 204,
+      "name": "Used bikes",
+      "slug": "used-bikes",
+      "parent": 0,
+      "count": 0,
+      "link": "/used-bikes",
+      "seoIntro": null,
+      "seoFooterHtml": null,
+      "children": []
+    },
+    {
+      "id": 62,
+      "name": "Wheels",
+      "slug": "wheels",
+      "parent": 0,
+      "count": 12,
+      "link": "/wheels",
+      "seoIntro": null,
+      "seoFooterHtml": null,
+      "children": []
+    }
+  ]
+}

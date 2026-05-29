@@ -1,0 +1,166 @@
+@import "tailwindcss";
+
+:root {
+  /* Bergasports goud (logo gradient) */
+  --brand: #b38518;
+  --brand-hover: #9c7b22;
+  --brand-mid: #d4af38;
+  --brand-dark: #6b5218;
+  --brand-sidebar: #8a6a1c;
+  --brand-muted: #6b6356;
+  --brand-border: #e5dcc8;
+  --brand-border-soft: #f0ead8;
+  --brand-surface: #faf8f4;
+  --brand-surface-alt: #f5f0e6;
+  --background: #faf8f5;
+  --foreground: #1a1524;
+  --topbar: #1a1a1a;
+  --topbar-foreground: #f5f4f2;
+  --topbar-muted: rgba(245, 244, 242, 0.72);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-brand: var(--brand);
+  --color-brand-hover: var(--brand-hover);
+  --color-brand-mid: var(--brand-mid);
+  --color-brand-border: var(--brand-border);
+  --color-brand-surface: var(--brand-surface);
+  --font-sans: var(--font-ubuntu);
+  --font-heading: var(--font-ubuntu);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-ubuntu), Ubuntu, system-ui, sans-serif;
+}
+
+:where(h1, h2, h3, h4, h5, h6) {
+  font-family: var(--font-ubuntu), Ubuntu, system-ui, sans-serif;
+  font-weight: 700;
+}
+
+.title-2-lines {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  min-height: 3rem;
+}
+
+.title-3-lines {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
+  min-height: 3.75rem;
+}
+
+.home-cat-details > summary {
+  list-style: none;
+}
+
+.home-cat-details > summary::-webkit-details-marker {
+  display: none;
+}
+
+.wc-store-html {
+  line-height: 1.55;
+}
+
+.wc-store-html :where(p, ul, ol, table, pre, blockquote) {
+  margin-top: 0.65em;
+  margin-bottom: 0.65em;
+}
+
+.wc-store-html :where(ul, ol) {
+  padding-left: 1.25rem;
+}
+
+.wc-store-html :where(h1, h2, h3, h4) {
+  margin-top: 1em;
+  margin-bottom: 0.4em;
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+.wc-store-html :where(a) {
+  color: var(--brand-hover);
+  text-decoration: underline;
+}
+
+.wc-store-html :where(img) {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.5rem;
+}
+
+.wc-store-html :where(table) {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9em;
+}
+
+.wc-store-html :where(th, td) {
+  border: 1px solid var(--brand-border);
+  padding: 0.4rem 0.5rem;
+  vertical-align: top;
+}
+
+.trendyol-reviews-dialog::backdrop {
+  background: rgb(26 21 36 / 0.45);
+}
+
+.trendyol-reviews-dialog[open] {
+  animation: trendyol-dialog-in 0.2s ease-out;
+}
+
+@keyframes trendyol-dialog-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.shop-variation-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--brand-hover) var(--brand-border-soft);
+}
+
+.shop-variation-scroll::-webkit-scrollbar {
+  height: 5px;
+}
+
+.shop-variation-scroll::-webkit-scrollbar-track {
+  margin: 0 0.25rem;
+  background: var(--brand-border-soft);
+  border-radius: 999px;
+}
+
+.shop-variation-scroll::-webkit-scrollbar-thumb {
+  background: linear-gradient(90deg, var(--brand-mid), var(--brand));
+  border-radius: 999px;
+}
+
+.shop-variation-scroll::-webkit-scrollbar-thumb:hover {
+  background: var(--brand-hover);
+}
+
+@keyframes trust-usp-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.trust-usp-fade {
+  animation: trust-usp-in 0.45s ease-out;
+}

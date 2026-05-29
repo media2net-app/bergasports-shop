@@ -1,0 +1,62 @@
+{
+  "sellerScore": 9.4,
+  "sellerName": "E-Store House",
+  "merchantId": 1185891,
+  "summary": {
+    "averageRating": 4.8,
+    "totalRatingCount": 12840,
+    "totalCommentCount": 6200,
+    "fiveStarCount": 9800
+  },
+  "reviews": [
+    {
+      "id": 900000001,
+      "userFullName": "Maria P.",
+      "showUserName": true,
+      "commentDateISOType": "2025-11-18",
+      "comment": "Livrare rapidă, ambalaj impecabil. Recomand magazinul — produse conform descrierii.",
+      "rate": 5,
+      "product": { "title": "Lenjerie de pat Ranforce 100% bumbac" }
+    },
+    {
+      "id": 900000002,
+      "userFullName": "Alexandru D.",
+      "showUserName": true,
+      "commentDateISOType": "2025-11-02",
+      "comment": "Foarte mulțumit de calitate și de comunicare. Voi comanda din nou.",
+      "rate": 5,
+      "product": { "title": "Cuvertură matlasată" }
+    },
+    {
+      "id": 900000003,
+      "userFullName": "",
+      "showUserName": false,
+      "commentDateISOType": "2025-10-21",
+      "comment": "Super! Totul a ajuns în 2 zile. Nota 5 pentru seriozitate.",
+      "rate": 5,
+      "product": { "title": "Prosop bumbac 600 g/m²" }
+    },
+    {
+      "id": 900000004,
+      "userFullName": "Elena V.",
+      "showUserName": true,
+      "commentDateISOType": "2025-10-05",
+      "comment": "Calitate excelentă la preț corect. Mulțumesc echipei!",
+      "rate": 5,
+      "product": { "title": "Husă de pat finet" }
+    },
+    {
+      "id": 900000005,
+      "userFullName": "Ion M.",
+      "showUserName": true,
+      "commentDateISOType": "2025-09-14",
+      "comment": "Magazin serios pe Trendyol; produsul arată exact ca în poze.",
+      "rate": 5,
+      "product": { "title": "Set lenjerie pat dublu" }
+    }
+  ],
+  "page": 0,
+  "pageSize": 15,
+  "totalPages": 1,
+  "totalElements": 5
+}
