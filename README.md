@@ -11,7 +11,7 @@ Next.js webshop gebaseerd op de [Bergasports](https://github.com/) stack (shop, 
 ## Lokaal starten
 
 ```bash
-cp .env.example .env.local
+cp .env.local.example .env.local
 # Vul DATABASE_URL en ADMIN_JWT_SECRET in
 
 npm install
@@ -22,7 +22,7 @@ npm run seed:site-pages
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) (shop) en [http://localhost:3000/admin](http://localhost:3000/admin).
+Open [http://localhost:3060](http://localhost:3060) (shop) en [http://localhost:3060/admin](http://localhost:3060/admin).
 
 ## Omgeving
 
@@ -34,7 +34,7 @@ Open [http://localhost:3000](http://localhost:3000) (shop) en [http://localhost:
 | `SMTP_*` / `RESEND_API_KEY` | Orderbevestigingen |
 | `EASY_SALES_*` | Optioneel: order sync |
 
-Zie `.env.example` voor het volledige overzicht.
+Zie `.env.local.example` voor het volledige overzicht.
 
 ## Volgende stappen
 

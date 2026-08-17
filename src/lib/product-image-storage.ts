@@ -19,7 +19,7 @@ type MirrorResult = {
 };
 
 function siteBaseUrl(): string {
-  return (process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000").replace(/\/$/, "");
+  return (process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3060").replace(/\/$/, "");
 }
 
 export function isHostedProductImageUrl(url: string): boolean {

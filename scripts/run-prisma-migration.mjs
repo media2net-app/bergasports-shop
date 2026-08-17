@@ -5,9 +5,11 @@
  */
 import { spawnSync } from "node:child_process";
 import path from "node:path";
+import { loadProjectEnv } from "./load-project-env.mjs";
 import { migrationLog } from "./migration-log.mjs";
 
 const root = path.resolve(import.meta.dirname, "..");
+loadProjectEnv(root);
 
 function run(cmd, args) {
   migrationLog(`RUN: ${cmd} ${args.join(" ")}`);

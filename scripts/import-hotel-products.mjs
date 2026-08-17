@@ -91,7 +91,7 @@ if (dryRun) {
 console.log("\nStart import via admin API is aanbevolen voor volledige variaties.");
 console.log("CLI: roep per categorie de Next admin route aan, of gebruik Admin → Import → Ralex.\n");
 console.log("Voorbeeld eerste categorie (LENJERII DE PAT, id 20):");
-console.log("  curl -X POST http://localhost:3000/api/admin/categories/20/import-products \\");
+console.log("  curl -X POST http://localhost:3060/api/admin/categories/20/import-products \\");
 console.log("    -H 'Cookie: <admin-session>'");
 
 for (const id of targets.slice(0, 3)) {

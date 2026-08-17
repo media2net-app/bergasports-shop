@@ -63,9 +63,9 @@ const secret = env.ADMIN_JWT_SECRET;
 const databaseUrl = env.DATABASE_URL;
 const baseUrl = (
   process.env.BASE_URL ||
-  (process.env.USE_LOCAL_ADMIN === "1" ? "http://localhost:3000" : null) ||
+  (process.env.USE_LOCAL_ADMIN === "1" ? "http://localhost:3060" : null) ||
   env.NEXT_PUBLIC_SITE_URL ||
-  "http://localhost:3000"
+  "http://localhost:3060"
 ).replace(/\/$/, "");
 
 if (!secret || secret.length < 16) {

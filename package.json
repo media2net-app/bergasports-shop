@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "node scripts/run-next.mjs dev",
     "build": "prisma generate && node scripts/run-next.mjs build",
-    "start": "next start",
+    "start": "next start -p 3060",
     "lint": "eslint",
     "import:bergasports": "node scripts/import-bergasports-catalog.mjs",
     "import:bergasports:dry-run": "node scripts/import-bergasports-catalog.mjs --dry-run",
@@ -25,7 +25,7 @@
     "normalize:category-links": "node scripts/normalize-category-links.mjs",
     "seed:site-pages": "node scripts/seed-site-pages-prisma.mjs",
     "migrate:prisma": "node scripts/run-prisma-migration.mjs",
-    "mirror:all-images": "BASE_URL=http://localhost:3000 node scripts/mirror-all-product-images.mjs"
+    "mirror:all-images": "BASE_URL=http://localhost:3060 node scripts/mirror-all-product-images.mjs"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.8.0",

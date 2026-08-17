@@ -1,6 +1,6 @@
 /**
  * Start Next met cwd = bergasports en .env.local die shell-variabelen overschrijft
- * (voorkomt per ongeluk Hotelink DATABASE_URL op localhost:3000).
+ * (voorkomt per ongeluk Hotelink DATABASE_URL op localhost:3060).
  */
 import { spawn } from "node:child_process";
 import path from "node:path";
@@ -34,7 +34,7 @@ if (projectEnv.DATABASE_URL) {
 }
 
 if (cmd === "dev") {
-  const child = spawn("npx", ["next", "dev", "--webpack", ...extra], {
+  const child = spawn("npx", ["next", "dev", "--webpack", "-p", "3060", ...extra], {
     stdio: "inherit",
     cwd: projectRoot,
     shell: isWin,

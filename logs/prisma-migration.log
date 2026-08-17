@@ -1,0 +1,9 @@
+[2026-08-17T13:18:28.859Z] [INFO] === Prisma migration run start ===
+[2026-08-17T13:18:28.868Z] [INFO] RUN: npx prisma db push
+[2026-08-17T13:18:32.736Z] [ERROR] FAILED: exit 1
+[2026-08-17T13:18:46.905Z] [INFO] === Prisma migration run start ===
+[2026-08-17T13:18:46.916Z] [INFO] RUN: npx prisma db push
+[2026-08-17T13:18:50.408Z] [INFO] OK: npx prisma db push
+[2026-08-17T13:18:50.408Z] [INFO] RUN: npx prisma generate
+[2026-08-17T13:18:53.533Z] [INFO] OK: npx prisma generate
+[2026-08-17T13:18:53.535Z] [INFO] === Prisma migration run complete ===

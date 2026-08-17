@@ -31,7 +31,7 @@ function loadEnvFile(filename) {
 
 const env = { ...loadEnvFile(".env"), ...loadEnvFile(".env.local") };
 const secret = env.ADMIN_JWT_SECRET;
-const baseUrl = (process.env.BASE_URL || "http://localhost:3000").replace(/\/$/, "");
+const baseUrl = (process.env.BASE_URL || "http://localhost:3060").replace(/\/$/, "");
 
 if (!secret || secret.length < 16) {
   console.error("ADMIN_JWT_SECRET ontbreekt");

@@ -14,6 +14,8 @@ const PREFIXES = [
   "http://www.bergasports.com",
   "http://localhost:3000",
   "https://localhost:3000",
+  "http://localhost:3060",
+  "https://localhost:3060",
 ];
 
 function loadEnvFile(filename) {

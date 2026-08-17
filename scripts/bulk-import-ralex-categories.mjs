@@ -4,7 +4,7 @@
  * Vereist: draaiende `npm run dev`, geldige `.env.local` met ADMIN_PASSWORD (en server met ADMIN_JWT_SECRET).
  *
  *   npm run import:ralex-bulk
- *   BULK_IMPORT_BASE=http://127.0.0.1:3000 npm run import:ralex-bulk
+ *   BULK_IMPORT_BASE=http://127.0.0.1:3060 npm run import:ralex-bulk
  *
  * Opnieuw alles (ook als categorieën al “compleet” gemarkeerd zijn), bv. na nieuwe importlogica:
  *   BULK_IMPORT_FORCE=1 npm run import:ralex-bulk
@@ -58,7 +58,7 @@ function log(...a) {
 
 loadEnv();
 
-const BASE = process.env.BULK_IMPORT_BASE || "http://127.0.0.1:3000";
+const BASE = process.env.BULK_IMPORT_BASE || "http://127.0.0.1:3060";
 const password = process.env.ADMIN_PASSWORD;
 const FORCE =
   process.env.BULK_IMPORT_FORCE === "1" ||
