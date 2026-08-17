@@ -20,7 +20,7 @@ export async function GET() {
     return denied;
   }
 
-  const status = getTikTokAdminStatus();
+  const status = await getTikTokAdminStatus();
 
   return NextResponse.json(status);
 }

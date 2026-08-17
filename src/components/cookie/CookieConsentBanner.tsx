@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { useCookieConsent } from "@/components/cookie/CookieConsentProvider";
+import { LEGAL_PAGE_PATHS } from "@/lib/site-content";
 
 export default function CookieConsentBanner() {
   const pathname = usePathname() ?? "";
@@ -109,11 +110,11 @@ export default function CookieConsentBanner() {
             </p>
             <p className="mt-2 text-xs text-[#f0ead8]/70">
               Meer in{" "}
-              <Link href="/politica-cookies" className="underline hover:text-[#faf8f5]">
+              <Link href={LEGAL_PAGE_PATHS.cookies} className="underline hover:text-[#faf8f5]">
                 cookiebeleid
               </Link>{" "}
               en{" "}
-              <Link href="/politica-de-confidentialitate" className="underline hover:text-[#faf8f5]">
+              <Link href={LEGAL_PAGE_PATHS.privacy} className="underline hover:text-[#faf8f5]">
                 privacybeleid
               </Link>
               .

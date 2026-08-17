@@ -1,5 +1,6 @@
 import type { OrderWithItems } from "@/lib/orders";
 import { resolveSiteEmailLogoUrl } from "@/lib/site-brand";
+import { LEGAL_PAGE_PATHS } from "@/lib/site-content";
 import {
   emailButton,
   emailParagraph,
@@ -8,14 +9,13 @@ import {
   wrapTransactionalEmailHtml,
 } from "@/lib/transactional-email-layout";
 
-function logoUrlFromEnv(): string {
-  return resolveSiteEmailLogoUrl();
-}
-
 export type MarketingEmailKind = "welcome" | "post_purchase" | "win_back";
 
-const WIN_BACK_CODE = process.env.MARKETING_WINBACK_CODE?.trim() || "TERUG10";
-const WIN_BACK_DAYS = Number(process.env.MARKETING_WINBACK_EXPIRY_DAYS?.trim() || "14");
+export type MarketingEmailBrandOpts = {
+  logoUrl?: string;
+  winBackCode?: string;
+  winBackExpiryDays?: number;
+};
 
 function expiryDateNl(days: number): string {
   const d = new Date();
@@ -23,7 +23,14 @@ function expiryDateNl(days: number): string {
   return new Intl.DateTimeFormat("nl-NL", { dateStyle: "long" }).format(d);
 }
 
-export function buildWelcomeEmailParts(customerName: string): { subject: string; text: string; html: string } {
+function logoUrlFromOpts(opts?: MarketingEmailBrandOpts): string {
+  return opts?.logoUrl?.trim() || resolveSiteEmailLogoUrl();
+}
+
+export function buildWelcomeEmailParts(
+  customerName: string,
+  opts?: MarketingEmailBrandOpts,
+): { subject: string; text: string; html: string } {
   const shop = transactionalEmailSiteUrl();
   const subject = "Welkom bij Bergasports";
   const text = [
@@ -50,13 +57,16 @@ export function buildWelcomeEmailParts(customerName: string): { subject: string;
     title: "Welkom!",
     innerHtml: inner,
     siteUrl: shop,
-    logoUrl: logoUrlFromEnv(),
+    logoUrl: logoUrlFromOpts(opts),
   });
 
   return { subject, text, html };
 }
 
-export function buildPostPurchaseEmailParts(order: OrderWithItems): { subject: string; text: string; html: string } {
+export function buildPostPurchaseEmailParts(
+  order: OrderWithItems,
+  opts?: MarketingEmailBrandOpts,
+): { subject: string; text: string; html: string } {
   const shop = transactionalEmailSiteUrl();
   const subject = `Bedankt voor bestelling ${order.order_number}`;
   const text = [
@@ -67,7 +77,7 @@ export function buildPostPurchaseEmailParts(order: OrderWithItems): { subject: s
     `Bestelling: ${order.order_number}`,
     `Totaal: ${formatEmailMoney(order.total, order.currency)}`,
     "",
-    `Retourbeleid: ${shop}/livrare-si-retur`,
+    `Retourbeleid: ${shop}${LEGAL_PAGE_PATHS.returns}`,
     `Opnieuw bestellen: ${shop}/shop`,
   ].join("\n");
 
@@ -78,7 +88,7 @@ export function buildPostPurchaseEmailParts(order: OrderWithItems): { subject: s
       "Vragen over maat, onderhoud of retour (14 dagen)? Antwoord op deze e-mail of neem contact op via de website.",
     ),
     emailParagraph(`Bestelling ${order.order_number} · ${formatEmailMoney(order.total, order.currency)}`),
-    emailButton(`${shop}/livrare-si-retur`, "Verzending & retour"),
+    emailButton(`${shop}${LEGAL_PAGE_PATHS.returns}`, "Retourneren"),
     emailButton(`${shop}/shop`, "Opnieuw bestellen"),
   ].join("");
 
@@ -87,20 +97,27 @@ export function buildPostPurchaseEmailParts(order: OrderWithItems): { subject: s
     title: "Bedankt voor je vertrouwen",
     innerHtml: inner,
     siteUrl: shop,
-    logoUrl: logoUrlFromEnv(),
+    logoUrl: logoUrlFromOpts(opts),
   });
 
   return { subject, text, html };
 }
 
-export function buildWinBackEmailParts(customerName: string): { subject: string; text: string; html: string } {
+export function buildWinBackEmailParts(
+  customerName: string,
+  opts?: MarketingEmailBrandOpts,
+): { subject: string; text: string; html: string } {
   const shop = transactionalEmailSiteUrl();
-  const expiry = expiryDateNl(WIN_BACK_DAYS);
-  const subject = `We missen je — ${WIN_BACK_CODE}`;
+  const code = opts?.winBackCode?.trim() || process.env.MARKETING_WINBACK_CODE?.trim() || "TERUG10";
+  const expiryDaysRaw =
+    opts?.winBackExpiryDays ?? Number(process.env.MARKETING_WINBACK_EXPIRY_DAYS?.trim() || "14");
+  const expiryDays = Number.isFinite(expiryDaysRaw) && expiryDaysRaw > 0 ? expiryDaysRaw : 14;
+  const expiry = expiryDateNl(expiryDays);
+  const subject = `We missen je — ${code}`;
   const text = [
     `Hallo ${customerName},`,
     "",
-    `We zien je graag terug in de webshop. Gebruik code ${WIN_BACK_CODE} bij je volgende bestelling.`,
+    `We zien je graag terug in de webshop. Gebruik code ${code} bij je volgende bestelling.`,
     `Geldig tot ${expiry}.`,
     "",
     `${shop}/shop`,
@@ -109,7 +126,7 @@ export function buildWinBackEmailParts(customerName: string): { subject: string;
   const inner = [
     emailParagraph(`Hallo ${customerName},`),
     emailParagraph("Het is even geleden — we hebben een korting voor je klaargezet."),
-    emailParagraph(`Code: ${WIN_BACK_CODE} · geldig tot ${expiry}`),
+    emailParagraph(`Code: ${code} · geldig tot ${expiry}`),
     emailButton(`${shop}/shop`, "Bekijk aanbiedingen"),
   ].join("");
 
@@ -118,7 +135,7 @@ export function buildWinBackEmailParts(customerName: string): { subject: string;
     title: "Tot snel?",
     innerHtml: inner,
     siteUrl: shop,
-    logoUrl: logoUrlFromEnv(),
+    logoUrl: logoUrlFromOpts(opts),
   });
 
   return { subject, text, html };

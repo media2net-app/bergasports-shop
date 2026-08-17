@@ -29,7 +29,7 @@ async function getMarketingEmailCounts(): Promise<MarketingEmailCounts> {
 }
 
 export type MarketingDashboardMetrics = {
-  stack: ReturnType<typeof getMarketingStackStatus>;
+  stack: Awaited<ReturnType<typeof getMarketingStackStatus>>;
   tiktok: Awaited<ReturnType<typeof getTikTokCatalogHealth>>;
   sla: Awaited<ReturnType<typeof getOrderSlaSummary>>;
   emailCounts: MarketingEmailCounts;
@@ -51,7 +51,7 @@ export type MarketingDashboardMetrics = {
 export async function getMarketingDashboardMetrics(): Promise<MarketingDashboardMetrics> {
   const [stack, tiktok, sla, emailCounts, winBackCandidates, cronHistory, channelSummaries] =
     await Promise.all([
-      Promise.resolve(getMarketingStackStatus()),
+      getMarketingStackStatus(),
       getTikTokCatalogHealth(),
       getOrderSlaSummary(24),
       getMarketingEmailCounts(),

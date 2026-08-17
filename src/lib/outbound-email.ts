@@ -6,8 +6,8 @@ import { isSmtpConfigured, sendSmtpEmail } from "@/lib/smtp-email";
 export type OutboundEmailInput = ResendEmailInput;
 
 /** True when SMTP (Hostinger, etc.) or Resend is configured. */
-export function isOutboundEmailConfigured(): boolean {
-  return isSmtpConfigured() || isResendConfigured();
+export async function isOutboundEmailConfigured(): Promise<boolean> {
+  return (await isSmtpConfigured()) || (await isResendConfigured());
 }
 
 /**
@@ -15,7 +15,7 @@ export function isOutboundEmailConfigured(): boolean {
  * Configure Hostinger: SMTP_HOST, SMTP_USER, SMTP_PASS, optional SMTP_PORT (465), SMTP_FROM.
  */
 export async function sendOutboundEmail(input: OutboundEmailInput): Promise<boolean> {
-  if (isSmtpConfigured()) {
+  if (await isSmtpConfigured()) {
     return sendSmtpEmail(input);
   }
   return sendResendEmail(input);

@@ -12,7 +12,7 @@ type Props = {
 
 export default function AdminPeriodFilter({ value, onChange }: Props) {
   return (
-    <div className="admin-period-filter" role="group" aria-label="Period">
+    <div className="admin-period-filter" role="group" aria-label="Periode">
       {DASHBOARD_PERIOD_OPTIONS.map((option) => (
         <button
           key={option.id}
@@ -21,7 +21,7 @@ export default function AdminPeriodFilter({ value, onChange }: Props) {
           aria-pressed={value === option.id}
           onClick={() => onChange(option.id)}
         >
-          {option.label}
+          {option.shortLabel}
         </button>
       ))}
     </div>

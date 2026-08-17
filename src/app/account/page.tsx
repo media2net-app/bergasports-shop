@@ -4,11 +4,14 @@ import Footer from "@/components/layout/Footer";
 import Header from "@/components/layout/Header";
 import TrustBar from "@/components/layout/TrustBar";
 import AccountAuthForm from "@/components/account/AccountAuthForm";
+import { buildPageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "Account | Bergasports",
+export const metadata: Metadata = buildPageMetadata({
+  title: "Account",
   description: "Inloggen of account aanmaken. Guest checkout blijft mogelijk.",
-};
+  path: "/account",
+  noindex: true,
+});
 
 export default function AccountPage() {
   return (

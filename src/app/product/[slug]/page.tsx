@@ -5,12 +5,14 @@ import ProductTikTokView from "@/components/analytics/ProductTikTokView";
 import ShopProductCard from "@/components/shop/ShopProductCard";
 import ProductImageGallery from "@/components/product/ProductImageGallery";
 import ProductLandingPromo from "@/components/product/ProductLandingPromo";
+import ProductPriceBlock from "@/components/product/ProductPriceBlock";
 import ProductPurchaseActions from "@/components/product/ProductPurchaseActions";
+import ProductTrustRow from "@/components/product/ProductTrustRow";
 import { ProductVariationProvider } from "@/components/product/ProductVariationContext";
-import ShopDeliveryTrustPanel from "@/components/shop/ShopDeliveryTrustPanel";
 import Footer from "@/components/layout/Footer";
 import Header from "@/components/layout/Header";
 import TrustBar from "@/components/layout/TrustBar";
+import { SITE_DEFAULT_URL } from "@/lib/site-brand";
 import { isNumericProductPathSegment, productPath } from "@/lib/product-slug";
 import { loadRalexCategories } from "@/lib/categories-db";
 import { loadCatalogProducts, loadProductFromPathSegment } from "@/lib/products-db";
@@ -19,13 +21,16 @@ import {
   resolveProductShopCategory,
   resolveShopCategoryMatch,
 } from "@/lib/shop-category-filter";
+import { isProductInStock } from "@/lib/products";
 import {
-  formatProductCardPrice,
-  formatProductPrice,
-  isProductInStock,
-} from "@/lib/products";
-import { productBreadcrumbJsonLd, productJsonLd, productMetaDescription } from "@/lib/product-seo";
+  productBreadcrumbJsonLd,
+  productJsonLd,
+  productMetaDescription,
+  productSeoTitle,
+} from "@/lib/product-seo";
+import { buildPageMetadata } from "@/lib/seo";
 import { resolveProductContentTier } from "@/lib/product-content-tier";
+import { getFreeShippingThresholdSetting } from "@/lib/shop-runtime";
 
 export const dynamic = "force-dynamic";
 
@@ -34,7 +39,7 @@ function siteOrigin(): string {
   if (env) {
     return env.replace(/\/$/, "");
   }
-  return "https://e-storehouse.ro";
+  return SITE_DEFAULT_URL;
 }
 
 type ProductDetailPageProps = {
@@ -51,6 +56,49 @@ function WcHtmlBlock({ html, className }: { html: string; className?: string }) 
   );
 }
 
+const PAYMENT_METHODS = ["iDEAL", "Apple Pay", "Google Pay", "Visa", "Mastercard", "Bancontact"];
+
+function SellingPointBadge({ children, tone = "neutral" }: { children: string; tone?: "neutral" | "good" }) {
+  const toneClass =
+    tone === "good"
+      ? "border-[#166534]/25 bg-[#166534]/10 text-[#166534]"
+      : "border-[var(--brand-border)] bg-[var(--brand-surface-alt)] text-[var(--foreground)]/80";
+  return (
+    <span className={`rounded-full border px-2.5 py-1 text-xs font-semibold ${toneClass}`}>
+      {children}
+    </span>
+  );
+}
+
+function SpecRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex flex-wrap justify-between gap-x-6 gap-y-1 border-b border-[var(--brand-border)] py-2.5 last:border-b-0">
+      <dt className="text-sm text-[var(--foreground)]/60">{label}</dt>
+      <dd className="text-sm font-semibold text-[var(--foreground)]">{value}</dd>
+    </div>
+  );
+}
+
+function RatingStars({ rating, count }: { rating: string; count?: number }) {
+  const value = Number.parseFloat(rating);
+  if (!Number.isFinite(value) || value <= 0) {
+    return null;
+  }
+  const rounded = Math.round(value);
+  return (
+    <p className="mt-2 flex items-center gap-2 text-sm">
+      <span className="text-[var(--brand-mid)]" aria-hidden>
+        {"★".repeat(rounded)}
+        <span className="text-[var(--foreground)]/20">{"★".repeat(Math.max(0, 5 - rounded))}</span>
+      </span>
+      <span className="text-[var(--foreground)]/70">
+        {value.toFixed(1)}
+        {typeof count === "number" && count > 0 ? ` · ${count} beoordelingen` : ""}
+      </span>
+    </p>
+  );
+}
+
 function variationQuery(sp: { variation?: string }): string {
   const variationRaw = typeof sp.variation === "string" ? Number.parseInt(sp.variation, 10) : NaN;
   if (Number.isFinite(variationRaw) && variationRaw > 0) {
@@ -63,21 +111,18 @@ export async function generateMetadata({ params }: ProductDetailPageProps): Prom
   const { slug: segment } = await params;
   const product = await loadProductFromPathSegment(segment);
   if (!product) {
-    return { title: "Produs negasit" };
+    return { title: "Product niet gevonden" };
   }
-  const canonical = productPath(product);
-  const description = productMetaDescription(product);
-  return {
-    title: product.name,
-    description,
-    alternates: { canonical },
-    openGraph: {
-      title: product.name,
-      description,
-      url: canonical,
-      images: product.image ? [{ url: product.image }] : undefined,
-    },
-  };
+  return buildPageMetadata({
+    absoluteTitle: productSeoTitle(product),
+    description: productMetaDescription(product),
+    path: productPath(product),
+    image: product.socialImage?.trim() || product.image,
+    imageAlt: product.imageAlt?.trim() || product.name,
+    noindex: Boolean(product.noindex),
+    ogTitle: product.ogTitle,
+    ogDescription: product.ogDescription,
+  });
 }
 
 export default async function ProductDetailPage({ params, searchParams }: ProductDetailPageProps) {
@@ -101,7 +146,11 @@ export default async function ProductDetailPage({ params, searchParams }: Produc
   const initialVariationId =
     Number.isFinite(variationRaw) && variationRaw > 0 ? variationRaw : undefined;
 
-  const [catalog, categoriesFile] = await Promise.all([loadCatalogProducts(), loadRalexCategories()]);
+  const [catalog, categoriesFile, freeShippingThreshold] = await Promise.all([
+    loadCatalogProducts(),
+    loadRalexCategories(),
+    getFreeShippingThresholdSetting().catch(() => 50),
+  ]);
   const productCategory = resolveProductShopCategory(product, categoriesFile.tree);
 
   const resolvedInitialVariationId =
@@ -130,16 +179,24 @@ export default async function ProductDetailPage({ params, searchParams }: Produc
     return [];
   })().slice(0, 4);
 
-  const highlightedFeatures: string[] = [];
-  if (product.brand) {
-    highlightedFeatures.push(`Brand: ${product.brand}`);
+  const sellingPoints: { label: string; tone: "neutral" | "good" }[] = [];
+  if (product.discount) {
+    sellingPoints.push({ label: `${product.discount}% korting`, tone: "good" });
   }
-    highlightedFeatures.push(`Categorie: ${product.category}`);
   if (product.freeCargo) {
-    highlightedFeatures.push("Gratis verzending beschikbaar");
+    sellingPoints.push({ label: "Gratis verzending", tone: "good" });
   }
   if (product.sameDayShipping) {
-    highlightedFeatures.push("Zelfde dag verzonden");
+    sellingPoints.push({ label: "Zelfde dag verzonden", tone: "good" });
+  }
+  if (product.hasFastDeliveryTag) {
+    sellingPoints.push({ label: "Snelle levering", tone: "neutral" });
+  }
+  if (product.hasFlashSaleTag) {
+    sellingPoints.push({ label: "Flash-aanbieding", tone: "neutral" });
+  }
+  if (product.socialProof) {
+    sellingPoints.push({ label: product.socialProof, tone: "neutral" });
   }
 
   const hasWcDescription =
@@ -182,213 +239,273 @@ export default async function ProductDetailPage({ params, searchParams }: Produc
       <TrustBar />
       <Header />
 
-      <section className="mx-auto w-full max-w-[1440px] px-4 py-6 md:py-10">
-        <nav className="text-sm text-[var(--foreground)]/80" aria-label="Breadcrumb">
-          <ol className="flex flex-wrap items-center gap-1.5">
+      <section className="mx-auto w-full max-w-[1440px] px-4 py-5 md:py-8">
+        <nav className="text-sm" aria-label="Breadcrumb">
+          <ol className="flex flex-wrap items-center gap-1.5 text-[var(--foreground)]/60">
             <li>
-              <Link href="/shop" className="font-semibold text-[#96741f] hover:underline">
+              <Link href="/shop" className="transition-colors hover:text-[var(--brand)]">
                 Webshop
               </Link>
             </li>
             {productCategory ? (
               <>
-                <li aria-hidden className="text-[var(--foreground)]/45">
-                  /
-                </li>
+                <li aria-hidden>/</li>
                 <li>
-                  <Link href={productCategory.href} className="font-semibold text-[#96741f] hover:underline">
+                  <Link
+                    href={productCategory.href}
+                    className="transition-colors hover:text-[var(--brand)]"
+                  >
                     {productCategory.label}
                   </Link>
                 </li>
               </>
             ) : null}
-            <li aria-hidden className="text-[var(--foreground)]/45">
-              /
-            </li>
-            <li className="font-medium text-[var(--foreground)]" aria-current="page">
+            <li aria-hidden>/</li>
+            <li className="font-semibold text-[var(--foreground)]" aria-current="page">
               {product.name}
             </li>
           </ol>
         </nav>
 
         <ProductVariationProvider product={product} initialVariationId={resolvedInitialVariationId}>
-        <div className="mt-4 grid gap-6 md:gap-8 lg:grid-cols-2">
-          <div className="space-y-4">
-            <ProductImageGallery
-              images={product.images}
-              name={product.name}
-              initialHighlightImage={initialVariationImage || undefined}
-            />
-          </div>
-
-          <div className="rounded-2xl border border-[#e5dcc8] bg-white p-4 md:p-6">
-            <p className="text-xs font-semibold uppercase tracking-wider text-[var(--foreground)]">
-              {product.brand || "Bergasports"}
-            </p>
-            <h1 className="mt-2 font-[family-name:var(--font-heading)] text-2xl font-semibold text-[var(--foreground)] md:text-3xl">
-              {product.name}
-            </h1>
-            {inStock ? (
-              <p className="mt-2 inline-flex rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-900">
-                Op voorraad
-              </p>
-            ) : (
-              <p className="mt-2 inline-flex rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-900">
-                Niet op voorraad
-              </p>
-            )}
-
-            <p className="mt-2 text-sm text-[var(--foreground)]/70">Categorie: {product.category}</p>
-
-            {!product.landingPromo ? (
-              <>
-                <div className="mt-6 flex items-end gap-3">
-                  <span className="text-3xl font-bold text-[var(--foreground)]">
-                    {formatProductCardPrice(product)}
-                  </span>
-                  {!product.wcVariations?.length && product.oldPrice ? (
-                    <span className="text-lg text-[var(--foreground)]/50 line-through">
-                      {formatProductPrice(product.oldPrice, product.currency)}
-                    </span>
-                  ) : null}
-                </div>
-
-                <div className="mt-6 space-y-2 text-sm text-[var(--foreground)]/90">
-                  {product.discount ? <p>Korting: {product.discount}%</p> : null}
-                  {product.freeCargo ? <p>Gratis verzending beschikbaar</p> : null}
-                  {product.sameDayShipping ? <p>Zelfde dag verzonden</p> : null}
-                  {product.hasFastDeliveryTag ? <p>Snelle levering</p> : null}
-                  {product.hasFlashSaleTag ? <p>Flash-aanbieding</p> : null}
-                  {product.socialProof ? <p>{product.socialProof}</p> : null}
-                </div>
-              </>
-            ) : null}
-
-            <div className="mt-6 rounded-xl border border-[#e5dcc8] bg-[#faf8f4] p-4">
-              <p className="text-sm font-semibold text-[var(--foreground)]">Betaalmethoden</p>
-              <ul className="mt-2 space-y-1 text-sm text-[var(--foreground)]/85">
-                <li>iDEAL · Apple Pay · Google Pay · Visa / Mastercard · Bancontact</li>
-                <li>Veilig via Mollie</li>
-              </ul>
-            </div>
-
-            <ShopDeliveryTrustPanel className="mt-4" freeCargo={product.freeCargo} currency={product.currency} />
-
-            {contentTier !== "small" ? (
-              <div className="mt-6 rounded-xl border border-[#e5dcc8] bg-white p-4">
-                <p className="text-sm font-semibold text-[var(--foreground)]">Belangrijkste kenmerken</p>
-                <ul className="mt-2 space-y-1 text-sm text-[var(--foreground)]/85">
-                  {highlightedFeatures.map((feature) => (
-                    <li key={feature}>- {feature}</li>
-                  ))}
-                </ul>
-              </div>
-            ) : null}
-
-            {product.landingPromo ? (
-              <ProductLandingPromo product={product} />
-            ) : (
-              <ProductPurchaseActions
-                product={product}
-                initialVariationId={resolvedInitialVariationId}
+          <div className="mt-6 grid gap-8 lg:grid-cols-12 lg:gap-12">
+            {/* Galerij blijft in beeld tijdens scrollen */}
+            <div className="lg:col-span-7 lg:sticky lg:top-24 lg:self-start">
+              <ProductImageGallery
+                images={product.images}
+                name={product.name}
+                initialHighlightImage={initialVariationImage || undefined}
               />
-            )}
+            </div>
 
-            <div className="mt-6 rounded-xl border border-[#e5dcc8] bg-white p-4">
-              <p className="text-sm font-semibold text-[var(--foreground)]">Persoonlijk advies</p>
-              <p className="mt-2 text-sm text-[var(--foreground)]/80">
-                Twijfel je tussen modellen of maten? We helpen je graag in Dedemsvaart.
+            {/* Koopkolom: titel → prijs → CTA binnen één schermhoogte */}
+            <div className="lg:col-span-5">
+              <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[var(--brand)]">
+                {product.brand || "Bergasports"}
               </p>
-              <Link
-                href="/contact"
-                className="mt-3 inline-flex min-h-11 items-center text-xs font-bold uppercase tracking-wider text-[#96741f] underline"
-              >
-                Plan een afspraak
-              </Link>
+              <h1 className="mt-2 font-[family-name:var(--font-heading)] text-2xl font-semibold tracking-tight text-[var(--foreground)] md:text-3xl">
+                {product.name}
+              </h1>
+              {product.wcAverageRating ? (
+                <RatingStars rating={product.wcAverageRating} count={product.wcReviewCount} />
+              ) : null}
+
+              {!product.landingPromo ? (
+                <div className="mt-5">
+                  <ProductPriceBlock product={product} />
+                </div>
+              ) : null}
+
+              <p className="mt-4 flex items-center gap-2 text-sm font-semibold">
+                <span
+                  className={`h-2 w-2 rounded-full ${inStock ? "bg-[#16a34a]" : "bg-amber-500"}`}
+                  aria-hidden
+                />
+                <span className={inStock ? "text-[#166534]" : "text-amber-700"}>
+                  {inStock ? "Op voorraad" : "Niet op voorraad"}
+                </span>
+              </p>
+
+              {sellingPoints.length > 0 ? (
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {sellingPoints.map((point) => (
+                    <SellingPointBadge key={point.label} tone={point.tone}>
+                      {point.label}
+                    </SellingPointBadge>
+                  ))}
+                </div>
+              ) : null}
+
+              <div className="mt-6">
+                {product.landingPromo ? (
+                  <ProductLandingPromo product={product} />
+                ) : (
+                  <ProductPurchaseActions
+                    product={product}
+                    initialVariationId={resolvedInitialVariationId}
+                  />
+                )}
+              </div>
+
+              <ProductTrustRow
+                className="mt-7 border-t border-[var(--brand-border)] pt-6"
+                freeCargo={product.freeCargo}
+                currency={product.currency}
+                freeShippingThreshold={freeShippingThreshold}
+              />
+
+              <div className="mt-6 flex flex-wrap items-center gap-1.5">
+                {PAYMENT_METHODS.map((method) => (
+                  <span
+                    key={method}
+                    className="rounded-md border border-[var(--brand-border)] bg-white px-2 py-1 text-[11px] font-semibold text-[var(--foreground)]/70"
+                  >
+                    {method}
+                  </span>
+                ))}
+              </div>
+
+              <div className="mt-6 rounded-2xl border border-[var(--brand-border)] bg-[var(--brand-surface-alt)] p-5">
+                <p className="text-sm font-semibold text-[var(--foreground)]">
+                  Twijfel je over maat of model?
+                </p>
+                <p className="mt-1.5 text-sm leading-relaxed text-[var(--foreground)]/75">
+                  Ingmar denkt met je mee — bel, mail of kom langs in Dedemsvaart voor persoonlijk
+                  advies.
+                </p>
+                <Link
+                  href="/contact"
+                  className="arrow-link mt-3 inline-flex min-h-11 items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[#96741f]"
+                >
+                  Plan een afspraak
+                  <span aria-hidden className="arrow-link-icon">
+                    →
+                  </span>
+                </Link>
+              </div>
             </div>
           </div>
-        </div>
         </ProductVariationProvider>
 
         {contentTier === "premium" ? (
-          <div className="mt-8 rounded-2xl border border-[#e5dcc8] bg-white p-4 md:p-6">
-            <h2 className="font-[family-name:var(--font-heading)] text-xl font-semibold md:text-2xl">
-              Waarom deze fiets?
-            </h2>
-            <ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-[var(--foreground)]/85">
-              <li>Geselecteerd op performance, pasvorm en rijstijl.</li>
-              <li>Persoonlijk advies over maat, groepset en wielkeuze.</li>
-              <li>Montage en afstelling mogelijk in onze werkplaats.</li>
-            </ul>
-            <h3 className="mt-6 text-lg font-semibold">Voor wie is dit geschikt?</h3>
-            <p className="mt-2 text-sm text-[var(--foreground)]/80">
-              Voor renners die kwaliteit zoeken en materiaal willen dat past bij training, wedstrijd of lange ritten.
-            </p>
+          <div className="mt-12 grid gap-8 rounded-2xl border border-[var(--brand-border)] bg-white p-6 md:mt-14 md:p-8 lg:grid-cols-2 lg:gap-12">
+            <div>
+              <h2 className="section-rule font-[family-name:var(--font-heading)] text-xl font-semibold tracking-tight md:text-2xl">
+                Waarom dit model?
+              </h2>
+              <ul className="mt-4 space-y-2.5">
+                {[
+                  "Geselecteerd op performance, pasvorm en rijstijl.",
+                  "Persoonlijk advies over maat, groepset en wielkeuze.",
+                  "Montage en afstelling in onze eigen werkplaats.",
+                ].map((line) => (
+                  <li
+                    key={line}
+                    className="flex items-start gap-2.5 text-sm leading-relaxed text-[var(--foreground)]/80"
+                  >
+                    <span className="mt-0.5 shrink-0 font-bold text-[var(--brand)]" aria-hidden>
+                      ✓
+                    </span>
+                    {line}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div>
+              <h3 className="font-[family-name:var(--font-heading)] text-lg font-semibold tracking-tight">
+                Voor wie is dit geschikt?
+              </h3>
+              <p className="mt-3 text-sm leading-relaxed text-[var(--foreground)]/80">
+                Voor renners die kwaliteit zoeken en materiaal willen dat past bij training,
+                wedstrijd of lange ritten. Weet je niet welke maat je nodig hebt? Dan meten we je op
+                in de winkel voordat je bestelt.
+              </p>
+            </div>
           </div>
         ) : null}
 
         {contentTier !== "small" ? (
-        <div className="mt-10 rounded-2xl border border-[#e5dcc8] bg-white p-4 md:mt-12 md:p-6">
-          <h2 className="font-[family-name:var(--font-heading)] text-xl font-semibold text-[var(--foreground)] md:text-2xl">
-            Productdetails
-          </h2>
+          <div className="mt-12 grid gap-10 md:mt-14 lg:grid-cols-12 lg:gap-12">
+            <div className="lg:col-span-7">
+              <h2 className="section-rule font-[family-name:var(--font-heading)] text-xl font-semibold tracking-tight text-[var(--foreground)] md:text-2xl">
+                Productbeschrijving
+              </h2>
+              <div className="mt-4">
+                {product.wcShortDescriptionHtml ? (
+                  <WcHtmlBlock html={product.wcShortDescriptionHtml} />
+                ) : null}
+                {product.wcDescriptionHtml ? (
+                  <WcHtmlBlock html={product.wcDescriptionHtml} className="mt-4" />
+                ) : null}
+                {!hasWcDescription ? catalogSpecsFallback : null}
+                {product.wcShortDescriptionHtml && !product.wcDescriptionHtml
+                  ? catalogSpecsFallback
+                  : null}
+              </div>
+            </div>
 
-          <div className="mt-5 grid gap-6 lg:grid-cols-2">
-            <div>
-              <h3 className="text-lg font-semibold text-[var(--foreground)]">Productbeschrijving</h3>
+            <div className="lg:col-span-5">
+              <h2 className="section-rule font-[family-name:var(--font-heading)] text-xl font-semibold tracking-tight text-[var(--foreground)] md:text-2xl">
+                Specificaties
+              </h2>
+              <dl className="mt-4 rounded-2xl border border-[var(--brand-border)] bg-white px-5 py-2">
+                {product.specsText
+                  ? product.specsText
+                      .split(/\r?\n/)
+                      .map((line) => line.trim())
+                      .filter(Boolean)
+                      .map((line) => {
+                        const [label, ...rest] = line.split(":");
+                        const value = rest.join(":").trim();
+                        if (!value) return null;
+                        return <SpecRow key={line} label={label.trim()} value={value} />;
+                      })
+                  : null}
+                <SpecRow
+                  label="Productcode"
+                  value={product.wcSku ? product.wcSku : String(product.id)}
+                />
+                {product.wcProductType ? (
+                  <SpecRow label="Type" value={product.wcProductType} />
+                ) : null}
+                {product.wcAverageRating ? (
+                  <SpecRow
+                    label="Beoordeling"
+                    value={`${product.wcAverageRating}${
+                      typeof product.wcReviewCount === "number"
+                        ? ` (${product.wcReviewCount} reviews)`
+                        : ""
+                    }`}
+                  />
+                ) : null}
+                {product.wcCategories?.length ? (
+                  <SpecRow
+                    label="Categorieën"
+                    value={product.wcCategories
+                      .map((c) => c.name)
+                      .filter(Boolean)
+                      .join(", ")}
+                  />
+                ) : (
+                  <SpecRow label="Categorie" value={product.category} />
+                )}
+              </dl>
+            </div>
+          </div>
+        ) : hasWcDescription ? (
+          <div className="mt-10 max-w-3xl">
+            <h2 className="section-rule font-[family-name:var(--font-heading)] text-xl font-semibold tracking-tight text-[var(--foreground)] md:text-2xl">
+              Productbeschrijving
+            </h2>
+            <div className="mt-4">
               {product.wcShortDescriptionHtml ? (
-                <WcHtmlBlock html={product.wcShortDescriptionHtml} className="mt-2" />
+                <WcHtmlBlock html={product.wcShortDescriptionHtml} />
               ) : null}
               {product.wcDescriptionHtml ? (
                 <WcHtmlBlock html={product.wcDescriptionHtml} className="mt-4" />
               ) : null}
-              {!hasWcDescription ? catalogSpecsFallback : null}
-              {product.wcShortDescriptionHtml && !product.wcDescriptionHtml ? (
-                <div className="mt-4 border-t border-[#e5dcc8] pt-4">{catalogSpecsFallback}</div>
-              ) : null}
             </div>
-
-            <div>
-              <h3 className="text-lg font-semibold text-[var(--foreground)]">Specificaties</h3>
-              <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-[var(--foreground)]/85">
-                <li>Product verkocht en geleverd door {product.brand || "Bergasports"}.</li>
-                <li>
-                  Productcode: {product.wcSku ? `${product.wcSku} (ID ${product.id})` : product.id}
-                </li>
-                {product.wcProductType ? <li>Type: {product.wcProductType}</li> : null}
-                {product.wcAverageRating ? (
-                  <li>
-                    Gemiddelde beoordeling: {product.wcAverageRating}
-                    {typeof product.wcReviewCount === "number" ? ` (${product.wcReviewCount} reviews)` : null}
-                  </li>
-                ) : null}
-                {product.wcCategories?.length ? (
-                  <li>
-                    Categorieën: {product.wcCategories.map((c) => c.name).filter(Boolean).join(", ")}
-                  </li>
-                ) : null}
-              </ul>
-            </div>
-          </div>
-        </div>
-        ) : hasWcDescription ? (
-          <div className="mt-8 rounded-2xl border border-[#e5dcc8] bg-white p-4 md:p-6">
-            {product.wcShortDescriptionHtml ? (
-              <WcHtmlBlock html={product.wcShortDescriptionHtml} />
-            ) : null}
-            {product.wcDescriptionHtml ? (
-              <WcHtmlBlock html={product.wcDescriptionHtml} className="mt-4" />
-            ) : null}
           </div>
         ) : null}
 
         {similarProducts.length > 0 ? (
-          <div className="mt-10 md:mt-12">
-            <h2 className="font-[family-name:var(--font-heading)] text-xl font-semibold text-[var(--foreground)] md:text-2xl">
-              Vergelijkbare producten
-            </h2>
-            <div className="mt-4 grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-4">
-              {similarProducts.map((item, index) => (
+          <div className="mt-12 md:mt-16">
+            <div className="flex flex-wrap items-end justify-between gap-3">
+              <h2 className="section-rule font-[family-name:var(--font-heading)] text-xl font-semibold tracking-tight text-[var(--foreground)] md:text-2xl">
+                Vergelijkbare producten
+              </h2>
+              <Link
+                href={productCategory?.href ?? "/shop"}
+                className="arrow-link inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[#96741f]"
+              >
+                Bekijk meer
+                <span aria-hidden className="arrow-link-icon">
+                  →
+                </span>
+              </Link>
+            </div>
+            <div className="mt-5 grid grid-cols-2 gap-3 md:gap-5 lg:grid-cols-4">
+              {similarProducts.map((item) => (
                 <ShopProductCard key={item.id} product={item} priority={false} />
               ))}
             </div>

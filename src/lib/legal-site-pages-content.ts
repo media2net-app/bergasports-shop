@@ -3,6 +3,14 @@
  */
 
 import { SITE_BRAND_NAME, SITE_EMAIL } from "@/lib/site-brand";
+import { SHOP_PHONE_LABEL, shopPhoneTelHref } from "@/lib/site-contact";
+import {
+  LEGAL_PAGE_PATHS,
+  PAGE_SEO,
+  SHOP_MAPS_URL,
+  SHOP_OPENING_HOURS,
+  SITE_ADDRESS,
+} from "@/lib/site-content";
 
 export const LEGAL_PAGES_UPDATED_LABEL = "mei 2026";
 
@@ -12,10 +20,10 @@ export const legalSitePagesSeed = [
   {
     slug: "about",
     path: "/over-ons",
-    title: `Over Bergasports | Ingmar Berga`,
-    heading: "Over Bergasports",
-    meta_title: `Over Bergasports | Ingmar Berga`,
-    meta_description: `Van topsport naar ${SITE_BRAND_NAME}. Persoonlijk advies, hoogwaardig materiaal en ervaring in Dedemsvaart.`,
+    title: `Mijn verhaal | Ingmar Berga`,
+    heading: "Mijn verhaal",
+    meta_title: `Mijn verhaal | Ingmar Berga — ${SITE_BRAND_NAME} Dedemsvaart`,
+    meta_description: `Van topsport naar ${SITE_BRAND_NAME}. Het verhaal van Ingmar Berga: persoonlijk advies, hoogwaardig materiaal en jarenlange ervaring in Dedemsvaart.`,
     sort_order: 10,
     body_html: p([
       "<strong>Meer dan een winkel. Je sportpartner.</strong>",
@@ -28,25 +36,32 @@ export const legalSitePagesSeed = [
   {
     slug: "contact",
     path: "/contact",
-    title: `Contact | ${SITE_BRAND_NAME}`,
-    heading: "Contact",
-    meta_title: `Contact | ${SITE_BRAND_NAME}`,
-    meta_description: `Neem contact op met ${SITE_BRAND_NAME} voor bestellingen, levering, retouren en productvragen.`,
+    title: `Contact & route | ${SITE_BRAND_NAME}`,
+    heading: "Contact & route",
+    meta_title: PAGE_SEO.contact.title,
+    meta_description: PAGE_SEO.contact.description,
     sort_order: 20,
     body_html: `
+<h2>Contactgegevens</h2>
 <ul>
+  <li><strong>Adres:</strong> ${SITE_ADDRESS}</li>
+  <li><strong>Telefoon:</strong> <a href="${shopPhoneTelHref()}">${SHOP_PHONE_LABEL}</a></li>
   <li><strong>E-mail:</strong> <a href="mailto:${SITE_EMAIL}">${SITE_EMAIL}</a></li>
-  <li><strong>Telefoon:</strong> zie footer</li>
-  <li><strong>Adres:</strong> Dedemsvaart (bezoek op afspraak)</li>
-  <li><strong>Bereikbaar:</strong> maandag–vrijdag, 09:00 – 17:00</li>
+  <li><strong>Route:</strong> <a href="${SHOP_MAPS_URL}" target="_blank" rel="noopener noreferrer">open in Google Maps</a></li>
 </ul>
-<p>We reageren op berichten in volgorde van ontvangst, meestal dezelfde werkdag.</p>
-<p>Vermeld bij vragen over je bestelling het <strong>ordernummer</strong> uit de bevestigingsmail.</p>
+<h2>Openingstijden</h2>
+<table>
+<tbody>
+${SHOP_OPENING_HOURS.map((row) => `  <tr><td>${row.day}</td><td>${row.hours}</td></tr>`).join("\n")}
+</tbody>
+</table>
+<p>Kom langs voor persoonlijk advies, een vakkundige check van je racefiets of gewoon een goede kop koffie.</p>
+<p>We reageren op berichten in volgorde van ontvangst, meestal dezelfde werkdag. Vermeld bij vragen over je bestelling het <strong>ordernummer</strong> uit de bevestigingsmail.</p>
 `.trim(),
   },
   {
     slug: "terms",
-    path: "/termeni-si-conditii",
+    path: LEGAL_PAGE_PATHS.terms,
     title: `Algemene voorwaarden | ${SITE_BRAND_NAME}`,
     heading: "Algemene voorwaarden",
     meta_title: `Algemene voorwaarden | ${SITE_BRAND_NAME}`,
@@ -69,15 +84,15 @@ ${p([
 ])}
 <h2>4. Betaling</h2>
 ${p([
-  "Betaalmethoden staan vermeld bij checkout en op de pagina <a href=\"/metode-de-plata\">betaalmethoden</a>.",
+  `Betaalmethoden staan vermeld bij checkout en op de pagina <a href="${LEGAL_PAGE_PATHS.payment}">betaalmethoden</a>.`,
 ])}
 <h2>5. Levering</h2>
 ${p([
-  "We leveren in Nederland (en eventueel België, indien aangegeven). Geschatte levertijden staan op de productpagina en bij <a href=\"/livrare-si-retur\">verzending en retour</a>.",
+  `We leveren in Nederland (en eventueel België, indien aangegeven). Geschatte levertijden staan op de productpagina en bij <a href="${LEGAL_PAGE_PATHS.shipping}">verzending en bezorging</a>.`,
 ])}
 <h2>6. Herroeping</h2>
 ${p([
-  "Consumenten hebben recht op herroeping binnen 14 dagen, conform de wet en ons retourbeleid — zie <a href=\"/livrare-si-retur\">verzending en retour</a>.",
+  `Consumenten hebben recht op herroeping binnen 14 dagen, conform de wet en ons retourbeleid — zie <a href="${LEGAL_PAGE_PATHS.returns}">retourneren</a>.`,
 ])}
 <h2>7. Klachten</h2>
 ${p([
@@ -96,7 +111,7 @@ ${p([
   },
   {
     slug: "privacy",
-    path: "/politica-de-confidentialitate",
+    path: LEGAL_PAGE_PATHS.privacy,
     title: `Privacybeleid (AVG) | ${SITE_BRAND_NAME}`,
     heading: "Privacybeleid",
     meta_title: `Privacybeleid | ${SITE_BRAND_NAME}`,
@@ -143,13 +158,13 @@ ${p([
 <p>Neem contact op via <a href="mailto:${SITE_EMAIL}">${SITE_EMAIL}</a>.</p>
 <h2>8. Cookies</h2>
 ${p([
-  'Zie ook <a href="/politica-cookies">cookiebeleid</a>.',
+  `Zie ook <a href="${LEGAL_PAGE_PATHS.cookies}">cookiebeleid</a>.`,
 ])}
 `.trim(),
   },
   {
     slug: "cookies",
-    path: "/politica-cookies",
+    path: LEGAL_PAGE_PATHS.cookies,
     title: `Cookiebeleid | ${SITE_BRAND_NAME}`,
     heading: "Cookiebeleid",
     meta_title: `Cookiebeleid | ${SITE_BRAND_NAME}`,
@@ -172,53 +187,111 @@ ${p([
 ])}
 <h2>Meer info</h2>
 ${p([
-  'Zie ook <a href="/politica-de-confidentialitate">privacybeleid</a>.',
-])}
-`.trim(),
-  },
-  {
-    slug: "shipping",
-    path: "/livrare-si-retur",
-    title: `Verzending en retour | ${SITE_BRAND_NAME}`,
-    heading: "Verzending en retour",
-    meta_title: `Verzending en retour | ${SITE_BRAND_NAME}`,
-    meta_description: `Levering in Nederland, levertijden en retourbeleid (14 dagen) bij ${SITE_BRAND_NAME}.`,
-    sort_order: 50,
-    body_html: `
-<h2>Verzending</h2>
-<ul>
-  <li>We verzenden naar adressen in <strong>Nederland</strong> (en eventueel België, indien vermeld).</li>
-  <li>Geschatte levertijd: <strong>2–5 werkdagen</strong> na bevestiging (kan in drukke periodes afwijken).</li>
-  <li>Verzendkosten worden getoond in de winkelwagen of bij bevestiging.</li>
-</ul>
-<h2>Ontvangst pakket</h2>
-${p([
-  "Controleer het pakket bij de bezorger. Bij schade: noteer dit op het formulier en neem binnen 48 uur contact op met foto's.",
-])}
-<h2>Retour (herroeping)</h2>
-<ul>
-  <li>Je kunt binnen <strong>14 kalenderdagen</strong> na ontvangst retourneren (consumentenrecht).</li>
-  <li>Product ongebruikt, in originele verpakking, labels intact waar van toepassing.</li>
-  <li>Neem contact op via <a href="/contact">contact</a> of <a href="mailto:${SITE_EMAIL}">${SITE_EMAIL}</a> voor retourinstructies.</li>
-  <li>Terugbetaling binnen <strong>14 dagen</strong> na ontvangst van het retour, via dezelfde betaalmethode of in overleg.</li>
-</ul>
-<h2>Ruilen</h2>
-${p([
-  "Voor een andere maat of kleur: plaats een nieuwe bestelling en retourneer het oorspronkelijke product, of neem contact op voor een passende oplossing.",
+  `Zie ook <a href="${LEGAL_PAGE_PATHS.privacy}">privacybeleid</a>.`,
 ])}
 `.trim(),
   },
   {
     slug: "payment",
-    path: "/metode-de-plata",
+    path: LEGAL_PAGE_PATHS.payment,
     title: `Betaalmethoden | ${SITE_BRAND_NAME}`,
     heading: "Betaalmethoden",
-    meta_title: `Betaalmethoden | ${SITE_BRAND_NAME}`,
-    meta_description: `Beschikbare betaalmethoden bij ${SITE_BRAND_NAME}.`,
+    meta_title: `Veilig betalen: iDEAL, Apple Pay & creditcard | ${SITE_BRAND_NAME}`,
+    meta_description: `Betaal je bestelling bij ${SITE_BRAND_NAME} veilig met iDEAL, Apple Pay, Google Pay, Bancontact of creditcard via Mollie.`,
     sort_order: 60,
+    body_html: `
+${p([
+  "Je rekent veilig af via Mollie. Je betaalgegevens komen nooit bij ons terecht.",
+])}
+<h2>Beschikbare betaalmethoden</h2>
+<ul>
+  <li><strong>iDEAL</strong> — direct via je eigen bank</li>
+  <li><strong>Apple Pay</strong> en <strong>Google Pay</strong></li>
+  <li><strong>Creditcard</strong> — Visa en Mastercard</li>
+  <li><strong>Bancontact</strong> — voor Belgische klanten</li>
+  <li><strong>In de winkel</strong> — pin of contant bij afhalen in Dedemsvaart</li>
+</ul>
+<h2>Facturatie</h2>
+${p([
+  `Je ontvangt de factuur per e-mail bij de bestelbevestiging. Vragen over een bedrag of factuur? Mail <a href="mailto:${SITE_EMAIL}">${SITE_EMAIL}</a> met je ordernummer.`,
+])}
+<h2>Meer weten</h2>
+${p([
+  `Bekijk ook <a href="${LEGAL_PAGE_PATHS.shipping}">verzending en bezorging</a> en <a href="${LEGAL_PAGE_PATHS.returns}">retourneren</a>.`,
+])}
+`.trim(),
+  },
+  {
+    slug: "onderhoud",
+    path: "/onderhoud",
+    title: `Onderhoud & reparatie | ${SITE_BRAND_NAME}`,
+    heading: "Onderhoud & reparatie",
+    meta_title: `Onderhoud & reparatie racefiets | ${SITE_BRAND_NAME}`,
+    meta_description: `Onderhoud, afstelling en reparatie van racefietsen, gravel en MTB in Dedemsvaart.`,
+    sort_order: 22,
     body_html: p([
-      "Beschikbare betaalmethoden staan vermeld bij het afrekenen.",
-      "Voor vragen over facturatie of het te betalen bedrag, neem contact op vóór levering.",
+      "<strong>Goed materiaal begint met goed onderhoud.</strong>",
+      "Wij helpen met onderhoud, afstelling en reparaties aan racefietsen en andere fietsen.",
+    ]) +
+      `<ul><li>Onderhoudsbeurt</li><li>Versnellingen afstellen</li><li>Remmen</li><li>Banden / tubeless</li><li>Wielmontage</li><li>Onderdelen vervangen</li></ul>` +
+      p(['Wil je weten wat jouw fiets nodig heeft? <a href="/afspraak">Maak een afspraak</a>.']),
+  },
+  {
+    slug: "afspraak",
+    path: "/afspraak",
+    title: `Maak een afspraak | ${SITE_BRAND_NAME}`,
+    heading: "Maak een afspraak",
+    meta_title: `Afspraak in de winkel | ${SITE_BRAND_NAME} Dedemsvaart`,
+    meta_description: `Plan een afspraak bij ${SITE_BRAND_NAME} in Dedemsvaart voor advies, pasvorm of onderhoud.`,
+    sort_order: 23,
+    body_html: p([
+      "Kom langs voor persoonlijk advies, een pasafspraak of onderhoud. Vul het formulier in of bel ons.",
+      "We reageren meestal dezelfde werkdag.",
+    ]),
+  },
+  {
+    slug: "merken",
+    path: "/merken",
+    title: `Merken | ${SITE_BRAND_NAME}`,
+    heading: "Onze merken",
+    meta_title: `Merken: Colnago, Cipollini, Orbea, Nimbl, LaFuga | ${SITE_BRAND_NAME}`,
+    meta_description: `Ontdek de merken bij ${SITE_BRAND_NAME}: racefietsen, kleding en schoenen van topmerken.`,
+    sort_order: 24,
+    body_html: p([
+      `Bij ${SITE_BRAND_NAME} kies je uit merken die we zelf rijden en vertrouwen.`,
+      '<a href="/shop">Bekijk de shop</a> of lees meer over <a href="/lafuga">LaFuga</a> en <a href="/nimbl">Nimbl</a>.',
+    ]),
+  },
+  {
+    slug: "lafuga",
+    path: "/lafuga",
+    title: `LaFuga | ${SITE_BRAND_NAME}`,
+    heading: "LaFuga",
+    meta_title: `LaFuga fietskleding | ${SITE_BRAND_NAME}`,
+    meta_description: `LaFuga wielrenkleding bij ${SITE_BRAND_NAME} in Dedemsvaart. Advies en pasvorm in de winkel.`,
+    sort_order: 25,
+    body_html: p([
+      "LaFuga maakt wielrenkleding voor renners die comfort en prestaties combineren.",
+      'Bekijk <a href="/shop">LaFuga in de shop</a> of <a href="/afspraak">maak een pasafspraak</a>.',
+    ]),
+  },
+  {
+    slug: "nimbl",
+    path: "/nimbl",
+    title: `Nimbl | ${SITE_BRAND_NAME}`,
+    heading: "Nimbl",
+    meta_title: `Nimbl wielrenschoenen | ${SITE_BRAND_NAME}`,
+    meta_description: `Nimbl wielrenschoenen bij ${SITE_BRAND_NAME}. Passen en advies in Dedemsvaart.`,
+    sort_order: 26,
+    body_html: p([
+      "Nimbl maakt lichte, stijve wielrenschoenen voor op de weg.",
+      'Kom passen in Dedemsvaart of bekijk het aanbod in de <a href="/shop">shop</a>.',
     ]),
   },
 ] as const;
+
+/**
+ * Pagina's die niet meer bestaan maar wel in de database kunnen staan.
+ * De seed zet ze op niet-gepubliceerd, zodat ze uit de sitemap verdwijnen.
+ */
+export const retiredSitePageSlugs = ["shipping"] as const;

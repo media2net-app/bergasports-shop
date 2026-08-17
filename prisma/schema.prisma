@@ -96,6 +96,14 @@ model Order {
   easySalesSyncError   String?  @map("easy_sales_sync_error")
   easySalesSyncedAt    DateTime? @map("easy_sales_synced_at") @db.Timestamptz(6)
   statusEmailsSent     Json?    @map("status_emails_sent") @db.JsonB
+  trackingCode         String?  @map("tracking_code")
+  trackingUrl          String?  @map("tracking_url")
+  shippingCarrier      String?  @map("shipping_carrier")
+  sendcloudParcelId    Int?     @map("sendcloud_parcel_id")
+  sendcloudLabelUrl    String?  @map("sendcloud_label_url")
+  refundedAt           DateTime? @map("refunded_at") @db.Timestamptz(6)
+  refundAmount         Decimal?  @map("refund_amount") @db.Decimal(12, 2)
+  paymentStatus        String?   @map("payment_status")
   createdAt            DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt            DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
@@ -137,6 +145,11 @@ model SitePage {
   blocks          Json?    @db.JsonB
   metaTitle       String?  @map("meta_title")
   metaDescription String?  @map("meta_description")
+  ogTitle         String?  @map("og_title")
+  ogDescription   String?  @map("og_description")
+  socialImage     String?  @map("social_image")
+  imageAlt        String?  @map("image_alt")
+  noindex         Boolean  @default(false)
   isPublished     Boolean  @default(true) @map("is_published")
   sortOrder       Int      @default(0) @map("sort_order")
   updatedAt       DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
@@ -309,6 +322,13 @@ model NewsPost {
   publishedAt     DateTime? @map("published_at") @db.Timestamptz(6)
   isPublished     Boolean   @default(true) @map("is_published")
   sourceUrl       String?   @map("source_url")
+  seoTitle        String?   @map("seo_title")
+  seoDescription  String?   @map("seo_description")
+  ogTitle         String?   @map("og_title")
+  ogDescription   String?   @map("og_description")
+  socialImage     String?   @map("social_image")
+  imageAlt        String?   @map("image_alt")
+  noindex         Boolean   @default(false)
   createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt       DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
@@ -376,4 +396,35 @@ model ShippingRate {
 
   @@index([countryCode, active])
   @@map("shipping_rates")
+}
+
+model MediaAsset {
+  id          String   @id @default(cuid())
+  url         String
+  pathname    String
+  filename    String
+  alt         String?
+  contentType String?  @map("content_type")
+  byteSize    Int?     @map("byte_size")
+  folder      String   @default("uploads")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([createdAt(sort: Desc)])
+  @@map("media_assets")
+}
+
+model ContactLead {
+  id            String   @id @default(cuid())
+  name          String
+  email         String
+  phone         String?
+  message       String
+  kind          String   @default("contact")
+  preferredDate String?  @map("preferred_date")
+  status        String   @default("new")
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([createdAt(sort: Desc)])
+  @@index([status])
+  @@map("contact_leads")
 }

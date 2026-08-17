@@ -1,3 +1,4 @@
+import { categoryDisplayName } from "@/lib/category-meta";
 import { publicCategoryPath, toCanonicalWcSlug } from "@/lib/category-slugs";
 import { decodeImportedProductTitle, formatProductCardPrice, type Product } from "@/lib/products";
 import {
@@ -199,7 +200,7 @@ export function resolveShopCategoryFilter(
 
   return {
     filteredProducts,
-    categoryLabel: formatRalexCategoryName(node.name),
+    categoryLabel: categoryDisplayName(node.slug, formatRalexCategoryName(node.name)),
     categorySlug: node.slug,
     unknownCategory: false,
   };

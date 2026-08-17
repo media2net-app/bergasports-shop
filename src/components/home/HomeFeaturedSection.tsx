@@ -18,9 +18,12 @@ export default async function HomeFeaturedSection() {
         <p className="text-center">
           <Link
             href="/shop"
-            className="text-sm font-semibold text-[#96741f] underline underline-offset-2"
+            className="group inline-flex min-h-12 items-center gap-2 rounded-full border border-[var(--brand)]/40 bg-white px-7 text-sm font-semibold text-[#96741f] transition duration-300 hover:border-[var(--brand)] hover:bg-[var(--brand-surface-alt)]"
           >
-            Bekijk alle producten in de webshop →
+            Bekijk alle producten in de webshop
+            <span aria-hidden className="transition-transform duration-300 group-hover:translate-x-1">
+              →
+            </span>
           </Link>
         </p>
       ) : null}

@@ -139,6 +139,10 @@ export default function Header() {
           searchOpen ? "overflow-visible" : ""
         }`}
       >
+        <span
+          className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-[var(--brand)]/70 to-transparent"
+          aria-hidden
+        />
         <div className="mx-auto w-full max-w-[1440px] px-4 md:px-6">
           <div className="grid h-[72px] grid-cols-[1fr_auto_1fr] items-center">
             {/* Links: menu naar logo (rechts uitlijnen in kolom) */}

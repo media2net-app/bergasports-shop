@@ -4,8 +4,45 @@
 
 export const SITE_ADDRESS = "Julianastraat 3A, 7701 GH Dedemsvaart, Nederland";
 export const SITE_KVK = "52087018";
-export const INSTAGRAM_URL = "https://www.instagram.com/bergasports/";
-export const INSTAGRAM_HANDLE = "@bergasports";
+
+export type OpeningHoursRow = {
+  day: string;
+  /** Engelse dagnaam voor schema.org openingHoursSpecification. */
+  schemaDay: string;
+  hours: string;
+  opens?: string;
+  closes?: string;
+};
+
+/** Winkeltijden Julianastraat 3A — gelijk aan bergasports.com/nl/contact. */
+export const SHOP_OPENING_HOURS: OpeningHoursRow[] = [
+  { day: "Maandag", schemaDay: "Monday", hours: "Gesloten" },
+  { day: "Dinsdag", schemaDay: "Tuesday", hours: "12:30 – 17:30", opens: "12:30", closes: "17:30" },
+  { day: "Woensdag", schemaDay: "Wednesday", hours: "12:30 – 17:30", opens: "12:30", closes: "17:30" },
+  { day: "Donderdag", schemaDay: "Thursday", hours: "12:30 – 21:00", opens: "12:30", closes: "21:00" },
+  { day: "Vrijdag", schemaDay: "Friday", hours: "12:30 – 17:30", opens: "12:30", closes: "17:30" },
+  { day: "Zaterdag", schemaDay: "Saturday", hours: "12:00 – 16:00", opens: "12:00", closes: "16:00" },
+  { day: "Zondag", schemaDay: "Sunday", hours: "Gesloten" },
+];
+
+/** Eénregelige samenvatting voor footer, trust-blokken en e-mails. */
+export const SHOP_OPENING_HOURS_SHORT =
+  "Di t/m vr 12:30 – 17:30 · do tot 21:00 · za 12:00 – 16:00";
+
+export const SHOP_MAPS_URL =
+  "https://www.google.com/maps/search/?api=1&query=Julianastraat+3A+7701+GH+Dedemsvaart";
+
+/** Nederlandse URL's voor de juridische pagina's — één bron voor links, seed en sitemap. */
+export const LEGAL_PAGE_PATHS = {
+  terms: "/algemene-voorwaarden",
+  privacy: "/privacybeleid",
+  cookies: "/cookiebeleid",
+  payment: "/betaalmethoden",
+  shipping: "/verzending",
+  returns: "/retouren",
+} as const;
+export const INSTAGRAM_URL = "https://www.instagram.com/bergasportsnl/";
+export const INSTAGRAM_HANDLE = "@bergasportsnl";
 
 export const TRUST_BAR_USPS = [
   "Persoonlijk advies en expertise",
@@ -29,7 +66,6 @@ export const BERGASPORTS_CATEGORY_PATHS = {
   glasses: "/brillen",
   accessories: "/accessoires",
   cyclingHelmets: "/helmen",
-  usedBikes: "/tweedehands",
   cleats: "/schoenplaatjes",
   groupSets: "/groepsets",
 } as const;
@@ -48,6 +84,8 @@ export const WEBSHOP_MENU_LINKS: ShopMenuLink[] = [
 
 export type ShopMegaMenuColumn = {
   title: string;
+  /** Groep zonder subcategorieën linkt via de kop. */
+  href?: string;
   links: ShopMenuLink[];
 };
 
@@ -55,20 +93,17 @@ export const WEBSHOP_MEGA_MENU = {
   columns: [
     {
       title: "Fietsen",
+      href: BERGASPORTS_CATEGORY_PATHS.bikes,
       links: [
         { href: BERGASPORTS_CATEGORY_PATHS.roadBikes, label: "Racefietsen" },
         { href: BERGASPORTS_CATEGORY_PATHS.gravel, label: "Gravel" },
         { href: BERGASPORTS_CATEGORY_PATHS.mtb, label: "MTB" },
-        { href: BERGASPORTS_CATEGORY_PATHS.speedSkates, label: "Skeelers" },
-        { href: BERGASPORTS_CATEGORY_PATHS.usedBikes, label: "Tweedehands" },
       ],
     },
     {
-      title: "Wielen",
-      links: [
-        { href: BERGASPORTS_CATEGORY_PATHS.wheels, label: "Fietswielen" },
-        { href: BERGASPORTS_CATEGORY_PATHS.scopeOutlet, label: "Scope Outlet" },
-      ],
+      title: "Skeelers",
+      href: BERGASPORTS_CATEGORY_PATHS.speedSkates,
+      links: [],
     },
     {
       title: "Schoenen & kleding",
@@ -78,7 +113,13 @@ export const WEBSHOP_MEGA_MENU = {
       ],
     },
     {
+      title: "Wielen",
+      href: BERGASPORTS_CATEGORY_PATHS.wheels,
+      links: [{ href: BERGASPORTS_CATEGORY_PATHS.scopeOutlet, label: "Scope Outlet" }],
+    },
+    {
       title: "Accessoires",
+      href: BERGASPORTS_CATEGORY_PATHS.accessories,
       links: [
         { href: BERGASPORTS_CATEGORY_PATHS.glasses, label: "Brillen" },
         { href: BERGASPORTS_CATEGORY_PATHS.cyclingHelmets, label: "Helmen" },
@@ -105,6 +146,9 @@ export function shopCategoryHrefsFromNav(): string[] {
     hrefs.add(href);
   }
   for (const col of WEBSHOP_MEGA_MENU.columns) {
+    if (col.href) {
+      hrefs.add(col.href);
+    }
     for (const { href } of col.links) {
       hrefs.add(href);
     }
@@ -134,33 +178,36 @@ export const HEADER_NAV_LEFT: HeaderNavItem[] = [
 ];
 
 /** Rechts van het logo. */
+export const ABOUT_MENU_LINKS: ShopMenuLink[] = [
+  { href: "/over-ons", label: "Mijn verhaal" },
+  { href: "/onderhoud", label: "Onderhoud & reparatie" },
+  { href: "/afspraak", label: "Afspraak" },
+  { href: "/merken", label: "Merken" },
+  { href: "/contact", label: "Contact & route" },
+];
+
 export const HEADER_NAV_RIGHT: HeaderNavItem[] = [
   {
     type: "dropdown",
-    label: "Bergasports",
-    items: [
-      { href: "/over-ons", label: "Over ons" },
-      { href: "/onderhoud", label: "Onderhoud & reparatie" },
-      { href: "/contact", label: "Contact" },
-    ],
+    label: "Over Bergasports",
+    items: ABOUT_MENU_LINKS,
   },
 ];
 
-/** Mobiel: geneste boom. */
+/** Mobiel: geneste boom — shopgroepen volgen het mega-menu. */
 export const MOBILE_NAV_TREE: {
   label: string;
   href?: string;
   children?: ShopMenuLink[];
 }[] = [
-  { label: "Fietsen", children: WEBSHOP_MEGA_MENU.columns[0].links },
-  { label: "Wielen", children: WEBSHOP_MEGA_MENU.columns[1].links },
-  { label: "Schoenen & kleding", children: WEBSHOP_MEGA_MENU.columns[2].links },
-  { label: "Accessoires", children: WEBSHOP_MEGA_MENU.columns[3].links },
+  ...WEBSHOP_MEGA_MENU.columns.map((column) =>
+    column.links.length > 0
+      ? { label: column.title, children: [...column.links] }
+      : { label: column.title, href: column.href },
+  ),
   { label: "Nieuws", href: "/nieuws" },
   { label: "LaFuga", href: BERGASPORTS_CATEGORY_PATHS.lafugaWear },
-  { label: "Over Bergasports", href: "/over-ons" },
-  { label: "Onderhoud & reparatie", href: "/onderhoud" },
-  { label: "Contact", href: "/contact" },
+  { label: "Over Bergasports", children: ABOUT_MENU_LINKS },
 ];
 
 /** Volledige lijst (legacy flat). */
@@ -224,7 +271,8 @@ export const HOME_INSTAGRAM = {
 
 export const HOME_VISIT = {
   title: "Bezoek Bergasports in Dedemsvaart",
-  text: `${SITE_ADDRESS}`,
+  text: "Kom langs voor persoonlijk advies, een vakkundige check van je racefiets of gewoon een goede kop koffie.",
+  address: SITE_ADDRESS,
   cta: "Contact & route",
   ctaHref: "/contact",
 } as const;
@@ -246,3 +294,25 @@ export const HOME_APPOINTMENT = {
 
 export const SITE_META_DESCRIPTION =
   "Fietsenwinkel in Dedemsvaart — Orbea, Colnago, Basso, Cervélo, Nimbl en meer. Racefietsen, wielen, schoenen en persoonlijk advies.";
+
+/**
+ * SEO-copy voor de vaste pagina's. CMS-velden (meta_title / meta_description)
+ * gaan hier vóór; dit is de fallback wanneer de admin niets heeft ingevuld.
+ */
+export const PAGE_SEO = {
+  home: {
+    title: "Bergasports | Racefietsen, Gravel, MTB, Nimbl & Skeelers",
+    description:
+      "Bergasports in Dedemsvaart is specialist in racefietsen, gravel, MTB, skeelers, Nimbl schoenen en fietskleding. Persoonlijk advies, onderhoud en reparatie.",
+  },
+  shop: {
+    title: "Webshop | Racefietsen, wielen, schoenen & accessoires | Bergasports",
+    description:
+      "Het volledige assortiment van Bergasports: racefietsen, gravel, MTB, skeelers, wielen, Nimbl schoenen, LaFuga kleding en accessoires. Persoonlijk advies uit Dedemsvaart.",
+  },
+  contact: {
+    title: "Contact & route | Bergasports Dedemsvaart",
+    description:
+      "Bezoek Bergasports aan de Julianastraat 3A in Dedemsvaart. Bekijk onze openingstijden, bel 06 - 8316 2631 of plan je route voor persoonlijk advies.",
+  },
+} as const;

@@ -20,7 +20,7 @@ export async function GET() {
     return denied;
   }
 
-  const config = getEasySalesConfig();
+  const config = await getEasySalesConfig();
   if (!config) {
     return NextResponse.json({
       ok: false,

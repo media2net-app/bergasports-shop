@@ -28,15 +28,15 @@ export default function AdminOrderEasySalesSync({ orderId, status, error, synced
       const res = await fetch(`/api/admin/orders/${orderId}/sync-easy-sales`, { method: "POST" });
       const data = (await res.json()) as { ok?: boolean; error?: string; status?: string };
       if (!res.ok) {
-        setMessage(data.error ?? "Sync failed");
+        setMessage(data.error ?? "Sync mislukt");
       } else if (data.ok) {
-        setMessage("Synced to Easy-Sales.");
+        setMessage("Gesynchroniseerd met Easy Sales.");
       } else {
-        setMessage(data.error ?? "Sync failed");
+        setMessage(data.error ?? "Sync mislukt");
       }
       router.refresh();
     } catch {
-      setMessage("Network error");
+      setMessage("Geen verbinding");
     } finally {
       setBusy(false);
     }
@@ -47,15 +47,15 @@ export default function AdminOrderEasySalesSync({ orderId, status, error, synced
       <div className="admin-flex-between" style={{ alignItems: "center", gap: "0.5rem" }}>
         <span className={easySalesSyncBadgeClass(status)}>{easySalesSyncLabel(status)}</span>
         <button type="button" className="admin-btn-secondary" disabled={busy} onClick={() => void retry()}>
-          {busy ? "Syncing…" : "Sync to Easy-Sales"}
+          {busy ? "Bezig…" : "Sync naar Easy Sales"}
         </button>
       </div>
       <p className="admin-muted admin-m-0" style={{ fontSize: "0.8125rem" }}>
-        Orders in this list come from shop checkout. Easy-Sales receives a copy after each order is placed.
+        Bestellingen in dit overzicht komen uit de webshop. Easy Sales ontvangt een kopie na elke bestelling.
       </p>
       {syncedAt ? (
         <p className="admin-muted admin-m-0" style={{ fontSize: "0.75rem" }}>
-          Last attempt: {new Date(syncedAt).toLocaleString("en-US")}
+          Laatste poging: {new Date(syncedAt).toLocaleString("nl-NL")}
         </p>
       ) : null}
       {error ? (

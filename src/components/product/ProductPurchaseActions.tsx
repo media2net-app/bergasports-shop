@@ -172,7 +172,7 @@ export default function ProductPurchaseActions({
   };
 
   return (
-    <div className="mt-8 space-y-4">
+    <div className="space-y-4">
       {!inStock ? (
         <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-900">
           Momenteel niet op voorraad — je kunt dit product niet toevoegen. Neem contact op voor beschikbaarheid.
@@ -180,18 +180,31 @@ export default function ProductPurchaseActions({
       ) : null}
       {variations && variations.length > 1 ? (
         <div>
-          <p className="text-sm font-semibold text-[var(--foreground)]">Kies een variant</p>
-          <div className="mt-2 flex flex-wrap gap-2">
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <p className="text-sm font-semibold text-[var(--foreground)]">Kies een variant</p>
+            {selected ? (
+              <p className="text-sm text-[var(--foreground)]/60">
+                Gekozen:{" "}
+                <span className="font-semibold text-[var(--foreground)]">
+                  {shortVariationLabel(selected.label)}
+                </span>
+              </p>
+            ) : (
+              <p className="text-sm font-semibold text-[#96741f]">Nog geen keuze gemaakt</p>
+            )}
+          </div>
+          <div className="mt-2.5 flex flex-wrap gap-2">
             {variations.map((v) => {
               const active = v.id === selectedId;
               return (
                 <button
                   key={v.id}
                   type="button"
-                  className={`rounded-full border px-3 py-1.5 text-sm font-semibold transition ${
+                  aria-pressed={active}
+                  className={`min-h-11 rounded-xl border px-4 text-sm font-semibold transition ${
                     active
                       ? "border-[#B38F27] bg-[#B38F27] text-white"
-                      : "border-[#e5dcc8] bg-white text-[var(--foreground)] hover:border-[#B38F27]/40"
+                      : "border-[#e5dcc8] bg-white text-[var(--foreground)] hover:border-[#B38F27] hover:bg-[var(--brand-surface-alt)]"
                   }`}
                   onClick={() => {
                     setSelectedId?.(v.id);
@@ -210,45 +223,41 @@ export default function ProductPurchaseActions({
         </div>
       ) : null}
 
-      {catalogUnit != null ? (
-        <div className="rounded-xl border border-[#e5dcc8] bg-[#faf9fc] px-4 py-3">
-          <p className="flex flex-wrap items-baseline gap-2 text-2xl font-bold text-[var(--foreground)]">
-            <span>{formatProductPrice(catalogUnit, product.currency)}</span>
-          </p>
-        </div>
-      ) : needsChoice ? (
-        <p className="text-sm text-[var(--foreground)]/65">Kies een variant om de prijs te zien.</p>
+      {catalogUnit == null && needsChoice ? (
+        <p className="text-sm text-[var(--foreground)]/65">Kies eerst een variant om verder te gaan.</p>
       ) : null}
 
-      {/* Desktop / tablet: qty + CTA in pagina */}
-      <div className="hidden flex-wrap items-center gap-3 lg:flex">
-        <QuantityStepper {...stepperProps} idSuffix="inline" />
-        <button
-          type="button"
-          disabled={!canAdd}
-          className="rounded-full bg-[#B38F27] px-5 py-2.5 text-sm font-semibold text-white transition enabled:hover:bg-[#96741f] disabled:cursor-not-allowed disabled:opacity-50"
-          onClick={handleAddToCart}
-        >
-          In winkelwagen
-        </button>
-      </div>
-
-      {/* Mobiel: qty + CTA in pagina */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center lg:hidden">
+      {/* Aantal + hoofd-CTA: op elke breedte direct naast/onder elkaar in beeld */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <QuantityStepper {...stepperProps} idSuffix="page" />
         <button
           type="button"
           disabled={!canAdd}
-          className="min-h-11 flex-1 rounded-full bg-[#B38F27] px-5 py-2.5 text-sm font-semibold text-white transition enabled:hover:bg-[#96741f] disabled:cursor-not-allowed disabled:opacity-50 sm:flex-none"
+          className="min-h-12 flex-1 rounded-full bg-[#B38F27] px-6 text-base font-bold text-white transition duration-300 enabled:hover:bg-[#96741f] disabled:cursor-not-allowed disabled:opacity-50"
           onClick={handleAddToCart}
         >
           In winkelwagen
         </button>
       </div>
 
+      <p className="flex items-center gap-2 text-xs text-[var(--foreground)]/60">
+        <svg
+          className="h-3.5 w-3.5 shrink-0 text-[#166534]"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          aria-hidden
+        >
+          <rect x="5" y="10" width="14" height="10" rx="2" />
+          <path d="M8 10V7a4 4 0 018 0v3" strokeLinecap="round" />
+        </svg>
+        Veilig afrekenen · geen verborgen kosten
+      </p>
+
       {/* Mobiele sticky bar — vast onderaan viewport */}
       <div
-        className="product-mobile-cart-bar fixed inset-x-0 bottom-0 z-50 border-t border-[#e5dcc8] bg-white shadow-[0_-8px_24px_rgba(37,17,54,0.12)] lg:hidden"
+        className="product-mobile-cart-bar fixed inset-x-0 bottom-0 z-50 border-t border-[#e5dcc8] bg-white/95 backdrop-blur-md lg:hidden"
         role="region"
         aria-label="In winkelwagen"
       >

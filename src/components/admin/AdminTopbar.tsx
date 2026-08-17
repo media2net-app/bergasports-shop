@@ -9,6 +9,13 @@ const PAGE_TITLES: Record<string, string> = {
   "/admin/products/new": "Nieuw product",
   "/admin/orders": "Bestellingen",
   "/admin/pages": "Pagina's",
+  "/admin/inventory": "Voorraad",
+  "/admin/news": "Nieuws",
+  "/admin/users": "Gebruikers",
+  "/admin/coupons": "Kortingscodes",
+  "/admin/customers": "Klanten",
+  "/admin/categories": "Categorieën",
+  "/admin/shipping": "Verzending",
 };
 
 function titleForPath(path: string): string {
@@ -23,6 +30,24 @@ function titleForPath(path: string): string {
   }
   if (path.startsWith("/admin/pages/")) {
     return "Pagina bewerken";
+  }
+  if (path.startsWith("/admin/news/")) {
+    return "Nieuwsbericht";
+  }
+  if (path === "/admin/categories/new") {
+    return "Nieuwe categorie";
+  }
+  if (path.startsWith("/admin/categories/")) {
+    return "Categorie bewerken";
+  }
+  if (path.startsWith("/admin/settings/")) {
+    return "Instellingen";
+  }
+  if (path.startsWith("/admin/media")) {
+    return "Media";
+  }
+  if (path.startsWith("/admin/leads")) {
+    return "Contact & afspraken";
   }
   return "Admin";
 }
@@ -48,6 +73,7 @@ export default function AdminTopbar({ menuOpen, onMenuToggle }: AdminTopbarProps
         <span className="admin-menu-toggle-icon" aria-hidden />
         <span className="admin-sr-only">{menuOpen ? "Menu sluiten" : "Menu openen"}</span>
       </button>
+      <p className="admin-topbar-kicker">Bergasports</p>
       <h1 className="admin-topbar-heading">{title}</h1>
     </header>
   );

@@ -123,12 +123,12 @@ export async function POST(request: Request) {
   }
 
   if (await customerQualifiesForRepeatDiscount(customerPhone)) {
-    discountTotal = applyRepeatDiscount(subtotal, discountTotal).discountTotal;
+    discountTotal = (await applyRepeatDiscount(subtotal, discountTotal)).discountTotal;
   }
 
   const country = (body.shippingCountry || "NL").toUpperCase();
   const shipMethod = body.shippingMethod || "standard";
-  const shipQuote = getShippingQuote(country, shipMethod, subtotal - discountTotal);
+  const shipQuote = await getShippingQuote(country, shipMethod, subtotal - discountTotal);
   const shippingCost = shipQuote?.price ?? Number(body.shippingCost ?? 0) ?? 0;
 
   const total =

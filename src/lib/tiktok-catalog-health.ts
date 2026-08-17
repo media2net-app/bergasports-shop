@@ -6,7 +6,7 @@ import { fetchAllProductsRaw } from "@/lib/products-db";
 import { getTikTokAdminStatus } from "@/lib/tiktok-admin-status";
 
 export type TikTokCatalogHealth = {
-  pixel: ReturnType<typeof getTikTokAdminStatus>;
+  pixel: Awaited<ReturnType<typeof getTikTokAdminStatus>>;
   productsVisible: number;
   productsWithImage: number;
   productsInStock: number;
@@ -15,7 +15,7 @@ export type TikTokCatalogHealth = {
 };
 
 export async function getTikTokCatalogHealth(): Promise<TikTokCatalogHealth> {
-  const pixel = getTikTokAdminStatus();
+  const pixel = await getTikTokAdminStatus();
   const raw = await fetchAllProductsRaw();
   const products = raw.filter(isProductVisibleOnShop).map(mapTrendyolJsonToProduct);
 

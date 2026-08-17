@@ -1,77 +1,62 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState, type ComponentType } from "react";
 
-type AdminImageUploadButtonProps = {
-  label: string;
-  folder?: "products" | "pages" | "uploads";
-  className?: string;
-  onUploaded: (url: string) => void;
-  onError?: (message: string) => void;
-  multiple?: boolean;
+import type { AdminUploadFolder } from "@/components/admin/admin-media";
+import AdminImageUploadControl, {
+  type AdminImageUploadControlProps,
+} from "@/components/admin/AdminImageUploadControl";
+
+type MediaPickerProps = {
+  open: boolean;
+  onClose: () => void;
+  onSelect: (url: string, alt?: string | null) => void;
+  folder?: AdminUploadFolder;
+};
+
+type AdminImageUploadButtonProps = AdminImageUploadControlProps & {
+  showLibrary?: boolean;
+  libraryLabel?: string;
 };
 
 export default function AdminImageUploadButton({
-  label,
-  folder = "uploads",
-  className = "admin-btn-secondary",
-  onUploaded,
-  onError,
-  multiple = false,
+  showLibrary,
+  libraryLabel = "Kies uit bibliotheek",
+  ...uploadProps
 }: AdminImageUploadButtonProps) {
-  const inputRef = useRef<HTMLInputElement>(null);
-  const [busy, setBusy] = useState(false);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [Picker, setPicker] = useState<ComponentType<MediaPickerProps> | null>(null);
+  const withLibrary = showLibrary ?? uploadProps.variant !== "dropzone";
+  const buttonClass =
+    uploadProps.className ?? (uploadProps.variant === "toolbar" ? "admin-html-editor-btn" : "admin-btn-secondary");
 
-  async function uploadFiles(files: FileList | null) {
-    if (!files?.length) {
-      return;
+  async function openLibrary() {
+    if (!Picker) {
+      const mod = await import("@/components/admin/AdminMediaPicker");
+      setPicker(() => mod.default);
     }
-    setBusy(true);
-    try {
-      for (const file of Array.from(files)) {
-        const body = new FormData();
-        body.set("file", file);
-        body.set("folder", folder);
-        const res = await fetch("/api/admin/media/upload", {
-          method: "POST",
-          body,
-        });
-        const data = (await res.json()) as { url?: string; error?: string };
-        if (!res.ok || !data.url) {
-          throw new Error(data.error ?? "Upload mislukt");
-        }
-        onUploaded(data.url);
-      }
-    } catch (e) {
-      const message = e instanceof Error ? e.message : "Upload mislukt";
-      onError?.(message);
-    } finally {
-      setBusy(false);
-      if (inputRef.current) {
-        inputRef.current.value = "";
-      }
-    }
+    setPickerOpen(true);
   }
 
   return (
     <>
-      <input
-        ref={inputRef}
-        type="file"
-        accept="image/jpeg,image/png,image/webp,image/gif"
-        multiple={multiple}
-        className="sr-only"
-        tabIndex={-1}
-        onChange={(e) => void uploadFiles(e.target.files)}
-      />
-      <button
-        type="button"
-        className={className}
-        disabled={busy}
-        onClick={() => inputRef.current?.click()}
-      >
-        {busy ? "Uploaden…" : label}
-      </button>
+      <AdminImageUploadControl {...uploadProps} />
+      {withLibrary ? (
+        <button type="button" className={buttonClass} onClick={() => void openLibrary()}>
+          {libraryLabel}
+        </button>
+      ) : null}
+      {pickerOpen && Picker ? (
+        <Picker
+          open
+          folder={uploadProps.folder}
+          onClose={() => setPickerOpen(false)}
+          onSelect={(url, alt) => {
+            uploadProps.onUploaded(url, alt);
+            setPickerOpen(false);
+          }}
+        />
+      ) : null}
     </>
   );
 }

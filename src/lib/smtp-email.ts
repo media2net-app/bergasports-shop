@@ -2,6 +2,8 @@ import "server-only";
 
 import nodemailer from "nodemailer";
 
+import { getRuntimeSetting } from "@/lib/site-settings-db";
+
 export type SmtpEmailInput = {
   to: string | string[];
   subject: string;
@@ -9,48 +11,48 @@ export type SmtpEmailInput = {
   html?: string;
 };
 
-function smtpPassword(): string | null {
+async function smtpPassword(): Promise<string> {
   return (
-    process.env.SMTP_PASS?.trim() ||
+    (await getRuntimeSetting("SMTP_PASS")).trim() ||
     process.env.SMTP_PASSWORD?.trim() ||
-    null
+    ""
   );
 }
 
-/** Hostinger and other SMTP: set SMTP_HOST, SMTP_USER, SMTP_PASS (or SMTP_PASSWORD). */
-export function isSmtpConfigured(): boolean {
-  const host = process.env.SMTP_HOST?.trim();
-  const user = process.env.SMTP_USER?.trim();
-  const pass = smtpPassword();
+export async function isSmtpConfigured(): Promise<boolean> {
+  const [host, user, pass] = await Promise.all([
+    getRuntimeSetting("SMTP_HOST"),
+    getRuntimeSetting("SMTP_USER"),
+    smtpPassword(),
+  ]);
   return Boolean(host && user && pass);
 }
 
-function smtpFromAddress(): string {
-  return (
-    process.env.SMTP_FROM?.trim() ||
-    process.env.ORDER_NOTIFICATION_FROM?.trim() ||
-    (() => {
-      const user = process.env.SMTP_USER?.trim();
-      return user ? `Bergasports <${user}>` : "Bergasports <info@bergasports.com>";
-    })()
-  );
+async function smtpFromAddress(): Promise<string> {
+  const from = (await getRuntimeSetting("SMTP_FROM")).trim();
+  if (from) return from;
+  const orderFrom = (await getRuntimeSetting("ORDER_NOTIFICATION_FROM")).trim();
+  if (orderFrom) return orderFrom;
+  const user = (await getRuntimeSetting("SMTP_USER")).trim();
+  return user ? `Bergasports <${user}>` : "Bergasports <info@bergasports.com>";
 }
 
 export async function sendSmtpEmail(input: SmtpEmailInput): Promise<boolean> {
-  if (!isSmtpConfigured()) {
+  if (!(await isSmtpConfigured())) {
     return false;
   }
 
-  const host = process.env.SMTP_HOST!.trim();
-  const user = process.env.SMTP_USER!.trim();
-  const pass = smtpPassword()!;
-  const port = Number(process.env.SMTP_PORT?.trim() || "465");
+  const [host, user, pass, portRaw, secureRaw, from] = await Promise.all([
+    getRuntimeSetting("SMTP_HOST"),
+    getRuntimeSetting("SMTP_USER"),
+    smtpPassword(),
+    getRuntimeSetting("SMTP_PORT"),
+    getRuntimeSetting("SMTP_SECURE"),
+    smtpFromAddress(),
+  ]);
+  const port = Number(portRaw.trim() || "465");
   const secure =
-    process.env.SMTP_SECURE === "false"
-      ? false
-      : process.env.SMTP_SECURE === "true"
-        ? true
-        : port === 465;
+    secureRaw === "false" ? false : secureRaw === "true" ? true : port === 465;
 
   const to = (Array.isArray(input.to) ? input.to : [input.to]).map((x) => x.trim()).filter(Boolean);
   if (!to.length) {
@@ -58,16 +60,16 @@ export async function sendSmtpEmail(input: SmtpEmailInput): Promise<boolean> {
   }
 
   const transporter = nodemailer.createTransport({
-    host,
+    host: host.trim(),
     port,
     secure,
-    auth: { user, pass },
+    auth: { user: user.trim(), pass },
     ...(port === 587 && !secure ? { requireTLS: true } : {}),
   });
 
   try {
     await transporter.sendMail({
-      from: smtpFromAddress(),
+      from,
       to: to.join(", "),
       subject: input.subject,
       text: input.text,

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useCart } from "@/components/cart/CartProvider";
 import { SHOP_PHONE_LABEL, shopPhoneTelHref } from "@/lib/site-contact";
+import { SHOP_OPENING_HOURS_SHORT } from "@/lib/site-content";
 import { formatProductPrice, type Product, type WcVariationJson } from "@/lib/products";
 
 type ProductLandingPromoProps = {
@@ -68,7 +69,7 @@ export default function ProductLandingPromo({ product }: ProductLandingPromoProp
 
   const phone = promo.phone ?? SHOP_PHONE_LABEL;
   const phoneHref = shopPhoneTelHref(phone);
-  const phoneHours = promo.phoneHours ?? "Ma–vr 08:00–16:00";
+  const phoneHours = promo.phoneHours ?? SHOP_OPENING_HOURS_SHORT;
 
   const handleOrder = () => {
     const variation = pickDefaultVariation(product);

@@ -60,7 +60,7 @@ export async function updateEasySalesProductStock(
   easySalesProductId: number,
   stock: number,
 ): Promise<EasySalesSyncResult> {
-  const config = getEasySalesConfig();
+  const config = await getEasySalesConfig();
   if (!config) {
     return { ok: false, error: "Easy-Sales is not configured." };
   }

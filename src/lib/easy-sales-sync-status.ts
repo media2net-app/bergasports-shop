@@ -3,13 +3,13 @@ export type EasySalesSyncStatus = "synced" | "failed" | "pending" | null;
 export function easySalesSyncLabel(status: EasySalesSyncStatus): string {
   switch (status) {
     case "synced":
-      return "Synced";
+      return "Gesynchroniseerd";
     case "failed":
-      return "Sync failed";
+      return "Sync mislukt";
     case "pending":
-      return "Pending";
+      return "In wachtrij";
     default:
-      return "Not synced";
+      return "Niet gesynchroniseerd";
   }
 }
 

@@ -6,7 +6,7 @@ export default function HomeAboutTeaser() {
   return (
     <section className="grid gap-6 md:grid-cols-[1.2fr_0.8fr] md:items-end">
       <div>
-        <h2 className="font-[family-name:var(--font-heading)] text-2xl text-[var(--foreground)] md:text-3xl">
+        <h2 className="section-rule font-[family-name:var(--font-heading)] text-2xl tracking-tight text-[var(--foreground)] md:text-3xl">
           {HOME_ABOUT.title}
         </h2>
         <p className="mt-4 max-w-xl text-sm leading-relaxed text-[var(--foreground)]/75 md:text-base">
@@ -16,9 +16,12 @@ export default function HomeAboutTeaser() {
       <div className="md:text-right">
         <Link
           href={HOME_ABOUT.ctaHref}
-          className="inline-flex min-h-11 items-center border-b border-[var(--foreground)] text-xs font-bold uppercase tracking-[0.14em] transition hover:border-[var(--brand)] hover:text-[var(--brand)]"
+          className="arrow-link inline-flex min-h-11 items-center gap-2 border-b border-[var(--foreground)] text-xs font-bold uppercase tracking-[0.14em] transition hover:border-[var(--brand)] hover:text-[var(--brand)]"
         >
           {HOME_ABOUT.cta}
+          <span aria-hidden className="arrow-link-icon">
+            →
+          </span>
         </Link>
       </div>
     </section>

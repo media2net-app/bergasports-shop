@@ -32,33 +32,35 @@ export default function ShopProductCard({
 
   return (
     <article
-      className={`group flex h-full flex-col overflow-hidden rounded-2xl border border-[#e5dcc8] bg-white transition hover:shadow-md ${!inStock ? "opacity-75" : ""} ${className}`}
+      className={`card-lift group flex h-full flex-col overflow-hidden rounded-2xl border border-[#e5dcc8] bg-white hover:border-[var(--brand)]/45 ${!inStock ? "opacity-75" : ""} ${className}`}
     >
       <Link
         href={href}
         className="flex min-h-0 flex-1 flex-col focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#B38F27]"
       >
-        <OptimizedProductImage
-          src={product.image}
-          alt={product.name}
-          variant={imageVariant}
-          priority={priority}
-          className="object-contain"
-          wrapperClassName="shrink-0 rounded-none border-0"
-        />
+        <div className="p-3 pb-0">
+          <OptimizedProductImage
+            src={product.image}
+            alt={product.name}
+            variant={imageVariant}
+            priority={priority}
+            className="media-zoom object-contain"
+            wrapperClassName="shrink-0 rounded-xl border-0"
+          />
+        </div>
 
         <div className="flex flex-1 flex-col p-4 pt-3">
           {!inStock ? (
-            <span className="mb-2 inline-flex w-fit rounded-full bg-amber-100 px-2 py-1 text-xs font-semibold text-amber-900">
+            <span className="mb-2 inline-flex w-fit rounded-full bg-amber-100 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-amber-900">
               Niet op voorraad
             </span>
           ) : product.tag ? (
-            <span className="mb-2 inline-flex w-fit rounded-full bg-[#f0ead8] px-2 py-1 text-xs font-semibold text-[var(--foreground)]">
+            <span className="mb-2 inline-flex w-fit rounded-full bg-[#f0ead8] px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-[var(--brand-dark)]">
               {product.tag}
             </span>
           ) : null}
 
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--foreground)]/70">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--foreground)]/60">
             {product.brand || product.category}
           </p>
 
@@ -72,12 +74,12 @@ export default function ShopProductCard({
             </div>
           ) : null}
 
-          <h2 className="title-3-lines mt-1 text-[15px] font-semibold leading-snug text-[var(--foreground)] group-hover:text-[#96741f] sm:text-base">
+          <h2 className="title-3-lines mt-1 text-[15px] font-semibold leading-snug text-[var(--foreground)] transition-colors group-hover:text-[#96741f] sm:text-base">
             {product.name}
           </h2>
 
           <div className="mt-auto flex items-baseline gap-2 pt-3">
-            <span className="text-lg font-bold text-[var(--foreground)]">
+            <span className="text-xl font-bold tracking-tight text-[var(--foreground)]">
               {formatProductCardPrice(product)}
             </span>
             {product.oldPrice && !product.wcVariations?.length ? (
@@ -95,7 +97,7 @@ export default function ShopProductCard({
         {inStock ? (
           <Link
             href={href}
-            className="mt-3 block w-full rounded-full bg-[#B38F27] px-4 py-2.5 text-center text-sm font-semibold text-white transition group-hover:bg-[#96741f] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B38F27] focus-visible:ring-offset-2"
+            className="mt-3 block w-full rounded-full bg-[#B38F27] px-4 py-2.5 text-center text-sm font-semibold text-white transition duration-300 group-hover:bg-[#96741f] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B38F27] focus-visible:ring-offset-2"
           >
             {ctaLabel}
           </Link>

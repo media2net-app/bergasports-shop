@@ -17,6 +17,7 @@ type ShopDeliveryTrustPanelProps = {
   /** Productvlag: altijd gratis verzending tonen. */
   freeCargo?: boolean;
   className?: string;
+  freeShippingThreshold?: number;
 };
 
 export default function ShopDeliveryTrustPanel({
@@ -24,10 +25,11 @@ export default function ShopDeliveryTrustPanel({
   currency = SITE_DEFAULT_CURRENCY,
   freeCargo = false,
   className = "",
+  freeShippingThreshold,
 }: ShopDeliveryTrustPanelProps) {
   const deliveryRange = formatEstimatedDeliveryRange();
-  const threshold = freeShippingThresholdAmount();
-  const thresholdLabel = formatFreeShippingThreshold(currency);
+  const threshold = freeShippingThreshold ?? freeShippingThresholdAmount();
+  const thresholdLabel = formatFreeShippingThreshold(currency, threshold);
   const qualifiesFree =
     freeCargo || (subtotalAmount != null && subtotalAmount >= threshold - 0.005);
   const remaining =

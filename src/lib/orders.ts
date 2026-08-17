@@ -12,12 +12,12 @@ export type OrderStatus = (typeof ORDER_STATUSES)[number];
 
 export const ORDER_STATUS_LABEL: Record<OrderStatus, string> = {
   awaiting_payment: "Wacht op betaling",
-  pending: "Pending",
-  confirmed: "Confirmed",
-  processing: "Processing",
-  shipped: "Shipped",
-  delivered: "Delivered",
-  cancelled: "Cancelled",
+  pending: "Open",
+  confirmed: "Bevestigd",
+  processing: "In behandeling",
+  shipped: "Verzonden",
+  delivered: "Afgeleverd",
+  cancelled: "Geannuleerd",
 };
 
 export type OrderItemInput = {
@@ -79,6 +79,14 @@ export type OrderRow = {
   easy_sales_synced_at: string | null;
   status_emails_sent: Record<string, string> | null;
   marketing_consent: boolean;
+  tracking_code: string | null;
+  tracking_url: string | null;
+  shipping_carrier: string | null;
+  sendcloud_parcel_id: number | null;
+  sendcloud_label_url: string | null;
+  refunded_at: string | null;
+  refund_amount: number | null;
+  payment_status: string | null;
 };
 
 export type OrderItemRow = {

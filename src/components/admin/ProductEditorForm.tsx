@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 
+import AdminHtmlEditor from "@/components/admin/AdminHtmlEditor";
 import AdminImageUploadButton from "@/components/admin/AdminImageUploadButton";
 import { productPath, slugifyProductTitle } from "@/lib/product-slug";
 import {
@@ -75,11 +76,14 @@ function appendImageUrls(existingText: string, rawPaste: string): string {
   return merged.join("\n");
 }
 
+type CategoryOption = { slug: string; name: string; group?: string };
+
 type ProductEditorFormProps = {
   initial: TrendyolJsonProduct;
+  categoryOptions?: CategoryOption[];
 };
 
-export default function ProductEditorForm({ initial }: ProductEditorFormProps) {
+export default function ProductEditorForm({ initial, categoryOptions = [] }: ProductEditorFormProps) {
   const router = useRouter();
   const [error, setError] = useState("");
   const [saveOk, setSaveOk] = useState(false);
@@ -94,7 +98,7 @@ export default function ProductEditorForm({ initial }: ProductEditorFormProps) {
   const [url, setUrl] = useState(initial.url);
   const [image, setImage] = useState(initial.image);
   const [imagesText, setImagesText] = useState(imagesToText(initial.images));
-  const [currency, setCurrency] = useState(initial.currency ?? "Lei");
+  const [currency, setCurrency] = useState(initial.currency ?? "EUR");
   const [priceCurrent, setPriceCurrent] = useState(String(initial.priceCurrent ?? 0));
   const [priceDiscounted, setPriceDiscounted] = useState(String(initial.priceDiscounted ?? 0));
   const [priceOld, setPriceOld] = useState(String(initial.priceOld ?? 0));
@@ -127,14 +131,29 @@ export default function ProductEditorForm({ initial }: ProductEditorFormProps) {
   const [easySalesId, setEasySalesId] = useState(
     typeof initial.easySalesProductId === "number" ? String(initial.easySalesProductId) : "",
   );
+  const [inStockManual, setInStockManual] = useState(initial.inStock !== false);
+  const [sku, setSku] = useState(initial.wcSku ?? "");
+  const [specsText, setSpecsText] = useState(initial.specsText ?? "");
+  const [seoTitle, setSeoTitle] = useState(initial.seoTitle ?? "");
+  const [seoDescription, setSeoDescription] = useState(initial.seoDescription ?? "");
+  const [ogTitle, setOgTitle] = useState(initial.ogTitle ?? "");
+  const [ogDescription, setOgDescription] = useState(initial.ogDescription ?? "");
+  const [socialImage, setSocialImage] = useState(initial.socialImage ?? "");
+  const [imageAlt, setImageAlt] = useState(initial.imageAlt ?? "");
+  const [noindex, setNoindex] = useState(Boolean(initial.noindex));
 
   const parsedStockQty = stockQty.trim() === "" ? null : Number(stockQty);
   const parsedReservedQty = reservedQty.trim() === "" ? 0 : Number(reservedQty);
   const parsedEasySalesId = easySalesId.trim() === "" ? null : Number(easySalesId);
-  const stockAvailable =
-    parsedStockQty != null && Number.isFinite(parsedStockQty)
-      ? Math.max(0, Math.floor(parsedStockQty - (Number.isFinite(parsedReservedQty) ? Math.max(0, parsedReservedQty) : 0)))
-      : null;
+  const hasStockNumber = parsedStockQty != null && Number.isFinite(parsedStockQty);
+  const stockAvailable = hasStockNumber
+    ? Math.max(
+        0,
+        Math.floor(
+          parsedStockQty! - (Number.isFinite(parsedReservedQty) ? Math.max(0, parsedReservedQty) : 0),
+        ),
+      )
+    : null;
 
   const mainImageInputRef = useRef<HTMLInputElement>(null);
 
@@ -216,7 +235,7 @@ export default function ProductEditorForm({ initial }: ProductEditorFormProps) {
       next.inStock =
         typeof next.stockQuantity === "number"
           ? (productAvailableStock(next) ?? 0) > 0
-          : initial.inStock !== false;
+          : inStockManual;
 
       if (landingPromo !== undefined) {
         next.landingPromo = landingPromo;
@@ -246,6 +265,31 @@ export default function ProductEditorForm({ initial }: ProductEditorFormProps) {
       } else {
         delete next.wcDescriptionHtml;
       }
+      const skuTrim = sku.trim();
+      if (skuTrim) next.wcSku = skuTrim;
+      else delete next.wcSku;
+      const specsTrim = specsText.trim();
+      if (specsTrim) next.specsText = specsTrim;
+      else delete next.specsText;
+      const seoTitleTrim = seoTitle.trim();
+      if (seoTitleTrim) next.seoTitle = seoTitleTrim;
+      else delete next.seoTitle;
+      const seoDescTrim = seoDescription.trim();
+      if (seoDescTrim) next.seoDescription = seoDescTrim;
+      else delete next.seoDescription;
+      const ogTitleTrim = ogTitle.trim();
+      if (ogTitleTrim) next.ogTitle = ogTitleTrim;
+      else delete next.ogTitle;
+      const ogDescTrim = ogDescription.trim();
+      if (ogDescTrim) next.ogDescription = ogDescTrim;
+      else delete next.ogDescription;
+      const socialTrim = socialImage.trim();
+      if (socialTrim) next.socialImage = socialTrim;
+      else delete next.socialImage;
+      const altTrim = imageAlt.trim();
+      if (altTrim) next.imageAlt = altTrim;
+      else delete next.imageAlt;
+      next.noindex = noindex;
 
       return next;
     } catch {
@@ -274,6 +318,7 @@ export default function ProductEditorForm({ initial }: ProductEditorFormProps) {
     stockQty,
     reservedQty,
     easySalesId,
+    inStockManual,
     socialProofText,
     landingJson,
     bundleJson,
@@ -281,6 +326,15 @@ export default function ProductEditorForm({ initial }: ProductEditorFormProps) {
     wcShortHtml,
     wcDescHtml,
     catalogSource,
+    sku,
+    specsText,
+    seoTitle,
+    seoDescription,
+    ogTitle,
+    ogDescription,
+    socialImage,
+    imageAlt,
+    noindex,
   ]);
 
   useEffect(() => {
@@ -295,7 +349,7 @@ export default function ProductEditorForm({ initial }: ProductEditorFormProps) {
     setError("");
     const body = payload;
     if (!body) {
-      setError("Check prices, WooCommerce HTML, and JSON (variations / landing / bundles).");
+      setError("Controleer prijzen en JSON (variaties / landing / bundles).");
       return;
     }
     setSaving(true);
@@ -307,20 +361,20 @@ export default function ProductEditorForm({ initial }: ProductEditorFormProps) {
       });
       const data = (await res.json()) as { error?: string };
       if (!res.ok) {
-        setError(data.error ?? "Save failed");
+        setError(data.error ?? "Opslaan mislukt");
         setSaving(false);
         return;
       }
       setSaveOk(true);
       router.refresh();
     } catch {
-      setError("Network error");
+      setError("Geen verbinding");
     }
     setSaving(false);
   }
 
   async function remove() {
-    if (!window.confirm(`Delete product ${id}? This cannot be undone in production without a backup.`)) {
+    if (!window.confirm(`Product ${id} verwijderen? Dit kun je niet ongedaan maken.`)) {
       return;
     }
     setDeleting(true);
@@ -329,14 +383,14 @@ export default function ProductEditorForm({ initial }: ProductEditorFormProps) {
       const res = await fetch(`/api/admin/products/${id}`, { method: "DELETE" });
       const data = (await res.json()) as { error?: string };
       if (!res.ok) {
-        setError(data.error ?? "Delete failed");
+        setError(data.error ?? "Verwijderen mislukt");
         setDeleting(false);
         return;
       }
       router.push("/admin/products");
       router.refresh();
     } catch {
-      setError("Network error");
+      setError("Geen verbinding");
     }
     setDeleting(false);
   }
@@ -365,9 +419,20 @@ export default function ProductEditorForm({ initial }: ProductEditorFormProps) {
     });
   }, [imagesText, image]);
 
+  const categoryOptionGroups = useMemo(() => {
+    const groups = new Map<string, CategoryOption[]>();
+    for (const option of categoryOptions) {
+      const group = option.group ?? "";
+      const list = groups.get(group) ?? [];
+      list.push(option);
+      groups.set(group, list);
+    }
+    return [...groups.entries()];
+  }, [categoryOptions]);
+
   function handleAddImages() {
     const raw = window.prompt(
-      "Paste one or more image URLs (https…). Separate multiple URLs with commas or new lines.",
+      "Plak één of meer foto-URL’s (https…). Meerdere URL’s scheiden met komma’s of nieuwe regels.",
       "",
     );
     if (raw == null || !raw.trim()) {
@@ -414,10 +479,10 @@ export default function ProductEditorForm({ initial }: ProductEditorFormProps) {
       <div className="admin-page-head">
         <div>
           <Link href="/admin/products" className="admin-breadcrumb">
-            ← All products
+            ← Alle producten
           </Link>
           <h1 className="admin-h1">{titlePreview}</h1>
-          <p className="admin-muted admin-m-0 admin-mt-05">Edit product · ID {id}</p>
+          <p className="admin-muted admin-m-0 admin-mt-05">Product bewerken · ID {id}</p>
           <p className="admin-muted admin-m-0 admin-mt-05">
             <Link
               href={productPath(shopSlugPreview)}
@@ -425,24 +490,24 @@ export default function ProductEditorForm({ initial }: ProductEditorFormProps) {
               rel="noopener noreferrer"
               className="admin-link-action"
             >
-              View in shop
+              Bekijk in de shop
             </Link>
             <span> · {productPath(shopSlugPreview)}</span>
           </p>
         </div>
         <div className="admin-form-actions">
           <button type="button" onClick={save} disabled={saving} className="admin-btn-primary">
-            {saving ? "Saving…" : "Save"}
+            {saving ? "Opslaan…" : "Opslaan"}
           </button>
           <button type="button" onClick={remove} disabled={deleting} className="admin-btn-danger">
-            {deleting ? "…" : "Delete"}
+            {deleting ? "…" : "Verwijderen"}
           </button>
         </div>
       </div>
 
       {saveOk ? (
         <div className="admin-banner ok admin-m-0" role="status">
-          Changes saved.
+          Wijzigingen opgeslagen.
         </div>
       ) : null}
       {error ? <div className="admin-error-box">{error}</div> : null}
@@ -450,8 +515,8 @@ export default function ProductEditorForm({ initial }: ProductEditorFormProps) {
       <div className="admin-product-editor-grid">
         <div className="admin-product-editor-main">
           <div className="admin-panel-surface">
-            <h2 className="admin-section-title">Catalog</h2>
-            <label className={labelClass}>Source</label>
+            <h2 className="admin-section-title">Catalogus</h2>
+            <label className={labelClass}>Bron</label>
             <select
               className={`${fieldClass} admin-max-w-md`}
               value={catalogSource}
@@ -459,33 +524,75 @@ export default function ProductEditorForm({ initial }: ProductEditorFormProps) {
             >
               {CATALOG_SOURCES.map((s) => (
                 <option key={s} value={s}>
-                  {s === "trendyol" ? "Trendyol (import)" : s === "ralex" ? "Ralex" : "Manual / admin"}
+                  {s === "trendyol" ? "Trendyol (import)" : s === "ralex" ? "Ralex" : "Handmatig / admin"}
                 </option>
               ))}
             </select>
           </div>
 
           <div className="admin-panel-surface admin-stack-tight">
-            <h2 className="admin-section-title">Basic details</h2>
+            <h2 className="admin-section-title">Basisgegevens</h2>
             <div className="admin-form-grid">
               <div className="admin-span-2">
-                <label className={labelClass}>Name</label>
+                <label className={labelClass}>Naam</label>
                 <input className={fieldClass} value={name} onChange={(e) => setName(e.target.value)} />
               </div>
               <div>
-                <label className={labelClass}>Brand</label>
+                <label className={labelClass}>Merk</label>
                 <input className={fieldClass} value={brand} onChange={(e) => setBrand(e.target.value)} />
               </div>
               <div>
-                <label className={labelClass}>Category (label in shop)</label>
-                <input className={fieldClass} value={category} onChange={(e) => setCategory(e.target.value)} />
+                <label className={labelClass}>Categorie / subcategorie</label>
+                {categoryOptions.length > 0 ? (
+                  <select
+                    className={fieldClass}
+                    value={category}
+                    onChange={(e) => setCategory(e.target.value)}
+                  >
+                    <option value="">— Kies —</option>
+                    {category && !categoryOptions.some((c) => c.name === category) ? (
+                      <option value={category}>{category}</option>
+                    ) : null}
+                    {categoryOptionGroups.map(([group, items]) =>
+                      group ? (
+                        <optgroup key={group} label={group}>
+                          {items.map((c) => (
+                            <option key={c.slug} value={c.name}>
+                              {c.name}
+                            </option>
+                          ))}
+                        </optgroup>
+                      ) : (
+                        items.map((c) => (
+                          <option key={c.slug} value={c.name}>
+                            {c.name}
+                          </option>
+                        ))
+                      ),
+                    )}
+                  </select>
+                ) : (
+                  <input className={fieldClass} value={category} onChange={(e) => setCategory(e.target.value)} />
+                )}
+              </div>
+              <div>
+                <label className={labelClass}>SKU</label>
+                <input className={fieldClass} value={sku} onChange={(e) => setSku(e.target.value)} />
+              </div>
+              <div className="admin-span-2">
+                <label className={labelClass}>Specificaties (één per regel, bijv. Frame: Carbon)</label>
+                <textarea
+                  className={`${fieldClass} admin-field--tall`}
+                  value={specsText}
+                  onChange={(e) => setSpecsText(e.target.value)}
+                />
               </div>
               <div className="admin-span-2">
                 <label className={labelClass}>Product URL</label>
                 <input className={fieldClass} value={url} onChange={(e) => setUrl(e.target.value)} />
               </div>
               <div className="admin-span-2">
-                <label className={labelClass}>Social proof (text; empty = empty array)</label>
+                <label className={labelClass}>Social proof (tekst; leeg = geen)</label>
                 <input
                   className={fieldClass}
                   value={socialProofText}
@@ -495,8 +602,37 @@ export default function ProductEditorForm({ initial }: ProductEditorFormProps) {
             </div>
           </div>
 
+          <div className="admin-panel-surface admin-stack-tight">
+            <h2 className="admin-section-title">Beschrijving</h2>
+            <p className="admin-muted admin-m-0 admin-text-sm">
+              Tekst op de productpagina. Koppen, vet, lijsten, links en foto’s — geen ruwe HTML.
+            </p>
+            <div>
+              <label className={labelClass}>Korte omschrijving</label>
+              <AdminHtmlEditor
+                minHeight="compact"
+                placeholder="Korte tekst bovenaan de productpagina…"
+                value={wcShortHtml}
+                onChange={setWcShortHtml}
+                imageFolder="products"
+                onImageError={setError}
+              />
+            </div>
+            <div>
+              <label className={labelClass}>Volledige omschrijving</label>
+              <AdminHtmlEditor
+                minHeight="tall"
+                placeholder="Uitgebreide producttekst…"
+                value={wcDescHtml}
+                onChange={setWcDescHtml}
+                imageFolder="products"
+                onImageError={setError}
+              />
+            </div>
+          </div>
+
           <div className="admin-panel-surface">
-            <h2 className="admin-section-title">Visibility & delivery</h2>
+            <h2 className="admin-section-title">Zichtbaarheid &amp; levering</h2>
             <div className="admin-mb-1">
               <label className={labelClass}>Status</label>
               <select
@@ -517,7 +653,7 @@ export default function ProductEditorForm({ initial }: ProductEditorFormProps) {
                 ))}
               </select>
               <p className="admin-muted admin-m-0 admin-mt-05 admin-text-sm">
-                Concept = hidden on shop, search, and sitemap.
+                Concept = verborgen in de shop, zoekresultaten en sitemap.
               </p>
             </div>
             <div className="admin-inline-checks">
@@ -528,11 +664,11 @@ export default function ProductEditorForm({ initial }: ProductEditorFormProps) {
                   disabled={productStatus === "concept"}
                   onChange={(e) => setFeaturedOnHomepage(e.target.checked)}
                 />
-                Featured on homepage
+                Uitgelicht op de homepage
               </label>
               <div className="admin-stock-readout admin-form-grid-2 admin-span-2">
                 <div>
-                  <label className={labelClass}>Stock quantity (admin)</label>
+                  <label className={labelClass}>Voorraad (aantal)</label>
                   <input
                     className={fieldClass}
                     type="number"
@@ -540,11 +676,28 @@ export default function ProductEditorForm({ initial }: ProductEditorFormProps) {
                     step={1}
                     value={stockQty}
                     onChange={(e) => setStockQty(e.target.value)}
-                    placeholder="e.g. 12"
+                    placeholder="bijv. 12"
                   />
                 </div>
                 <div>
-                  <label className={labelClass}>Reserved</label>
+                  <label className={labelClass}>Voorraadstatus</label>
+                  <select
+                    className={fieldClass}
+                    value={hasStockNumber ? (stockAvailable! > 0 ? "in" : "out") : inStockManual ? "in" : "out"}
+                    disabled={hasStockNumber}
+                    onChange={(e) => setInStockManual(e.target.value === "in")}
+                  >
+                    <option value="in">Op voorraad</option>
+                    <option value="out">Uitverkocht</option>
+                  </select>
+                  <p className="admin-muted admin-m-0 admin-mt-05 admin-text-sm">
+                    {hasStockNumber
+                      ? "Volgt automatisch het aantal hierboven."
+                      : "Geldt zolang er geen aantal is ingevuld."}
+                  </p>
+                </div>
+                <div>
+                  <label className={labelClass}>Gereserveerd</label>
                   <input
                     className={fieldClass}
                     type="number"
@@ -555,19 +708,7 @@ export default function ProductEditorForm({ initial }: ProductEditorFormProps) {
                   />
                 </div>
                 <div>
-                  <label className={labelClass}>Easy Sales product ID</label>
-                  <input
-                    className={fieldClass}
-                    type="number"
-                    min={1}
-                    step={1}
-                    value={easySalesId}
-                    onChange={(e) => setEasySalesId(e.target.value)}
-                    placeholder="from Easy Sales"
-                  />
-                </div>
-                <div>
-                  <p className="admin-label admin-m-0">Available</p>
+                  <p className="admin-label admin-m-0">Beschikbaar</p>
                   <p className="admin-m-0">
                     {stockAvailable != null ? (
                       <strong>{stockAvailable}</strong>
@@ -576,20 +717,37 @@ export default function ProductEditorForm({ initial }: ProductEditorFormProps) {
                     )}
                   </p>
                 </div>
+                <div>
+                  <label className={labelClass}>Easy Sales product-ID</label>
+                  <input
+                    className={fieldClass}
+                    type="number"
+                    min={1}
+                    step={1}
+                    value={easySalesId}
+                    onChange={(e) => setEasySalesId(e.target.value)}
+                    placeholder="uit Easy Sales"
+                  />
+                </div>
                 {initial.stockSyncedAt ? (
                   <p className="admin-muted admin-m-0 admin-text-sm admin-span-2">
-                    Last Easy Sales sync: {new Date(initial.stockSyncedAt).toLocaleString("ro-RO")}
+                    Laatste Easy Sales-sync:{" "}
+                    {new Date(initial.stockSyncedAt).toLocaleString("nl-NL")}
                     {initial.easySalesSku ? ` · ES SKU ${initial.easySalesSku}` : ""}
                   </p>
                 ) : (
                   <p className="admin-muted admin-m-0 admin-text-sm admin-span-2">
-                    Not linked to Easy Sales — sync from the products list or set stock manually.
+                    Niet gekoppeld aan Easy Sales — vul de voorraad hier handmatig in of beheer die via{" "}
+                    <Link href="/admin/inventory" className="admin-link-action">
+                      Voorraad
+                    </Link>
+                    .
                   </p>
                 )}
               </div>
               <label>
                 <input type="checkbox" checked={freeCargo} onChange={(e) => setFreeCargo(e.target.checked)} />
-                Free shipping
+                Gratis verzending
               </label>
               <label>
                 <input
@@ -597,7 +755,7 @@ export default function ProductEditorForm({ initial }: ProductEditorFormProps) {
                   checked={sameDayShipping}
                   onChange={(e) => setSameDayShipping(e.target.checked)}
                 />
-                Same-day shipping
+                Same-day verzending
               </label>
               <label>
                 <input
@@ -605,7 +763,7 @@ export default function ProductEditorForm({ initial }: ProductEditorFormProps) {
                   checked={hasFastDeliveryTag}
                   onChange={(e) => setHasFastDeliveryTag(e.target.checked)}
                 />
-                Fast delivery tag
+                Tag: snelle levering
               </label>
               <label>
                 <input
@@ -613,34 +771,47 @@ export default function ProductEditorForm({ initial }: ProductEditorFormProps) {
                   checked={hasFlashSaleTag}
                   onChange={(e) => setHasFlashSaleTag(e.target.checked)}
                 />
-                Flash sale tag
+                Tag: flash sale
               </label>
             </div>
           </div>
 
+          <div className="admin-panel-surface admin-stack-tight">
+            <h2 className="admin-section-title">SEO &amp; meta</h2>
+            <label className={labelClass}>SEO-titel</label>
+            <input className={fieldClass} value={seoTitle} onChange={(e) => setSeoTitle(e.target.value)} />
+            <label className={labelClass}>Meta description</label>
+            <textarea className={fieldClass} value={seoDescription} onChange={(e) => setSeoDescription(e.target.value)} />
+            <label className={labelClass}>Open Graph titel</label>
+            <input className={fieldClass} value={ogTitle} onChange={(e) => setOgTitle(e.target.value)} />
+            <label className={labelClass}>Open Graph tekst</label>
+            <textarea className={fieldClass} value={ogDescription} onChange={(e) => setOgDescription(e.target.value)} />
+            <label className={labelClass}>Social image URL</label>
+            <input className={fieldClass} value={socialImage} onChange={(e) => setSocialImage(e.target.value)} />
+            <div className="admin-form-actions">
+              <AdminImageUploadButton
+                label="Uploaden"
+                folder="products"
+                onUploaded={(url) => {
+                  setError("");
+                  setSocialImage(url);
+                }}
+                onError={(message) => setError(message)}
+              />
+            </div>
+            <label className={labelClass}>Alt-tekst hoofdfoto</label>
+            <input className={fieldClass} value={imageAlt} onChange={(e) => setImageAlt(e.target.value)} />
+            <label className="admin-check-highlight">
+              <input type="checkbox" checked={noindex} onChange={(e) => setNoindex(e.target.checked)} />
+              Niet indexeren (noindex)
+            </label>
+          </div>
+
           <details className="admin-panel-surface admin-stack-tight">
-            <summary className="admin-section-summary">Geavanceerd (Woo HTML &amp; JSON)</summary>
+            <summary className="admin-section-summary">Geavanceerd (JSON)</summary>
             <div className="admin-mt-1 admin-stack-tight">
               <div>
-                <label className={labelClass}>WooCommerce short description (HTML, product page)</label>
-                <textarea
-                  className={`${fieldClass} admin-field--tall-lg`}
-                  value={wcShortHtml}
-                  onChange={(e) => setWcShortHtml(e.target.value)}
-                  spellCheck={false}
-                />
-              </div>
-              <div>
-                <label className={labelClass}>WooCommerce full description (HTML)</label>
-                <textarea
-                  className={`${fieldClass} admin-field--tall-xl`}
-                  value={wcDescHtml}
-                  onChange={(e) => setWcDescHtml(e.target.value)}
-                  spellCheck={false}
-                />
-              </div>
-              <div>
-                <label className={labelClass}>WooCommerce variations (JSON array, optional)</label>
+                <label className={labelClass}>Variaties (JSON-array, optioneel)</label>
                 <textarea
                   className={`${fieldClass} admin-field--mono admin-field--tall-lg`}
                   value={variationsJson}
@@ -649,7 +820,7 @@ export default function ProductEditorForm({ initial }: ProductEditorFormProps) {
                 />
               </div>
               <div>
-                <label className={labelClass}>Landing promo (JSON)</label>
+                <label className={labelClass}>Landingpromo (JSON)</label>
                 <textarea
                   className={`${fieldClass} admin-field--mono admin-field--tall-lg`}
                   value={landingJson}
@@ -658,7 +829,7 @@ export default function ProductEditorForm({ initial }: ProductEditorFormProps) {
                 />
               </div>
               <div>
-                <label className={labelClass}>Cart bundles (JSON)</label>
+                <label className={labelClass}>Winkelwagenbundels (JSON)</label>
                 <textarea
                   className={`${fieldClass} admin-field--mono admin-field--tall-xl`}
                   value={bundleJson}
@@ -670,7 +841,7 @@ export default function ProductEditorForm({ initial }: ProductEditorFormProps) {
           </details>
         </div>
 
-        <aside className="admin-product-editor-side" aria-label="Media and pricing">
+        <aside className="admin-product-editor-side" aria-label="Media en prijzen">
           <div className="admin-panel-surface admin-stack-tight">
             <h2 className="admin-section-title">Media</h2>
             <div className="admin-media-row admin-media-stack--aside">
@@ -685,10 +856,13 @@ export default function ProductEditorForm({ initial }: ProductEditorFormProps) {
                 <AdminImageUploadButton
                   label="Upload hoofdfoto"
                   folder="products"
-                  onUploaded={(uploadedUrl) => {
+                  onUploaded={(uploadedUrl, alt) => {
                     setError("");
                     const prevMain = image.trim();
                     setImage(uploadedUrl);
+                    if (alt?.trim()) {
+                      setImageAlt((prev) => (prev.trim() ? prev : alt.trim()));
+                    }
                     if (prevMain && isPreviewableImageUrl(prevMain) && prevMain !== uploadedUrl) {
                       setImagesText((prev) => appendImageUrls(prev, prevMain));
                     }
@@ -714,7 +888,7 @@ export default function ProductEditorForm({ initial }: ProductEditorFormProps) {
               </div>
               <div className="min-w-0 flex-1 admin-stack-tight">
                 <div>
-                  <label className={labelClass}>Main image (URL)</label>
+                  <label className={labelClass}>Hoofdfoto (URL)</label>
                   <input
                     ref={mainImageInputRef}
                     className={fieldClass}
@@ -723,7 +897,7 @@ export default function ProductEditorForm({ initial }: ProductEditorFormProps) {
                   />
                 </div>
                 <div>
-                  <label className={labelClass}>Extra images (one URL per line)</label>
+                  <label className={labelClass}>Extra foto’s (één URL per regel)</label>
                   <textarea
                     className={`${fieldClass} admin-field--mono admin-field--tall`}
                     value={imagesText}
@@ -733,7 +907,7 @@ export default function ProductEditorForm({ initial }: ProductEditorFormProps) {
                 {extraImageUrls.length > 0 ? (
                   <div>
                     <p className="admin-muted admin-m-0" style={{ fontSize: "0.72rem" }}>
-                      Extra previews — click to use as main image (previous main moves to the list).
+                      Extra previews — klik om als hoofdfoto te gebruiken (vorige hoofdfoto gaat naar de lijst).
                     </p>
                     <div className="admin-extra-thumbs" role="list">
                       {extraImageUrls.map((url) => (
@@ -741,7 +915,7 @@ export default function ProductEditorForm({ initial }: ProductEditorFormProps) {
                           key={url}
                           type="button"
                           className="admin-extra-thumb"
-                          title="Set as main image"
+                          title="Als hoofdfoto instellen"
                           onClick={() => handlePromoteExtraToMain(url)}
                         >
                           <img src={url} alt="" loading="lazy" decoding="async" />
@@ -755,14 +929,14 @@ export default function ProductEditorForm({ initial }: ProductEditorFormProps) {
           </div>
 
           <div className="admin-panel-surface admin-stack-tight">
-            <h2 className="admin-section-title">Pricing</h2>
+            <h2 className="admin-section-title">Prijzen</h2>
             <div className="admin-form-grid">
               <div>
-                <label className={labelClass}>Currency</label>
+                <label className={labelClass}>Valuta</label>
                 <input className={fieldClass} value={currency} onChange={(e) => setCurrency(e.target.value)} />
               </div>
               <div>
-                <label className={labelClass}>List / current price</label>
+                <label className={labelClass}>Huidige prijs</label>
                 <input
                   className={fieldClass}
                   inputMode="decimal"
@@ -771,7 +945,7 @@ export default function ProductEditorForm({ initial }: ProductEditorFormProps) {
                 />
               </div>
               <div>
-                <label className={labelClass}>Price na korting</label>
+                <label className={labelClass}>Prijs na korting</label>
                 <input
                   className={fieldClass}
                   inputMode="decimal"
@@ -780,7 +954,7 @@ export default function ProductEditorForm({ initial }: ProductEditorFormProps) {
                 />
               </div>
               <div>
-                <label className={labelClass}>Old price (0 = none)</label>
+                <label className={labelClass}>Oude prijs (0 = geen)</label>
                 <input
                   className={fieldClass}
                   inputMode="decimal"
@@ -789,27 +963,27 @@ export default function ProductEditorForm({ initial }: ProductEditorFormProps) {
                 />
               </div>
               <div className="admin-span-2">
-                <label className={labelClass}>Discount label (discountName)</label>
+                <label className={labelClass}>Kortingslabel</label>
                 <input className={fieldClass} value={discountName} onChange={(e) => setDiscountName(e.target.value)} />
               </div>
             </div>
           </div>
         </aside>
+      </div>
 
-        <div className="admin-editor-sticky admin-product-editor-sticky-span">
-          <div className="admin-editor-sticky-inner">
-            <span className="admin-muted" style={{ fontSize: "0.8rem" }}>
-              ID {id}
-              {payload ? "" : " · check input"}
-            </span>
-            <div className="admin-form-actions">
-              <button type="button" onClick={save} disabled={saving} className="admin-btn-primary">
-                {saving ? "Saving…" : "Save"}
-              </button>
-              <button type="button" onClick={remove} disabled={deleting} className="admin-btn-danger">
-                {deleting ? "…" : "Delete"}
-              </button>
-            </div>
+      <div className="admin-editor-sticky">
+        <div className="admin-editor-sticky-inner">
+          <span className="admin-muted" style={{ fontSize: "0.8rem" }}>
+            ID {id}
+            {payload ? "" : " · controleer invoer"}
+          </span>
+          <div className="admin-form-actions">
+            <button type="button" onClick={save} disabled={saving} className="admin-btn-primary">
+              {saving ? "Opslaan…" : "Opslaan"}
+            </button>
+            <button type="button" onClick={remove} disabled={deleting} className="admin-btn-danger">
+              {deleting ? "…" : "Verwijderen"}
+            </button>
           </div>
         </div>
       </div>

@@ -1,16 +1,19 @@
 import "server-only";
 
 import { hashEmail, hashExternalId, hashPhone } from "@/lib/tiktok-hash";
+import { getRuntimeSetting } from "@/lib/site-settings-db";
 
 const EVENTS_API_URL = "https://business-api.tiktok.com/open_api/v1.3/event/track/";
 
-export const TIKTOK_PIXEL_ID =
-  process.env.NEXT_PUBLIC_TIKTOK_PIXEL_ID?.trim() ||
-  process.env.TIKTOK_PIXEL_ID?.trim() ||
-  "";
-
-function getAccessToken(): string | null {
-  return process.env.TIKTOK_EVENTS_API_ACCESS_TOKEN?.trim() || null;
+async function getTikTokEventsConfig(): Promise<{ pixelId: string; token: string }> {
+  const [pixel, token] = await Promise.all([
+    getRuntimeSetting("NEXT_PUBLIC_TIKTOK_PIXEL_ID"),
+    getRuntimeSetting("TIKTOK_EVENTS_API_ACCESS_TOKEN"),
+  ]);
+  return {
+    pixelId: pixel.trim() || process.env.TIKTOK_PIXEL_ID?.trim() || "",
+    token: token.trim(),
+  };
 }
 
 function tikTokCurrency(currency: string): string {
@@ -87,8 +90,8 @@ function buildProperties(input: SendTikTokPurchaseInput) {
 }
 
 async function postEvents(payload: TikTokEventPayload): Promise<{ ok: boolean; message?: string }> {
-  const token = getAccessToken();
-  if (!token || !TIKTOK_PIXEL_ID) {
+  const { pixelId, token } = await getTikTokEventsConfig();
+  if (!token || !pixelId) {
     return { ok: false, message: "TikTok Events API not configured" };
   }
 
@@ -144,9 +147,10 @@ async function sendEvent(
     };
   }
 
+  const { pixelId } = await getTikTokEventsConfig();
   return postEvents({
     event_source: "web",
-    event_source_id: TIKTOK_PIXEL_ID,
+    event_source_id: pixelId,
     data: [data],
   });
 }
@@ -170,6 +174,7 @@ export async function sendTikTokPurchaseEvents(
   return { ok: errors.length === 0, errors };
 }
 
-export function isTikTokEventsApiConfigured(): boolean {
-  return Boolean(getAccessToken() && TIKTOK_PIXEL_ID);
+export async function isTikTokEventsApiConfigured(): Promise<boolean> {
+  const { pixelId, token } = await getTikTokEventsConfig();
+  return Boolean(token && pixelId);
 }

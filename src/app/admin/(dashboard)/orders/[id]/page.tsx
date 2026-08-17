@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import AdminOrderFulfillment from "@/components/admin/AdminOrderFulfillment";
 import AdminOrderStatusSelect from "@/components/admin/AdminOrderStatusSelect";
 import { ORDER_STATUS_LABEL } from "@/lib/orders";
 import { getOrderById } from "@/lib/orders-db";
@@ -30,12 +31,6 @@ export default async function AdminOrderDetailPage({ params }: PageProps) {
     notFound();
   }
 
-  const addressLines = [
-    order.shipping_address,
-    [order.shipping_postal_code, order.shipping_city].filter(Boolean).join(" "),
-    order.shipping_county,
-  ].filter(Boolean);
-
   return (
     <div className="admin-stack">
       <Link href="/admin/orders" className="admin-breadcrumb">
@@ -56,25 +51,23 @@ export default async function AdminOrderDetailPage({ params }: PageProps) {
         style={{ display: "grid", gap: "1rem", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))" }}
       >
         <div className="admin-panel admin-stack-tight">
-          <h2 className="admin-h2 admin-m-0">Klant &amp; verzending</h2>
+          <h2 className="admin-h2 admin-m-0">Klant</h2>
           <p className="admin-m-0">
             <strong>{order.customer_name}</strong>
           </p>
-          <p className="admin-muted admin-m-0">{order.customer_phone}</p>
-          {order.customer_email ? <p className="admin-muted admin-m-0">{order.customer_email}</p> : null}
-          <div className="admin-mt-1">
-            {addressLines.map((line) => (
-              <p key={line} className="admin-m-0">
-                {line}
-              </p>
-            ))}
-          </div>
-          {order.notes ? (
-            <div className="admin-mt-1">
-              <p className="admin-label admin-m-0">Opmerkingen</p>
-              <p className="admin-m-0">{order.notes}</p>
-            </div>
+          {order.customer_phone ? (
+            <p className="admin-muted admin-m-0">
+              <a href={`tel:${order.customer_phone}`}>{order.customer_phone}</a>
+            </p>
           ) : null}
+          {order.customer_email ? (
+            <p className="admin-muted admin-m-0">
+              <a href={`mailto:${order.customer_email}`}>{order.customer_email}</a>
+            </p>
+          ) : null}
+          <p className="admin-muted admin-m-0 admin-mt-1 admin-text-sm">
+            Adres, naam en opmerkingen bewerk je hieronder bij verzending.
+          </p>
         </div>
 
         <div className="admin-panel admin-stack-tight">
@@ -99,9 +92,13 @@ export default async function AdminOrderDetailPage({ params }: PageProps) {
               : order.payment_method === "mollie"
                 ? "Online (Mollie)"
                 : order.payment_method}
+            {order.payment_status ? ` · ${order.payment_status}` : ""}
+            {order.tracking_code ? ` · tracking ${order.tracking_code}` : ""}
           </p>
         </div>
       </div>
+
+      <AdminOrderFulfillment order={order} />
 
       <div className="admin-panel admin-stack-tight">
         <h2 className="admin-h2 admin-m-0">Regels ({order.items.length})</h2>

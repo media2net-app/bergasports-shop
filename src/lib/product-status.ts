@@ -4,7 +4,7 @@ export const PRODUCT_STATUSES = ["published", "concept"] as const;
 export type ProductStatus = (typeof PRODUCT_STATUSES)[number];
 
 export const PRODUCT_STATUS_LABEL: Record<ProductStatus, string> = {
-  published: "Published",
+  published: "Gepubliceerd",
   concept: "Concept",
 };
 

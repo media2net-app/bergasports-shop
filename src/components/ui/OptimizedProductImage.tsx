@@ -20,7 +20,7 @@ const VARIANT: Record<
     aspect: "aspect-[4/3]",
   },
   galleryHero: {
-    sizes: "(max-width: 1024px) 100vw, min(640px, 50vw)",
+    sizes: "(max-width: 1024px) 100vw, min(760px, 55vw)",
     quality: 88,
     aspect: "aspect-[4/3]",
   },

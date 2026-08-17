@@ -1,94 +1,135 @@
 /**
- * Seed / refresh CMS legal & info pages (Task C).
- * Run: npx tsx scripts/seed-site-pages.ts
+ * Seed / refresh de CMS-pagina's in Postgres.
+ * Run: npm run seed:site-pages
+ *
+ * De teksten komen uit src/lib/legal-site-pages-content.ts — dat is de enige bron.
+ * De homepage wordt alleen aangemaakt als hij nog niet bestaat, zodat hero-teksten
+ * die via de admin zijn aangepast blijven staan.
  */
 import fs from "node:fs";
 import path from "node:path";
-import { createClient } from "@supabase/supabase-js";
 
-import { legalSitePagesSeed } from "../src/lib/legal-site-pages-content.ts";
+import pg from "pg";
+
+import {
+  legalSitePagesSeed,
+  retiredSitePageSlugs,
+} from "../src/lib/legal-site-pages-content.ts";
 
 const root = path.resolve(import.meta.dirname, "..");
 
-function loadEnv() {
-  const p = path.join(root, ".env.local");
-  const env: Record<string, string> = {};
-  for (const line of fs.readFileSync(p, "utf8").split("\n")) {
-    const t = line.trim();
-    if (!t || t.startsWith("#")) continue;
-    const eq = t.indexOf("=");
-    if (eq === -1) continue;
-    env[t.slice(0, eq).trim()] = t.slice(eq + 1).trim();
+function loadEnv(): Record<string, string> {
+  const merged: Record<string, string> = {};
+  for (const file of [".env", ".env.local"]) {
+    const filePath = path.join(root, file);
+    if (!fs.existsSync(filePath)) continue;
+    for (const line of fs.readFileSync(filePath, "utf8").split("\n")) {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith("#")) continue;
+      const eq = trimmed.indexOf("=");
+      if (eq === -1) continue;
+      let value = trimmed.slice(eq + 1).trim();
+      if (
+        (value.startsWith("'") && value.endsWith("'")) ||
+        (value.startsWith('"') && value.endsWith('"'))
+      ) {
+        value = value.slice(1, -1);
+      }
+      merged[trimmed.slice(0, eq).trim()] = value;
+    }
   }
-  return env;
+  return merged;
 }
 
 const homepageBlocks = {
   hero: {
-    eyebrow: "Colectie noua",
-    title: "Bine ai venit la E-Store House",
-    subtitle:
-      "Descopera produse populare si selectii pentru casa, cadouri si uz zilnit. Servicii de incredere si livrare rapida.",
-    ctaShop: "Magazinul",
-    ctaOffers: "Vezi ofertele",
-    promoLabel: "Saptamana aceasta",
-    promoTitle: "Reducere de 20%",
-    promoText: "La pachete selectate din categoria Casa.",
+    eyebrow: "Bergasports · Dedemsvaart",
+    title: "Meer dan een winkel,\nje sportpartner.",
+    subtitle: "Bij Bergasports draait alles om prestaties, kwaliteit en persoonlijke service.",
+    ctaShop: "Bekijk onze producten",
+    ctaOffers: "Mijn verhaal",
   },
 };
 
+type SeedPage = {
+  slug: string;
+  path: string;
+  title: string;
+  heading?: string | null;
+  body_html?: string;
+  blocks?: unknown;
+  meta_title?: string | null;
+  meta_description?: string | null;
+  sort_order?: number;
+};
+
+async function upsertPage(client: pg.Client, page: SeedPage) {
+  await client.query(
+    `INSERT INTO site_pages (
+      slug, path, title, heading, body_html, blocks, meta_title, meta_description,
+      is_published, sort_order, updated_at
+    ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,true,$9,NOW())
+    ON CONFLICT (slug) DO UPDATE SET
+      path = EXCLUDED.path,
+      title = EXCLUDED.title,
+      heading = EXCLUDED.heading,
+      body_html = EXCLUDED.body_html,
+      blocks = EXCLUDED.blocks,
+      meta_title = EXCLUDED.meta_title,
+      meta_description = EXCLUDED.meta_description,
+      is_published = EXCLUDED.is_published,
+      sort_order = EXCLUDED.sort_order,
+      updated_at = NOW()`,
+    [
+      page.slug,
+      page.path,
+      page.title,
+      page.heading ?? null,
+      page.body_html ?? "",
+      page.blocks ? JSON.stringify(page.blocks) : null,
+      page.meta_title ?? null,
+      page.meta_description ?? null,
+      page.sort_order ?? 0,
+    ],
+  );
+  console.log("Geseed:", page.slug, page.path);
+}
+
 async function main() {
   const env = loadEnv();
-  const url = env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !key) {
-    throw new Error("Missing Supabase env in .env.local");
+  const url = process.env.DATABASE_URL || env.DATABASE_URL;
+  if (!url) {
+    throw new Error("DATABASE_URL ontbreekt in .env / .env.local");
   }
 
-  const supabase = createClient(url, key, { auth: { persistSession: false } });
+  const client = new pg.Client({ connectionString: url });
+  await client.connect();
 
-  const homeRow = {
-    slug: "home",
-    path: "/",
-    title: "Homepage",
-    heading: null,
-    body_html: "",
-    blocks: homepageBlocks,
-    sort_order: 0,
-    is_published: true,
-    updated_at: new Date().toISOString(),
-  };
-
-  const { error: homeErr } = await supabase.from("site_pages").upsert(homeRow, { onConflict: "slug" });
-  if (homeErr) {
-    throw new Error(homeErr.message);
-  }
-  console.log("Seeded: home /");
+  const home = await client.query(
+    `INSERT INTO site_pages (slug, path, title, heading, body_html, blocks, is_published, sort_order, updated_at)
+     VALUES ('home', '/', 'Homepage', NULL, '', $1, true, 0, NOW())
+     ON CONFLICT (slug) DO NOTHING`,
+    [JSON.stringify(homepageBlocks)],
+  );
+  console.log(home.rowCount ? "Geseed: home /" : "Overgeslagen: home / (bestaat al)");
 
   for (const page of legalSitePagesSeed) {
-    const { error } = await supabase.from("site_pages").upsert(
-      {
-        slug: page.slug,
-        path: page.path,
-        title: page.title,
-        heading: page.heading,
-        body_html: page.body_html,
-        meta_title: page.meta_title,
-        meta_description: page.meta_description,
-        blocks: null,
-        sort_order: page.sort_order,
-        is_published: true,
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: "slug" },
-    );
-    if (error) {
-      throw new Error(`${page.slug}: ${error.message}`);
-    }
-    console.log("Seeded:", page.slug, page.path);
+    await upsertPage(client, { ...page, blocks: null });
   }
 
-  console.log("Done — legal pages updated.");
+  if (retiredSitePageSlugs.length > 0) {
+    const retired = await client.query(
+      `UPDATE site_pages SET is_published = false, updated_at = NOW()
+       WHERE slug = ANY($1::text[]) AND is_published = true`,
+      [[...retiredSitePageSlugs]],
+    );
+    if (retired.rowCount) {
+      console.log(`Gearchiveerd: ${retired.rowCount} verouderde pagina('s)`);
+    }
+  }
+
+  await client.end();
+  console.log(`Klaar — ${legalSitePagesSeed.length} CMS-pagina's bijgewerkt.`);
 }
 
 main().catch((e) => {

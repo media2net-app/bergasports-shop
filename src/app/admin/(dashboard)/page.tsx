@@ -14,9 +14,15 @@ export default async function AdminDashboardPage() {
     <AdminDashboardView
       writable={writable}
       shopOrders={stats.shopOrders}
+      recentOrders={stats.recentOrders}
       productsCount={stats.productsCount}
       pagesPublished={stats.pagesPublished}
       pagesTotal={stats.pagesTotal}
+      stock={stats.stock}
+      newsPublished={stats.newsPublished}
+      newsDraft={stats.newsDraft}
+      newLeads={stats.newLeads}
+      lowStockThreshold={stats.lowStockThreshold}
     />
   );
 }

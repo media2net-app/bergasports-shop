@@ -10,7 +10,7 @@ import { isWooCommerceApiConfigured } from "@/lib/woocommerce-api";
 export const dynamic = "force-dynamic";
 
 type PageProps = {
-  searchParams?: Promise<{ status?: string; page?: string }>;
+  searchParams?: Promise<{ status?: string; page?: string; q?: string }>;
 };
 
 function formatDate(iso: string) {
@@ -28,10 +28,11 @@ export default async function AdminOrdersPage({ searchParams }: PageProps) {
       ? (rawStatus as OrderStatus | "all")
       : "all";
   const page = Math.max(1, Number.parseInt(String(sp.page ?? "1"), 10) || 1);
+  const search = typeof sp.q === "string" ? sp.q.trim() : "";
   const wcConfigured = await isWooCommerceApiConfigured();
 
   const [{ orders, total, totalPages, page: currentPage }, counts, sla] = await Promise.all([
-    listOrders({ status, page, pageSize: 25 }),
+    listOrders({ status, page, pageSize: 25, q: search || undefined }),
     countOrdersByStatus(),
     getOrderSlaSummary(24),
   ]);
@@ -40,6 +41,9 @@ export default async function AdminOrdersPage({ searchParams }: PageProps) {
     const q = new URLSearchParams();
     if (s !== "all") {
       q.set("status", s);
+    }
+    if (search) {
+      q.set("q", search);
     }
     if (p > 1) {
       q.set("page", String(p));
@@ -73,10 +77,31 @@ export default async function AdminOrdersPage({ searchParams }: PageProps) {
           <h1 className="admin-h1 admin-m-0">Bestellingen</h1>
           <p className="admin-muted admin-m-0 admin-mt-05">
             {total} {total === 1 ? "bestelling" : "bestellingen"}
+            {search ? ` · zoek: ${search}` : ""}
             {wcConfigured ? " · inclusief WooCommerce (WC-…)" : ""}.
           </p>
         </div>
         <div className="admin-tools-row">
+          <form className="admin-tools-row" action="/admin/orders" method="get">
+            {status !== "all" ? <input type="hidden" name="status" value={status} /> : null}
+            <input
+              className="admin-field admin-field--flush"
+              type="search"
+              name="q"
+              defaultValue={search}
+              placeholder="Nummer, naam, e-mail, telefoon"
+              aria-label="Bestellingen zoeken"
+              style={{ minWidth: "16rem", marginBottom: 0 }}
+            />
+            <button type="submit" className="admin-btn-secondary">
+              Zoeken
+            </button>
+            {search ? (
+              <Link href={status === "all" ? "/admin/orders" : `/admin/orders?status=${status}`} className="admin-link-action">
+                Wis
+              </Link>
+            ) : null}
+          </form>
           <a href={exportHref()} className="admin-btn-secondary">
             Export CSV
           </a>

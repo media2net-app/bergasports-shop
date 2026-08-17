@@ -2,6 +2,7 @@ import "server-only";
 
 import type { OrderStatus, OrderWithItems } from "@/lib/orders";
 import { sendOutboundEmail } from "@/lib/outbound-email";
+import { getEmailLogoUrlSetting } from "@/lib/shop-runtime";
 import { buildOrderStatusEmailParts, type OrderStatusEmailKind } from "@/lib/transactional-order-emails";
 
 export type { OrderStatusEmailKind };
@@ -50,6 +51,6 @@ export async function sendOrderStatusEmailToCustomer(
     return false;
   }
 
-  const { subject, text, html } = buildOrderStatusEmailParts(kind, order);
+  const { subject, text, html } = buildOrderStatusEmailParts(kind, order, await getEmailLogoUrlSetting());
   return sendOutboundEmail({ to: email, subject, text, html });
 }

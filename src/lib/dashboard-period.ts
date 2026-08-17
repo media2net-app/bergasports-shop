@@ -2,12 +2,12 @@ export type DashboardPeriod = "today" | "7d" | "30d" | "year" | "all";
 
 export const DASHBOARD_PERIOD_STORAGE_KEY = "admin-dashboard-period";
 
-export const DASHBOARD_PERIOD_OPTIONS: { id: DashboardPeriod; label: string }[] = [
-  { id: "today", label: "Vandaag" },
-  { id: "7d", label: "Laatste 7 dagen" },
-  { id: "30d", label: "Laatste 30 dagen" },
-  { id: "year", label: "Dit jaar" },
-  { id: "all", label: "Alles" },
+export const DASHBOARD_PERIOD_OPTIONS: { id: DashboardPeriod; label: string; shortLabel: string }[] = [
+  { id: "today", label: "Vandaag", shortLabel: "Vandaag" },
+  { id: "7d", label: "Laatste 7 dagen", shortLabel: "7 dagen" },
+  { id: "30d", label: "Laatste 30 dagen", shortLabel: "30 dagen" },
+  { id: "year", label: "Dit jaar", shortLabel: "Dit jaar" },
+  { id: "all", label: "Alles", shortLabel: "Alles" },
 ];
 
 export function parseStoredDashboardPeriod(raw: string | null): DashboardPeriod {

@@ -3,13 +3,22 @@
  * Waarden: site_settings (DB) overschrijft process.env.
  */
 
+export type SiteSettingSectionId = "shop" | "products" | "email" | "integrations" | "marketing";
+
 export type SiteSettingGroupId =
-  | "payments"
-  | "instagram"
-  | "analytics"
+  | "store"
+  | "shop"
+  | "products"
   | "email"
+  | "notifications"
+  | "payments"
+  | "shipping"
+  | "easysales"
+  | "instagram"
   | "woocommerce"
-  | "shop";
+  | "analytics"
+  | "pixels"
+  | "seo";
 
 export type SiteSettingDef = {
   key: string;
@@ -21,6 +30,9 @@ export type SiteSettingDef = {
   secret: boolean;
   optional?: boolean;
   placeholder?: string;
+  multiline?: boolean;
+  /** Niet tonen in het generieke instellingenformulier (eigen UI). */
+  hidden?: boolean;
   manual: {
     summary: string;
     steps: string[];
@@ -29,40 +41,115 @@ export type SiteSettingDef = {
   };
 };
 
-export const SITE_SETTING_GROUPS: {
-  id: SiteSettingGroupId;
+export const SITE_SETTING_SECTIONS: {
+  id: SiteSettingSectionId;
   title: string;
   intro: string;
 }[] = [
+  { id: "shop", title: "Shop", intro: "Winkelgegevens, URL en gratis verzending." },
+  { id: "products", title: "Producten", intro: "Voorraadwaarschuwingen in het CMS." },
+  { id: "email", title: "E-mails", intro: "SMTP, afzender en ordermails." },
+  { id: "integrations", title: "Koppelingen", intro: "Mollie, Sendcloud, Easy Sales, Instagram." },
+  { id: "marketing", title: "Marketing", intro: "Analytics, pixels en zoekmachines." },
+];
+
+export const SITE_SETTING_GROUPS: {
+  id: SiteSettingGroupId;
+  section: SiteSettingSectionId;
+  title: string;
+  navLabel: string;
+  intro: string;
+}[] = [
   {
-    id: "payments",
-    title: "Betalingen (Mollie)",
-    intro: "Nodig voor iDEAL, kaarten en overige betaalmethodes in de checkout.",
-  },
-  {
-    id: "instagram",
-    title: "Instagram",
-    intro: "Feed op de homepage + link naar jullie profiel.",
-  },
-  {
-    id: "analytics",
-    title: "Analytics",
-    intro: "Google Analytics / Tag Manager voor bezoekersstatistieken.",
-  },
-  {
-    id: "email",
-    title: "E-mail (ordermails)",
-    intro: "SMTP of Resend voor bestelbevestigingen naar klant en winkel.",
-  },
-  {
-    id: "woocommerce",
-    title: "WooCommerce (oude site)",
-    intro: "Alleen voor synchronisatie van orders/catalogus vanaf bergasports.com.",
+    id: "store",
+    section: "shop",
+    title: "Winkelgegevens",
+    navLabel: "Winkel",
+    intro: "Telefoon, e-mail, adres, KvK, BTW, WhatsApp en openingstijden zoals bezoekers die zien.",
   },
   {
     id: "shop",
-    title: "Shop",
-    intro: "Basis-URL van de webshop (voor links in e-mails en redirects).",
+    section: "shop",
+    title: "Shop & verzending",
+    navLabel: "URL & verzending",
+    intro: "Canonieke shop-URL en drempel voor gratis verzending.",
+  },
+  {
+    id: "products",
+    section: "products",
+    title: "Voorraad",
+    navLabel: "Voorraad",
+    intro: "Vanaf welk aantal een product in het CMS als bijna uitverkocht geldt.",
+  },
+  {
+    id: "email",
+    section: "email",
+    title: "Verzenden (SMTP / Resend)",
+    navLabel: "Verzenden",
+    intro: "Mailserver of Resend-key. Zonder dit gaan ordermails niet de deur uit.",
+  },
+  {
+    id: "notifications",
+    section: "email",
+    title: "Ordermails & marketing",
+    navLabel: "Ordermails",
+    intro: "Naar welk adres nieuwe orders gaan, afzender, logo en win-backkorting.",
+  },
+  {
+    id: "payments",
+    section: "integrations",
+    title: "Betalingen (Mollie)",
+    navLabel: "Mollie",
+    intro: "Nodig voor iDEAL, kaarten en overige betaalmethodes in de checkout.",
+  },
+  {
+    id: "shipping",
+    section: "integrations",
+    title: "Verzending (Sendcloud)",
+    navLabel: "Sendcloud",
+    intro: "Labels, tracking en verzendstatus vanuit het orderbeheer.",
+  },
+  {
+    id: "easysales",
+    section: "integrations",
+    title: "Easy Sales",
+    navLabel: "Easy Sales",
+    intro: "Voorraad- en ordersync met Easy Sales.",
+  },
+  {
+    id: "instagram",
+    section: "integrations",
+    title: "Instagram",
+    navLabel: "Instagram",
+    intro: "Feed op de homepage + link naar jullie profiel.",
+  },
+  {
+    id: "woocommerce",
+    section: "integrations",
+    title: "WooCommerce (oude site)",
+    navLabel: "WooCommerce",
+    intro: "Alleen voor synchronisatie van orders/catalogus vanaf bergasports.com.",
+  },
+  {
+    id: "analytics",
+    section: "marketing",
+    title: "Analytics",
+    navLabel: "Analytics",
+    intro: "Google Analytics / Tag Manager voor bezoekersstatistieken.",
+  },
+  {
+    id: "pixels",
+    section: "marketing",
+    title: "Pixels & ads",
+    navLabel: "Pixels",
+    intro: "Meta, TikTok, Google Ads en Merchant Center.",
+  },
+  {
+    id: "seo",
+    section: "marketing",
+    title: "SEO & vindbaarheid",
+    navLabel: "SEO",
+    intro: "Verificatiecodes voor Google Search Console en Bing Webmaster Tools.",
   },
 ];
 
@@ -108,6 +195,45 @@ export const SITE_SETTING_DEFS: SiteSettingDef[] = [
       ],
       links: [{ label: "Website profiles", href: "https://my.mollie.com/dashboard/settings/profiles" }],
       whereUsed: "Bij het aanmaken van Mollie-betalingen.",
+    },
+  },
+  {
+    key: "SENDCLOUD_PUBLIC_KEY",
+    envKey: "SENDCLOUD_PUBLIC_KEY",
+    label: "Sendcloud Public Key",
+    group: "shipping",
+    secret: true,
+    optional: true,
+    placeholder: "public key uit Sendcloud",
+    manual: {
+      summary: "Publieke API-key van Sendcloud. Samen met de secret key nodig voor labels en tracking.",
+      steps: [
+        "Log in op panel.sendcloud.sc met het Bergasports-account.",
+        "Ga naar Settings → Integrations → API.",
+        "Kopieer de Public Key.",
+        "Plak hier en sla op, samen met de Secret Key.",
+      ],
+      links: [{ label: "Sendcloud panel", href: "https://panel.sendcloud.sc/" }],
+      whereUsed: "Orderdetail → Sendcloud: label & verzenden.",
+    },
+  },
+  {
+    key: "SENDCLOUD_SECRET_KEY",
+    envKey: "SENDCLOUD_SECRET_KEY",
+    label: "Sendcloud Secret Key",
+    group: "shipping",
+    secret: true,
+    optional: true,
+    placeholder: "secret key uit Sendcloud",
+    manual: {
+      summary: "Geheime API-key van Sendcloud. Zonder deze key kunnen er geen labels worden aangemaakt.",
+      steps: [
+        "In Sendcloud: Settings → Integrations → API.",
+        "Kopieer de Secret Key (één keer zichtbaar of via regenerate).",
+        "Plak hier. De waarde blijft na opslaan verborgen.",
+      ],
+      links: [{ label: "Sendcloud API", href: "https://panel.sendcloud.sc/" }],
+      whereUsed: "Aanmaken van parcels en labels via `/api/admin/orders/[id]/sendcloud`.",
     },
   },
   {
@@ -169,12 +295,12 @@ export const SITE_SETTING_DEFS: SiteSettingDef[] = [
     group: "instagram",
     secret: false,
     optional: true,
-    placeholder: "https://www.instagram.com/bergasports/",
+    placeholder: "https://www.instagram.com/bergasportsnl/",
     manual: {
       summary: "Publieke link die bezoekers zien bij ‘Volg ons op Instagram’.",
       steps: [
         "Open Instagram → profiel Bergasports.",
-        "Kopieer de URL (bijv. https://www.instagram.com/bergasports/).",
+        "Kopieer de URL (bijv. https://www.instagram.com/bergasportsnl/).",
         "Plak hier en sla op.",
       ],
       whereUsed: "Header, footer, homepage CTA’s.",
@@ -217,6 +343,47 @@ export const SITE_SETTING_DEFS: SiteSettingDef[] = [
       ],
       links: [{ label: "Google Tag Manager", href: "https://tagmanager.google.com/" }],
       whereUsed: "Site-wide GTM container snippet.",
+    },
+  },
+  {
+    key: "GOOGLE_SITE_VERIFICATION",
+    envKey: "GOOGLE_SITE_VERIFICATION",
+    label: "Google Search Console verificatiecode",
+    group: "seo",
+    secret: false,
+    optional: true,
+    placeholder: "abc123XYZ-voorbeeldcode",
+    manual: {
+      summary:
+        "Bewijst aan Google dat je eigenaar bent van bergasports.com, zodat je zoekresultaten en de sitemap kunt beheren.",
+      steps: [
+        "Ga naar search.google.com/search-console en voeg bergasports.com toe als property (type: URL-prefix).",
+        "Kies verificatiemethode ‘HTML-tag’.",
+        "Kopieer alléén de code uit content=\"...\" — niet de hele tag.",
+        "Plak hier en sla op. Klik daarna in Search Console op ‘Verifiëren’.",
+        "Dien tot slot de sitemap in: https://www.bergasports.com/sitemap.xml",
+      ],
+      links: [{ label: "Google Search Console", href: "https://search.google.com/search-console" }],
+      whereUsed: "Meta-tag google-site-verification in de <head> van elke pagina.",
+    },
+  },
+  {
+    key: "BING_SITE_VERIFICATION",
+    envKey: "BING_SITE_VERIFICATION",
+    label: "Bing Webmaster verificatiecode",
+    group: "seo",
+    secret: false,
+    optional: true,
+    placeholder: "1A2B3C4D5E6F",
+    manual: {
+      summary: "Optioneel. Zelfde principe als Google, voor Bing en daarmee ook ChatGPT-zoekresultaten.",
+      steps: [
+        "Ga naar bing.com/webmasters en voeg bergasports.com toe.",
+        "Kies ‘HTML Meta Tag’ en kopieer de waarde uit content=\"...\".",
+        "Plak hier en sla op.",
+      ],
+      links: [{ label: "Bing Webmaster Tools", href: "https://www.bing.com/webmasters" }],
+      whereUsed: "Meta-tag msvalidate.01 in de <head> van elke pagina.",
     },
   },
   {
@@ -388,10 +555,420 @@ export const SITE_SETTING_DEFS: SiteSettingDef[] = [
       whereUsed: "E-mails, sitemap, Mollie redirect/webhook-bases.",
     },
   },
+  {
+    key: "NEXT_PUBLIC_FREE_SHIPPING_THRESHOLD_EUR",
+    envKey: "NEXT_PUBLIC_FREE_SHIPPING_THRESHOLD_EUR",
+    label: "Gratis verzending vanaf (€)",
+    group: "shop",
+    secret: false,
+    optional: true,
+    placeholder: "50",
+    manual: {
+      summary: "Vanaf dit bedrag (euro) is verzending naar NL gratis. Leeg = 50 euro.",
+      steps: ["Vul een bedrag in, bijvoorbeeld 50 of 150.", "Sla op. De shop toont dit bij producten en in de winkelwagen."],
+      whereUsed: "Productpagina, checkout-vertrouwen en verzendkosten.",
+    },
+  },
+  {
+    key: "LOW_STOCK_THRESHOLD",
+    envKey: "LOW_STOCK_THRESHOLD",
+    label: "Bijna uitverkocht vanaf (stuks)",
+    group: "products",
+    secret: false,
+    optional: true,
+    placeholder: "3",
+    manual: {
+      summary: "Producten met dit aantal of minder krijgen in het CMS de status ‘bijna uitverkocht’.",
+      steps: ["Standaard is 3. Verhoog of verlaag naar wens.", "Sla op. Dashboard en voorraadlijst gebruiken de nieuwe drempel."],
+      whereUsed: "Dashboard, voorraadbeheer.",
+    },
+  },
+  {
+    key: "SHOP_PHONE",
+    envKey: "SHOP_PHONE",
+    label: "Telefoonnummer",
+    group: "store",
+    secret: false,
+    optional: true,
+    placeholder: "06 - 8316 2631",
+    manual: {
+      summary: "Publieke telefoon zoals in de footer, contactpagina en afspraak-CTA.",
+      steps: ["Vul het nummer in zoals klanten het moeten zien.", "Sla op."],
+      whereUsed: "Footer, contact, homepage, factuur.",
+    },
+  },
+  {
+    key: "SHOP_EMAIL",
+    envKey: "SHOP_EMAIL",
+    label: "Publiek e-mailadres",
+    group: "store",
+    secret: false,
+    optional: true,
+    placeholder: "info@bergasports.com",
+    manual: {
+      summary: "Het adres dat klanten gebruiken om de winkel te mailen (niet per se de SMTP-mailbox).",
+      steps: ["Meestal info@bergasports.com.", "Sla op."],
+      whereUsed: "Footer, contact, JSON-LD.",
+    },
+  },
+  {
+    key: "SHOP_ADDRESS",
+    envKey: "SHOP_ADDRESS",
+    label: "Adres",
+    group: "store",
+    secret: false,
+    optional: true,
+    multiline: true,
+    placeholder: "Julianastraat 3A, 7701 GH Dedemsvaart, Nederland",
+    manual: {
+      summary: "Fysiek winkeladres voor footer en contact.",
+      steps: ["Eén regel is genoeg.", "Sla op."],
+      whereUsed: "Footer, homepage, factuur.",
+    },
+  },
+  {
+    key: "SHOP_KVK",
+    envKey: "SHOP_KVK",
+    label: "KvK-nummer",
+    group: "store",
+    secret: false,
+    optional: true,
+    placeholder: "52087018",
+    manual: {
+      summary: "Kamer van Koophandel-nummer in de footer.",
+      steps: ["Vul het KvK-nummer in zonder spaties.", "Sla op."],
+      whereUsed: "Footer en structured data.",
+    },
+  },
+  {
+    key: "WHATSAPP_NUMBER",
+    envKey: "WHATSAPP_NUMBER",
+    label: "WhatsApp-nummer",
+    group: "store",
+    secret: false,
+    optional: true,
+    placeholder: "06 8316 2631",
+    manual: {
+      summary: "Nummer waarop klanten via WhatsApp kunnen chatten. Verschijnt in de footer.",
+      steps: [
+        "Vul het mobiele nummer in, bijvoorbeeld 06 8316 2631 of +31683162631.",
+        "Sla op. De footer toont daarna een WhatsApp-link.",
+      ],
+      whereUsed: "Footer en eventuele contact-CTA’s.",
+    },
+  },
+  {
+    key: "SHOP_VAT_NUMBER",
+    envKey: "SHOP_VAT_NUMBER",
+    label: "BTW-nummer",
+    group: "store",
+    secret: false,
+    optional: true,
+    placeholder: "NL123456789B01",
+    manual: {
+      summary: "BTW-identificatienummer van de winkel, zichtbaar in de footer.",
+      steps: ["Vul het nummer in zoals op de KvK-inschrijving.", "Sla op."],
+      whereUsed: "Footer en factuurgegevens.",
+    },
+  },
+  {
+    key: "SHOP_OPENING_HOURS_SHORT",
+    envKey: "SHOP_OPENING_HOURS_SHORT",
+    label: "Openingstijden (kort)",
+    group: "store",
+    secret: false,
+    optional: true,
+    placeholder: "Di t/m vr 12:30 – 17:30 · do tot 21:00 · za 12:00 – 16:00",
+    multiline: true,
+    manual: {
+      summary: "Eénregelige samenvatting van de openingstijden op product- en contactpagina’s.",
+      steps: ["Houd het kort, bijvoorbeeld zoals in de placeholder.", "Sla op."],
+      whereUsed: "Productpromo, contact en overige winkelcopy.",
+    },
+  },
+  {
+    key: "SHOP_OPENING_HOURS_JSON",
+    envKey: "SHOP_OPENING_HOURS_JSON",
+    label: "Openingstijden (tabel)",
+    group: "store",
+    secret: false,
+    optional: true,
+    hidden: true,
+    multiline: true,
+    manual: {
+      summary: "Volledige openingstijden per dag, zichtbaar in footer, homepage en Google-gegevens.",
+      steps: ["Bewerk de tabel op deze pagina.", "Sla op."],
+      whereUsed: "Footer, homepage, structured data.",
+    },
+  },
+  {
+    key: "SMTP_SECURE",
+    envKey: "SMTP_SECURE",
+    label: "SMTP SSL/TLS",
+    group: "email",
+    secret: false,
+    optional: true,
+    placeholder: "true of false",
+    manual: {
+      summary: "true = SSL (poort 465). false = STARTTLS (poort 587). Leeg = automatisch op basis van de poort.",
+      steps: ["Laat leeg tenzij je provider iets anders voorschrijft.", "Sla op."],
+      whereUsed: "SMTP-verbinding.",
+    },
+  },
+  {
+    key: "ORDER_NOTIFICATION_EMAIL",
+    envKey: "ORDER_NOTIFICATION_EMAIL",
+    label: "Nieuwe order naar",
+    group: "notifications",
+    secret: false,
+    optional: true,
+    placeholder: "info@bergasports.com",
+    manual: {
+      summary: "Intern adres dat een mail krijgt bij elke nieuwe bestelling.",
+      steps: ["Vul één e-mailadres in.", "Sla op. Test daarna met een bestelling."],
+      whereUsed: "Interne ordernotificatie.",
+    },
+  },
+  {
+    key: "ORDER_NOTIFICATION_FROM",
+    envKey: "ORDER_NOTIFICATION_FROM",
+    label: "Afzender (Resend / fallback)",
+    group: "notifications",
+    secret: false,
+    optional: true,
+    placeholder: "Bergasports <info@bergasports.com>",
+    manual: {
+      summary: "Wordt gebruikt als Resend verstuurt, of als SMTP_FROM leeg is.",
+      steps: ["Zelfde formaat als SMTP From.", "Sla op."],
+      whereUsed: "From-header bij Resend en als SMTP-fallback.",
+    },
+  },
+  {
+    key: "NEXT_PUBLIC_EMAIL_LOGO_URL",
+    envKey: "NEXT_PUBLIC_EMAIL_LOGO_URL",
+    label: "Logo in e-mails (URL)",
+    group: "notifications",
+    secret: false,
+    optional: true,
+    placeholder: "https://www.bergasports.com/brand/bergasports-logo.png",
+    manual: {
+      summary: "Optionele absolute URL van het logo in ordermails. Leeg = standaard Bergasports-logo.",
+      steps: ["Plak een https-URL naar een PNG/JPG.", "Sla op en stuur een testmail."],
+      whereUsed: "Transactionele e-mails.",
+    },
+  },
+  {
+    key: "MARKETING_WINBACK_CODE",
+    envKey: "MARKETING_WINBACK_CODE",
+    label: "Win-back kortingscode",
+    group: "notifications",
+    secret: false,
+    optional: true,
+    placeholder: "TERUG10",
+    manual: {
+      summary: "Code in de win-backmail naar klanten die lang niet bestelden.",
+      steps: ["Kies een code die ook in de shop werkt, of laat TERUG10 staan.", "Sla op."],
+      whereUsed: "Win-backcron en marketingmails.",
+    },
+  },
+  {
+    key: "MARKETING_WINBACK_EXPIRY_DAYS",
+    envKey: "MARKETING_WINBACK_EXPIRY_DAYS",
+    label: "Win-back geldig (dagen)",
+    group: "notifications",
+    secret: false,
+    optional: true,
+    placeholder: "14",
+    manual: {
+      summary: "Hoeveel dagen de win-backcode in de mail geldig is.",
+      steps: ["Standaard 14.", "Sla op."],
+      whereUsed: "Tekst in de win-backmail.",
+    },
+  },
+  {
+    key: "REPEAT_ORDER_DISCOUNT_PERCENT",
+    envKey: "REPEAT_ORDER_DISCOUNT_PERCENT",
+    label: "Herhaalbestelling korting (%)",
+    group: "notifications",
+    secret: false,
+    optional: true,
+    placeholder: "10",
+    manual: {
+      summary: "Korting voor terugkerende kopers (max. 30%).",
+      steps: ["Bijvoorbeeld 10.", "Sla op."],
+      whereUsed: "Checkout voor bestaande klanten.",
+    },
+  },
+  {
+    key: "REPEAT_ORDER_PROMO_CODE",
+    envKey: "REPEAT_ORDER_PROMO_CODE",
+    label: "Herhaalbestelling code",
+    group: "notifications",
+    secret: false,
+    optional: true,
+    placeholder: "CLIENT10",
+    manual: {
+      summary: "Promocode-naam die bij de herhaalkorting hoort.",
+      steps: ["Laat CLIENT10 staan of kies een eigen code.", "Sla op."],
+      whereUsed: "Checkout / marketingstatus.",
+    },
+  },
+  {
+    key: "EASY_SALES_API_TOKEN",
+    envKey: "EASY_SALES_API_TOKEN",
+    label: "Easy Sales API-token",
+    group: "easysales",
+    secret: true,
+    optional: true,
+    placeholder: "personal access token",
+    manual: {
+      summary: "Personal Access Token uit Easy Sales. Nodig voor voorraad- en ordersync.",
+      steps: [
+        "Log in op Easy Sales → API Settings.",
+        "Maak of kopieer een Personal Access Token.",
+        "Plak hier samen met de website-token.",
+      ],
+      whereUsed: "Voorraadsync, orderpush, Easy Sales-status in de sidebar.",
+    },
+  },
+  {
+    key: "EASY_SALES_WEBSITE_TOKEN",
+    envKey: "EASY_SALES_WEBSITE_TOKEN",
+    label: "Easy Sales website-token",
+    group: "easysales",
+    secret: true,
+    optional: true,
+    placeholder: "website token",
+    manual: {
+      summary: "Website-token van de Bergasports-shop in Easy Sales.",
+      steps: ["In Easy Sales bij de website-koppeling.", "Plak hier."],
+      whereUsed: "Orders en voorraad naar de juiste webshop.",
+    },
+  },
+  {
+    key: "EASY_SALES_API_BASE_URL",
+    envKey: "EASY_SALES_API_BASE_URL",
+    label: "Easy Sales API-URL",
+    group: "easysales",
+    secret: false,
+    optional: true,
+    placeholder: "https://easy-sales.com/api/v2",
+    manual: {
+      summary: "Laat de standaard staan tenzij Easy Sales een andere host opgeeft.",
+      steps: ["Meestal https://easy-sales.com/api/v2", "Sla op."],
+      whereUsed: "Easy Sales HTTP-calls.",
+    },
+  },
+  {
+    key: "EASY_SALES_CLIENT_ID",
+    envKey: "EASY_SALES_CLIENT_ID",
+    label: "Easy Sales Client ID",
+    group: "easysales",
+    secret: false,
+    optional: true,
+    placeholder: "optioneel",
+    manual: {
+      summary: "Optioneel, alleen nodig voor website-grant in plaats van personal token.",
+      steps: ["Vul in als Easy Sales dit voorschrijft.", "Sla op samen met Client Secret."],
+      whereUsed: "OAuth/website grant.",
+    },
+  },
+  {
+    key: "EASY_SALES_CLIENT_SECRET",
+    envKey: "EASY_SALES_CLIENT_SECRET",
+    label: "Easy Sales Client Secret",
+    group: "easysales",
+    secret: true,
+    optional: true,
+    placeholder: "optioneel",
+    manual: {
+      summary: "Hoort bij Client ID. Leeg laten als je een Personal Access Token gebruikt.",
+      steps: ["Plak het secret.", "Sla op."],
+      whereUsed: "OAuth/website grant.",
+    },
+  },
+  {
+    key: "NEXT_PUBLIC_META_PIXEL_ID",
+    envKey: "NEXT_PUBLIC_META_PIXEL_ID",
+    label: "Meta Pixel ID",
+    group: "pixels",
+    secret: false,
+    optional: true,
+    placeholder: "1234567890",
+    manual: {
+      summary: "Facebook/Instagram-pixel voor advertenties.",
+      steps: ["In Meta Events Manager → Data sources → Pixel ID kopiëren.", "Plak hier."],
+      whereUsed: "Marketingpixels op de shop (na cookie-toestemming).",
+    },
+  },
+  {
+    key: "NEXT_PUBLIC_GOOGLE_ADS_ID",
+    envKey: "NEXT_PUBLIC_GOOGLE_ADS_ID",
+    label: "Google Ads ID",
+    group: "pixels",
+    secret: false,
+    optional: true,
+    placeholder: "AW-XXXXXXXX",
+    manual: {
+      summary: "Conversietag voor Google Ads.",
+      steps: ["In Google Ads → Tools → Conversies.", "Kopieer het AW-nummer."],
+      whereUsed: "Advertentieconversies.",
+    },
+  },
+  {
+    key: "NEXT_PUBLIC_TIKTOK_PIXEL_ID",
+    envKey: "NEXT_PUBLIC_TIKTOK_PIXEL_ID",
+    label: "TikTok Pixel ID",
+    group: "pixels",
+    secret: false,
+    optional: true,
+    placeholder: "CXXXXXXXX",
+    manual: {
+      summary: "TikTok-pixel voor events zoals ViewContent en Purchase.",
+      steps: ["TikTok Ads Manager → Assets → Events.", "Kopieer het Pixel ID."],
+      whereUsed: "TikTok-events op de shop.",
+    },
+  },
+  {
+    key: "TIKTOK_EVENTS_API_ACCESS_TOKEN",
+    envKey: "TIKTOK_EVENTS_API_ACCESS_TOKEN",
+    label: "TikTok Events API-token",
+    group: "pixels",
+    secret: true,
+    optional: true,
+    placeholder: "server-side token",
+    manual: {
+      summary: "Optionele server-side Events API naast de browserpixel.",
+      steps: ["In TikTok Events Manager → Events API.", "Plak het access token."],
+      whereUsed: "Server-side TikTok events.",
+    },
+  },
+  {
+    key: "GOOGLE_MERCHANT_CENTER_ID",
+    envKey: "GOOGLE_MERCHANT_CENTER_ID",
+    label: "Google Merchant Center ID",
+    group: "pixels",
+    secret: false,
+    optional: true,
+    placeholder: "123456789",
+    manual: {
+      summary: "ID van het Merchant Center-account voor productfeeds.",
+      steps: ["In merchants.google.com linksboven het nummer.", "Plak hier."],
+      whereUsed: "Marketingstatus / Shopping-feed.",
+    },
+  },
 ];
 
 export function getSettingDef(key: string): SiteSettingDef | undefined {
   return SITE_SETTING_DEFS.find((d) => d.key === key);
+}
+
+export function getSettingGroup(id: string) {
+  return SITE_SETTING_GROUPS.find((g) => g.id === id);
+}
+
+export function isSettingGroupId(id: string): id is SiteSettingGroupId {
+  return SITE_SETTING_GROUPS.some((g) => g.id === id);
 }
 
 export function maskSecretValue(value: string): string {
@@ -412,5 +989,7 @@ export type AdminSettingFieldView = {
   source: "database" | "env" | "missing";
   /** Voor geheimen: leeg of mask. Voor publiek: de echte waarde. */
   displayValue: string;
+  multiline?: boolean;
+  hidden?: boolean;
   manual: SiteSettingDef["manual"];
 };

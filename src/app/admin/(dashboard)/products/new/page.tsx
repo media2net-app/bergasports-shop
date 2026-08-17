@@ -20,7 +20,7 @@ export default function AdminNewProductPage() {
       });
       const data = (await res.json()) as { id?: number; error?: string };
       if (!res.ok) {
-        setError(data.error ?? "Failed to create");
+        setError(data.error ?? "Aanmaken mislukt");
         setLoading(false);
         return;
       }
@@ -28,9 +28,9 @@ export default function AdminNewProductPage() {
         router.replace(`/admin/products/${data.id}`);
         return;
       }
-      setError("No id returned");
+      setError("Geen product-ID ontvangen");
     } catch {
-      setError("Network error");
+      setError("Geen verbinding");
     }
     setLoading(false);
   }
@@ -38,16 +38,16 @@ export default function AdminNewProductPage() {
   return (
     <div className="admin-stack">
       <Link href="/admin/products" className="admin-breadcrumb">
-        ← All products
+        ← Alle producten
       </Link>
-      <h1 className="admin-h1">New product</h1>
+      <h1 className="admin-h1">Nieuw product</h1>
       <div className="admin-panel-surface admin-stack-tight">
         <p className="admin-muted admin-m-0">
-          An empty product template will be created. Then fill in all fields on the edit page.
+          Er wordt een leeg product aangemaakt. Vul daarna alle velden in op de bewerkpagina.
         </p>
         {error ? <p className="admin-error-box admin-m-0">{error}</p> : null}
         <button type="button" disabled={loading} onClick={create} className="admin-btn-primary admin-w-fit">
-          {loading ? "Working…" : "Create product"}
+          {loading ? "Bezig…" : "Product aanmaken"}
         </button>
       </div>
     </div>

@@ -20,7 +20,7 @@ export type EasySalesMappingExportResult =
  * CSV for bulk mapping in Easy Sales (set product_website_id = shop product id).
  */
 export async function buildEasySalesMappingCsv(): Promise<EasySalesMappingExportResult> {
-  const config = getEasySalesConfig();
+  const config = await getEasySalesConfig();
   if (!config) {
     return { ok: false, error: "Easy Sales is not configured." };
   }

@@ -4,17 +4,28 @@ import Link from "next/link";
 import Footer from "@/components/layout/Footer";
 import Header from "@/components/layout/Header";
 import TrustBar from "@/components/layout/TrustBar";
+import { buildPageMetadata } from "@/lib/seo";
 import { getPublishedPageByPath } from "@/lib/site-pages-db";
 import CmsPageView from "@/components/site/CmsPageView";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-  title: "Over Bergasports | Ingmar Berga",
-  description:
-    "Van topsport naar Bergasports. Persoonlijk advies, hoogwaardig materiaal en ervaring in Dedemsvaart.",
-  alternates: { canonical: "/over-ons" },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const page = await getPublishedPageByPath("/over-ons");
+  return buildPageMetadata({
+    absoluteTitle:
+      page?.meta_title?.trim() || "Mijn verhaal | Ingmar Berga — Bergasports Dedemsvaart",
+    description:
+      page?.meta_description?.trim() ||
+      "Van topsport naar Bergasports. Het verhaal van Ingmar Berga: persoonlijk advies, hoogwaardig materiaal en jarenlange ervaring in Dedemsvaart.",
+    path: "/over-ons",
+    image: page?.social_image,
+    imageAlt: page?.image_alt || page?.title,
+    noindex: page?.noindex,
+    ogTitle: page?.og_title,
+    ogDescription: page?.og_description,
+  });
+}
 
 const FALLBACK_HTML = `
 <p><strong>Meer dan een winkel. Je sportpartner.</strong></p>
@@ -44,10 +55,10 @@ export default async function OverOnsPage() {
       <article className="mx-auto max-w-[760px] px-4 py-12">
         <h1 className="font-[family-name:var(--font-heading)] text-3xl md:text-4xl">Over Bergasports</h1>
         <div
-          className="prose prose-neutral mt-6 max-w-none"
+          className="cms-html mt-6 max-w-none"
           dangerouslySetInnerHTML={{ __html: FALLBACK_HTML }}
         />
-        <Link href="/contact" className="mt-8 inline-flex min-h-11 items-center bg-[var(--topbar)] px-5 text-xs font-bold uppercase tracking-wider text-white">
+        <Link href="/afspraak" className="mt-8 inline-flex min-h-11 items-center bg-[var(--topbar)] px-5 text-xs font-bold uppercase tracking-wider text-white">
           Maak een afspraak
         </Link>
       </article>

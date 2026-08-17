@@ -27,3 +27,45 @@ export function isProductInStock(
 export function hasStockQuantity(product: Pick<TrendyolJsonProduct, "stockQuantity">): boolean {
   return typeof product.stockQuantity === "number" && Number.isFinite(product.stockQuantity);
 }
+
+/** Vanaf hoeveel stuks we in de admin waarschuwen dat de voorraad opraakt. */
+export const LOW_STOCK_THRESHOLD = 3;
+
+export type StockState = "in_stock" | "low_stock" | "out_of_stock" | "unmanaged";
+
+type StockInput = Pick<TrendyolJsonProduct, "stockQuantity" | "reservedStock" | "inStock">;
+
+/**
+ * Voorraadstatus voor de adminlijsten. "unmanaged" betekent: geen aantal ingevuld,
+ * dus we vallen terug op de handmatige schakelaar op voorraad / uitverkocht.
+ */
+export function productStockState(product: StockInput, lowStockThreshold = LOW_STOCK_THRESHOLD): StockState {
+  const available = productAvailableStock(product);
+  if (available === null) {
+    return product.inStock === false ? "out_of_stock" : "unmanaged";
+  }
+  if (available <= 0) {
+    return "out_of_stock";
+  }
+  return available <= lowStockThreshold ? "low_stock" : "in_stock";
+}
+
+export type StockSummary = {
+  inStock: number;
+  lowStock: number;
+  outOfStock: number;
+  unmanaged: number;
+};
+
+export function stockStateLabel(state: StockState): string {
+  switch (state) {
+    case "in_stock":
+      return "Op voorraad";
+    case "low_stock":
+      return "Bijna uitverkocht";
+    case "out_of_stock":
+      return "Uitverkocht";
+    default:
+      return "Geen aantal ingevuld";
+  }
+}

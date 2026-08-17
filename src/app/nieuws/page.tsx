@@ -5,14 +5,15 @@ import Footer from "@/components/layout/Footer";
 import Header from "@/components/layout/Header";
 import TrustBar from "@/components/layout/TrustBar";
 import { loadNewsPosts } from "@/lib/news-db";
+import { buildPageMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-  title: "Nieuws & inspiratie | Bergasports",
+export const metadata: Metadata = buildPageMetadata({
+  title: "Nieuws & inspiratie",
   description: "Nieuws over racefietsen, wielen, LaFuga, tips en evenementen bij Bergasports.",
-  alternates: { canonical: "/nieuws" },
-};
+  path: "/nieuws",
+});
 
 export default async function NieuwsPage() {
   const posts = await loadNewsPosts({ limit: 40 });

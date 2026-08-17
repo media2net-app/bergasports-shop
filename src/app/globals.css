@@ -17,6 +17,9 @@
   --topbar: #1a1a1a;
   --topbar-foreground: #f5f4f2;
   --topbar-muted: rgba(245, 244, 242, 0.72);
+
+  --shadow-card-hover: 0 4px 12px -6px rgb(26 21 36 / 0.1);
+  --ease-out-soft: cubic-bezier(0.22, 0.61, 0.36, 1);
 }
 
 @theme inline {
@@ -31,6 +34,10 @@
   --font-heading: var(--font-ubuntu);
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
@@ -40,6 +47,18 @@ body {
 :where(h1, h2, h3, h4, h5, h6) {
   font-family: var(--font-ubuntu), Ubuntu, system-ui, sans-serif;
   font-weight: 700;
+  text-wrap: balance;
+}
+
+::selection {
+  background: var(--brand-mid);
+  color: #1a1a1a;
+}
+
+:where(a, button, summary):focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+  border-radius: 0.25rem;
 }
 
 .title-2-lines {
@@ -66,44 +85,92 @@ body {
   display: none;
 }
 
-.wc-store-html {
-  line-height: 1.55;
+:is(.wc-store-html, .cms-html, .cms-page-body) {
+  line-height: 1.65;
 }
 
-.wc-store-html :where(p, ul, ol, table, pre, blockquote) {
-  margin-top: 0.65em;
-  margin-bottom: 0.65em;
+:is(.wc-store-html, .cms-html, .cms-page-body) :where(p, ul, ol, table, pre, blockquote) {
+  margin-top: 0.75em;
+  margin-bottom: 0.75em;
 }
 
-.wc-store-html :where(ul, ol) {
-  padding-left: 1.25rem;
+:is(.wc-store-html, .cms-html, .cms-page-body) :where(ul) {
+  list-style: disc;
+  padding-left: 1.35rem;
 }
 
-.wc-store-html :where(h1, h2, h3, h4) {
-  margin-top: 1em;
-  margin-bottom: 0.4em;
-  font-weight: 600;
+:is(.wc-store-html, .cms-html, .cms-page-body) :where(ol) {
+  list-style: decimal;
+  padding-left: 1.35rem;
+}
+
+:is(.wc-store-html, .cms-html, .cms-page-body) :where(li) {
+  margin-top: 0.25em;
+  margin-bottom: 0.25em;
+}
+
+:is(.wc-store-html, .cms-html, .cms-page-body) :where(h1, h2, h3, h4) {
+  margin-top: 1.35em;
+  margin-bottom: 0.45em;
+  font-weight: 700;
   color: var(--foreground);
+  line-height: 1.25;
 }
 
-.wc-store-html :where(a) {
+:is(.wc-store-html, .cms-html, .cms-page-body) :where(h1, h2, h3, h4):first-child {
+  margin-top: 0;
+}
+
+:is(.wc-store-html, .cms-html, .cms-page-body) :where(h1) {
+  font-size: 1.75rem;
+}
+
+:is(.wc-store-html, .cms-html, .cms-page-body) :where(h2) {
+  font-size: 1.35rem;
+}
+
+:is(.wc-store-html, .cms-html, .cms-page-body) :where(h3) {
+  font-size: 1.12rem;
+}
+
+:is(.wc-store-html, .cms-html, .cms-page-body) :where(h4) {
+  font-size: 1rem;
+}
+
+:is(.wc-store-html, .cms-html, .cms-page-body) :where(blockquote) {
+  margin: 1em 0;
+  padding: 0.2em 0 0.2em 1em;
+  border-left: 3px solid var(--brand);
+  color: var(--foreground);
+  font-style: italic;
+}
+
+:is(.wc-store-html, .cms-html, .cms-page-body) :where(a) {
   color: var(--brand-hover);
+  font-weight: 600;
   text-decoration: underline;
 }
 
-.wc-store-html :where(img) {
+:is(.wc-store-html, .cms-html, .cms-page-body) :where(img) {
+  display: block;
   max-width: 100%;
   height: auto;
+  margin: 1em 0;
   border-radius: 0.5rem;
 }
 
-.wc-store-html :where(table) {
+:is(.wc-store-html, .cms-html, .cms-page-body) :where(strong, b) {
+  font-weight: 700;
+  color: var(--foreground);
+}
+
+:is(.wc-store-html, .cms-html, .cms-page-body) :where(table) {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.9em;
 }
 
-.wc-store-html :where(th, td) {
+:is(.wc-store-html, .cms-html, .cms-page-body) :where(th, td) {
   border: 1px solid var(--brand-border);
   padding: 0.4rem 0.5rem;
   vertical-align: top;
@@ -163,4 +230,125 @@ body {
 
 .trust-usp-fade {
   animation: trust-usp-in 0.45s ease-out;
+}
+
+/* --- Design-systeem: sectiekoppen, kaarten, media --- */
+
+/* Gouden streepje boven een sectietitel. */
+.section-rule::before {
+  content: "";
+  display: block;
+  width: 2.5rem;
+  height: 3px;
+  margin-bottom: 0.875rem;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--brand), var(--brand-mid));
+}
+
+.section-rule-center::before {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Sierlijke scheiding met gouden ruitje in het midden. */
+.gold-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--brand-border);
+}
+
+.gold-divider::before,
+.gold-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--brand-border), transparent);
+}
+
+.gold-divider > span {
+  width: 6px;
+  height: 6px;
+  rotate: 45deg;
+  background: var(--brand-mid);
+}
+
+/* Kaart zonder schaduw in rust; bij hover een subtiele lift. */
+.card-lift {
+  transition:
+    transform 0.35s var(--ease-out-soft),
+    box-shadow 0.35s var(--ease-out-soft),
+    border-color 0.35s var(--ease-out-soft);
+}
+
+.card-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-card-hover);
+}
+
+/* Afbeelding die traag inzoomt binnen een .group-parent. */
+.media-zoom {
+  transition: transform 0.7s var(--ease-out-soft);
+}
+
+.group:hover .media-zoom {
+  transform: scale(1.05);
+}
+
+/* Link met pijl die meebeweegt. */
+.arrow-link > .arrow-link-icon {
+  transition: transform 0.3s var(--ease-out-soft);
+}
+
+.arrow-link:hover > .arrow-link-icon {
+  transform: translateX(4px);
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-up {
+  animation: fade-up 0.7s var(--ease-out-soft) both;
+}
+
+.fade-up-1 {
+  animation-delay: 0.08s;
+}
+
+.fade-up-2 {
+  animation-delay: 0.16s;
+}
+
+.fade-up-3 {
+  animation-delay: 0.24s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .fade-up,
+  .trust-usp-fade {
+    animation: none;
+  }
+
+  .card-lift,
+  .media-zoom,
+  .arrow-link > .arrow-link-icon {
+    transition: none;
+  }
+
+  .card-lift:hover,
+  .group:hover .media-zoom {
+    transform: none;
+  }
 }

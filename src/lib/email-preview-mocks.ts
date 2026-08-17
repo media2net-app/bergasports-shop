@@ -27,6 +27,14 @@ export function mockOrderForEmailPreview(): OrderWithItems {
     easy_sales_synced_at: null,
     status_emails_sent: null,
     marketing_consent: true,
+    tracking_code: null,
+    tracking_url: null,
+    shipping_carrier: null,
+    sendcloud_parcel_id: null,
+    sendcloud_label_url: null,
+    refunded_at: null,
+    refund_amount: null,
+    payment_status: null,
     items: [],
   };
 }

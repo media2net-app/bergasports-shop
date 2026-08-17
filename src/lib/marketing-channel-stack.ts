@@ -30,7 +30,7 @@ export async function getMarketingChannelStackPanel(
     return null;
   }
 
-  const stack = getMarketingStackStatus();
+  const stack = await getMarketingStackStatus();
 
   switch (channelId) {
     case "meta": {

@@ -4,12 +4,13 @@ import Link from "next/link";
 import Footer from "@/components/layout/Footer";
 import Header from "@/components/layout/Header";
 import TrustBar from "@/components/layout/TrustBar";
+import { buildPageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "Verzenden & bezorgen | Bergasports",
+export const metadata: Metadata = buildPageMetadata({
+  title: "Verzenden & bezorgen",
   description: "Verzendkosten, levertijden en afhalen bij Bergasports in Dedemsvaart.",
-  alternates: { canonical: "/verzending" },
-};
+  path: "/verzending",
+});
 
 export default function VerzendingPage() {
   return (

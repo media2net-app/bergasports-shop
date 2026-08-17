@@ -1,7 +1,7 @@
 import { SITE_DEFAULT_CURRENCY } from "@/lib/site-brand";
 import { formatProductPrice } from "@/lib/products";
 
-export const RETURNS_POLICY_PATH = "/livrare-si-retur";
+export const RETURNS_POLICY_PATH = "/verzending";
 export const RETURNS_DAYS = 14;
 export const ESTIMATED_DELIVERY_DAYS_MIN = 2;
 export const ESTIMATED_DELIVERY_DAYS_MAX = 5;
@@ -27,6 +27,6 @@ export function formatEstimatedDeliveryRange(now = new Date()): string {
   return `${start.toLocaleDateString("nl-NL")} – ${end.toLocaleDateString("nl-NL")}`;
 }
 
-export function formatFreeShippingThreshold(currency = SITE_DEFAULT_CURRENCY): string {
-  return formatProductPrice(freeShippingThresholdAmount(), currency);
+export function formatFreeShippingThreshold(currency = SITE_DEFAULT_CURRENCY, amount?: number): string {
+  return formatProductPrice(amount ?? freeShippingThresholdAmount(), currency);
 }

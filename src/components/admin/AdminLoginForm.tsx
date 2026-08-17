@@ -3,6 +3,8 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 
+import BrandWordmark from "@/components/layout/BrandWordmark";
+
 /** Alleen voor lokale demo — productie-login blijft leeg. */
 const DEMO_ADMIN_EMAIL = "demo@bergasports.com";
 const DEMO_ADMIN_PASSWORD = "BgS7!kR9#mQx2$vL4nWp8";
@@ -33,14 +35,14 @@ export default function AdminLoginForm() {
       });
       const data = (await res.json()) as { error?: string };
       if (!res.ok) {
-        setError(data.error ?? "Login failed");
+        setError(data.error ?? "Inloggen mislukt");
         setLoading(false);
         return;
       }
       router.replace("/admin");
       router.refresh();
     } catch {
-      setError("Network error");
+      setError("Geen verbinding met de server");
       setLoading(false);
     }
   }
@@ -48,16 +50,20 @@ export default function AdminLoginForm() {
   return (
     <div className="admin-login-center">
       <div className="admin-login-card">
-        <h1 className="admin-login-title">Admin login</h1>
+        <div className="admin-login-brand">
+          <BrandWordmark compact />
+        </div>
+        <h1 className="admin-login-title">Admin</h1>
+        <p className="admin-login-subtitle">Log in om de webshop te beheren.</p>
         {errParam === "config" ? (
           <p className="admin-banner warn admin-m-0 admin-mt-1">
-            Set <code>ADMIN_JWT_SECRET</code> and <code>DATABASE_URL</code> in <code>.env.local</code>.
+            Zet <code>ADMIN_JWT_SECRET</code> en <code>DATABASE_URL</code> in <code>.env.local</code>.
           </p>
         ) : null}
         <form className="admin-stack-tight admin-mt-1" onSubmit={handleSubmit}>
           <div>
             <label htmlFor="email" className="admin-label">
-              Email
+              E-mailadres
             </label>
             <input
               id="email"
@@ -71,7 +77,7 @@ export default function AdminLoginForm() {
           </div>
           <div>
             <label htmlFor="pw" className="admin-label">
-              Password
+              Wachtwoord
             </label>
             <input
               id="pw"
@@ -85,7 +91,7 @@ export default function AdminLoginForm() {
           </div>
           {error ? <p className="admin-error-box admin-m-0">{error}</p> : null}
           <button type="submit" disabled={loading} className="admin-btn-primary admin-btn-full">
-            {loading ? "Signing in…" : "Sign in"}
+            {loading ? "Bezig met inloggen…" : "Inloggen"}
           </button>
         </form>
       </div>

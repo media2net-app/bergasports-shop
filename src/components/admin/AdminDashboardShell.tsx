@@ -7,6 +7,21 @@ import { useCallback, useEffect, useState, type ReactNode } from "react";
 
 import AdminSidebarDbStatus from "@/components/admin/AdminSidebarDbStatus";
 import AdminTopbar from "@/components/admin/AdminTopbar";
+import {
+  IconDashboard,
+  IconExternal,
+  IconInventory,
+  IconLeads,
+  IconLogout,
+  IconMedia,
+  IconNews,
+  IconOrders,
+  IconPages,
+  IconProducts,
+  IconSettings,
+  IconTag,
+  IconUsers,
+} from "@/components/admin/AdminMetricIcons";
 
 function AdminLogoutButton() {
   return (
@@ -18,6 +33,7 @@ function AdminLogoutButton() {
         window.location.href = "/admin/login";
       }}
     >
+      <IconLogout />
       Uitloggen
     </button>
   );
@@ -27,16 +43,18 @@ type NavLinkProps = {
   href: string;
   active: boolean;
   onNavigate: () => void;
+  icon?: ReactNode;
   children: ReactNode;
 };
 
-function AdminNavLink({ href, active, onNavigate, children }: NavLinkProps) {
+function AdminNavLink({ href, active, onNavigate, icon, children }: NavLinkProps) {
   return (
     <Link
       href={href}
       className={`admin-sidebar-link${active ? " active" : ""}`}
       onClick={onNavigate}
     >
+      {icon ? <span className="admin-sidebar-link-icon">{icon}</span> : null}
       {children}
     </Link>
   );
@@ -48,7 +66,11 @@ type AdminDashboardShellProps = {
   superAdmin: boolean;
 };
 
-export default function AdminDashboardShell({ children, roleLabel }: AdminDashboardShellProps) {
+export default function AdminDashboardShell({
+  children,
+  roleLabel,
+  superAdmin,
+}: AdminDashboardShellProps) {
   const path = usePathname() ?? "";
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -79,10 +101,17 @@ export default function AdminDashboardShell({ children, roleLabel }: AdminDashbo
 
   const dashActive = path === "/admin" || path === "/admin/";
   const productsActive = path.startsWith("/admin/products");
+  const inventoryActive = path.startsWith("/admin/inventory");
   const pagesActive = path.startsWith("/admin/pages");
   const newsActive = path.startsWith("/admin/news");
+  const mediaActive = path.startsWith("/admin/media");
+  const leadsActive = path.startsWith("/admin/leads");
   const ordersActive = path.startsWith("/admin/orders");
+  const couponsActive = path.startsWith("/admin/coupons");
+  const customersActive = path.startsWith("/admin/customers");
+  const categoriesActive = path.startsWith("/admin/categories");
   const settingsActive = path.startsWith("/admin/settings");
+  const usersActive = path.startsWith("/admin/users");
 
   return (
     <div className={`admin-shell${menuOpen ? " admin-shell--menu-open" : ""}`}>
@@ -114,29 +143,93 @@ export default function AdminDashboardShell({ children, roleLabel }: AdminDashbo
           </div>
         </div>
         <nav id="admin-sidebar-nav" className="admin-sidebar-nav" aria-label="Secties">
-          <AdminNavLink href="/admin" active={dashActive} onNavigate={closeMenu}>
-            Dashboard
-          </AdminNavLink>
-          <AdminNavLink href="/admin/products" active={productsActive} onNavigate={closeMenu}>
-            Producten
-          </AdminNavLink>
-          <AdminNavLink href="/admin/pages" active={pagesActive} onNavigate={closeMenu}>
-            Pagina&apos;s
-          </AdminNavLink>
-          <AdminNavLink href="/admin/news" active={newsActive} onNavigate={closeMenu}>
-            Nieuws
-          </AdminNavLink>
-          <AdminNavLink href="/admin/orders" active={ordersActive} onNavigate={closeMenu}>
-            Bestellingen
-          </AdminNavLink>
-          <AdminNavLink href="/admin/settings" active={settingsActive} onNavigate={closeMenu}>
-            Instellingen
-          </AdminNavLink>
-          <AdminNavLink href="/" active={false} onNavigate={closeMenu}>
-            Bekijk shop
-          </AdminNavLink>
+          <div className="admin-sidebar-group">
+            <div className="admin-sidebar-group-label">Overzicht</div>
+            <AdminNavLink href="/admin" active={dashActive} onNavigate={closeMenu} icon={<IconDashboard />}>
+              Dashboard
+            </AdminNavLink>
+          </div>
+          <div className="admin-sidebar-group">
+            <div className="admin-sidebar-group-label">Shop</div>
+            <AdminNavLink
+              href="/admin/products"
+              active={productsActive}
+              onNavigate={closeMenu}
+              icon={<IconProducts />}
+            >
+              Producten
+            </AdminNavLink>
+            <AdminNavLink
+              href="/admin/inventory"
+              active={inventoryActive}
+              onNavigate={closeMenu}
+              icon={<IconInventory />}
+            >
+              Voorraad
+            </AdminNavLink>
+            <AdminNavLink href="/admin/orders" active={ordersActive} onNavigate={closeMenu} icon={<IconOrders />}>
+              Bestellingen
+            </AdminNavLink>
+            <AdminNavLink href="/admin/customers" active={customersActive} onNavigate={closeMenu} icon={<IconUsers />}>
+              Klanten
+            </AdminNavLink>
+            <AdminNavLink href="/admin/coupons" active={couponsActive} onNavigate={closeMenu} icon={<IconTag />}>
+              Kortingscodes
+            </AdminNavLink>
+            <AdminNavLink
+              href="/admin/shipping"
+              active={path.startsWith("/admin/shipping")}
+              onNavigate={closeMenu}
+              icon={<IconInventory />}
+            >
+              Verzending
+            </AdminNavLink>
+          </div>
+          <div className="admin-sidebar-group">
+            <div className="admin-sidebar-group-label">Content</div>
+            <AdminNavLink href="/admin/pages" active={pagesActive} onNavigate={closeMenu} icon={<IconPages />}>
+              Pagina&apos;s
+            </AdminNavLink>
+            <AdminNavLink
+              href="/admin/categories"
+              active={categoriesActive}
+              onNavigate={closeMenu}
+              icon={<IconPages />}
+            >
+              Categorieën
+            </AdminNavLink>
+            <AdminNavLink href="/admin/news" active={newsActive} onNavigate={closeMenu} icon={<IconNews />}>
+              Nieuws
+            </AdminNavLink>
+            <AdminNavLink href="/admin/media" active={mediaActive} onNavigate={closeMenu} icon={<IconMedia />}>
+              Media
+            </AdminNavLink>
+            <AdminNavLink href="/admin/leads" active={leadsActive} onNavigate={closeMenu} icon={<IconLeads />}>
+              Contact &amp; afspraken
+            </AdminNavLink>
+          </div>
+          <div className="admin-sidebar-group">
+            <div className="admin-sidebar-group-label">Beheer</div>
+            <AdminNavLink
+              href="/admin/settings"
+              active={settingsActive}
+              onNavigate={closeMenu}
+              icon={<IconSettings />}
+            >
+              Instellingen
+            </AdminNavLink>
+            {superAdmin ? (
+              <AdminNavLink href="/admin/users" active={usersActive} onNavigate={closeMenu} icon={<IconUsers />}>
+                Gebruikers
+              </AdminNavLink>
+            ) : null}
+          </div>
         </nav>
         <div className="admin-sidebar-foot">
+          <Link href="/" className="admin-sidebar-shop" onClick={closeMenu}>
+            <IconExternal />
+            Bekijk shop
+          </Link>
           <div className="admin-sidebar-integrations" aria-label="Integraties">
             <AdminSidebarDbStatus />
           </div>

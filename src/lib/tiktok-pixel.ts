@@ -4,8 +4,6 @@ import type { CartItem } from "@/components/cart/CartProvider";
 import { readMarketingConsentSync } from "@/lib/cookie-consent";
 import type { Product } from "@/lib/products";
 
-export const TIKTOK_PIXEL_ID = process.env.NEXT_PUBLIC_TIKTOK_PIXEL_ID?.trim() ?? "";
-
 type TikTokContent = {
   content_id: string;
   content_type: "product";
@@ -44,7 +42,7 @@ function ttqTrack(
   params?: Record<string, unknown>,
   options?: { event_id?: string },
 ) {
-  if (typeof window === "undefined" || !TIKTOK_PIXEL_ID || !window.ttq || !readMarketingConsentSync()) {
+  if (typeof window === "undefined" || !window.ttq || !readMarketingConsentSync()) {
     return;
   }
   if (options?.event_id) {
@@ -78,7 +76,6 @@ export async function tikTokIdentify(params: {
 }): Promise<void> {
   if (
     typeof window === "undefined" ||
-    !TIKTOK_PIXEL_ID ||
     !window.ttq?.identify ||
     !readMarketingConsentSync()
   ) {

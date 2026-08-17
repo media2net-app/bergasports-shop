@@ -64,7 +64,7 @@ async function fetchOrdersPage(
 }
 
 export async function listEasySalesDashboardOrders(): Promise<EasySalesDashboardOrder[] | null> {
-  const config = getEasySalesConfig();
+  const config = await getEasySalesConfig();
   if (!config) {
     return null;
   }

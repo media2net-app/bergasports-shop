@@ -73,6 +73,8 @@ export async function buildAdminSettingsView(): Promise<AdminSettingFieldView[]>
           ? maskSecretValue(effective)
           : ""
         : effective,
+      multiline: Boolean(def.multiline),
+      hidden: Boolean(def.hidden),
       manual: def.manual,
     };
   });

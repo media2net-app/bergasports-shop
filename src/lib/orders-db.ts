@@ -58,6 +58,14 @@ function prismaOrderToRow(o: {
   easySalesSyncedAt: Date | null;
   statusEmailsSent: Prisma.JsonValue | null;
   marketingConsent: boolean;
+  trackingCode?: string | null;
+  trackingUrl?: string | null;
+  shippingCarrier?: string | null;
+  sendcloudParcelId?: number | null;
+  sendcloudLabelUrl?: string | null;
+  refundedAt?: Date | null;
+  refundAmount?: Prisma.Decimal | null;
+  paymentStatus?: string | null;
 }): OrderRow {
   return {
     id: bigIntToNumber(o.id),
@@ -87,6 +95,14 @@ function prismaOrderToRow(o: {
         ? (o.statusEmailsSent as Record<string, string>)
         : null,
     marketing_consent: o.marketingConsent,
+    tracking_code: o.trackingCode ?? null,
+    tracking_url: o.trackingUrl ?? null,
+    shipping_carrier: o.shippingCarrier ?? null,
+    sendcloud_parcel_id: o.sendcloudParcelId ?? null,
+    sendcloud_label_url: o.sendcloudLabelUrl ?? null,
+    refunded_at: o.refundedAt?.toISOString() ?? null,
+    refund_amount: o.refundAmount != null ? decimalToNumber(o.refundAmount) : null,
+    payment_status: o.paymentStatus ?? null,
   };
 }
 
@@ -372,6 +388,7 @@ export type ListOrdersOptions = {
   page?: number;
   pageSize?: number;
   easySalesSync?: "all" | "failed" | "pending" | "synced";
+  q?: string;
 };
 
 export async function listOrders(options: ListOrdersOptions = {}): Promise<{
@@ -389,6 +406,15 @@ export async function listOrders(options: ListOrdersOptions = {}): Promise<{
   const where: Prisma.OrderWhereInput = {};
   if (options.status && options.status !== "all") {
     where.status = options.status;
+  }
+  const q = options.q?.trim();
+  if (q) {
+    where.OR = [
+      { orderNumber: { contains: q, mode: "insensitive" } },
+      { customerName: { contains: q, mode: "insensitive" } },
+      { customerEmail: { contains: q, mode: "insensitive" } },
+      { customerPhone: { contains: q, mode: "insensitive" } },
+    ];
   }
   if (options.easySalesSync === "failed") {
     where.easySalesSyncStatus = "failed";
@@ -478,6 +504,56 @@ export async function updateOrderStatus(id: number, status: OrderStatus): Promis
     }
   }
 
+  return prismaOrderToRow(data);
+}
+
+export async function updateOrderFulfillment(
+  id: number,
+  input: {
+    customer_name?: string;
+    customer_email?: string | null;
+    customer_phone?: string;
+    shipping_address?: string;
+    shipping_city?: string;
+    shipping_county?: string | null;
+    shipping_postal_code?: string | null;
+    notes?: string | null;
+    tracking_code?: string | null;
+    tracking_url?: string | null;
+    shipping_carrier?: string | null;
+    sendcloud_parcel_id?: number | null;
+    sendcloud_label_url?: string | null;
+    refunded_at?: Date | null;
+    refund_amount?: number | null;
+    payment_status?: string | null;
+  },
+): Promise<OrderRow> {
+  const prisma = requirePrisma();
+  const data = await prisma.order.update({
+    where: { id: BigInt(id) },
+    data: {
+      ...(input.customer_name != null ? { customerName: input.customer_name } : {}),
+      ...(input.customer_email !== undefined ? { customerEmail: input.customer_email } : {}),
+      ...(input.customer_phone != null ? { customerPhone: input.customer_phone } : {}),
+      ...(input.shipping_address != null ? { shippingAddress: input.shipping_address } : {}),
+      ...(input.shipping_city != null ? { shippingCity: input.shipping_city } : {}),
+      ...(input.shipping_county !== undefined ? { shippingCounty: input.shipping_county } : {}),
+      ...(input.shipping_postal_code !== undefined
+        ? { shippingPostalCode: input.shipping_postal_code }
+        : {}),
+      ...(input.notes !== undefined ? { notes: input.notes } : {}),
+      ...(input.tracking_code !== undefined ? { trackingCode: input.tracking_code } : {}),
+      ...(input.tracking_url !== undefined ? { trackingUrl: input.tracking_url } : {}),
+      ...(input.shipping_carrier !== undefined ? { shippingCarrier: input.shipping_carrier } : {}),
+      ...(input.sendcloud_parcel_id !== undefined ? { sendcloudParcelId: input.sendcloud_parcel_id } : {}),
+      ...(input.sendcloud_label_url !== undefined ? { sendcloudLabelUrl: input.sendcloud_label_url } : {}),
+      ...(input.refunded_at !== undefined ? { refundedAt: input.refunded_at } : {}),
+      ...(input.refund_amount !== undefined ? { refundAmount: input.refund_amount } : {}),
+      ...(input.payment_status !== undefined ? { paymentStatus: input.payment_status } : {}),
+    },
+  });
+  revalidatePath("/admin/orders");
+  revalidatePath(`/admin/orders/${id}`);
   return prismaOrderToRow(data);
 }
 

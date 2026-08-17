@@ -1,7 +1,7 @@
 {
   "source": "https://www.bergasports.com/",
   "sourceApi": "https://www.bergasports.com/wp-json/wp/v2/product_cat",
-  "fetchedAt": "2026-08-12T05:48:42.935Z",
+  "fetchedAt": "2026-08-17T13:35:44.001Z",
   "totalCategories": 16,
   "categories": [
     {
@@ -17,7 +17,7 @@
       "name": "Bikes",
       "slug": "bikes",
       "parent": 0,
-      "count": 48,
+      "count": 45,
       "link": "/bikes"
     },
     {
@@ -73,7 +73,7 @@
       "name": "Gravelbike",
       "slug": "gravelbike",
       "parent": 72,
-      "count": 14,
+      "count": 13,
       "link": "/gravelbike"
     },
     {
@@ -97,7 +97,7 @@
       "name": "Road bike",
       "slug": "road-bike",
       "parent": 72,
-      "count": 16,
+      "count": 15,
       "link": "/road-bike"
     },
     {
@@ -184,7 +184,7 @@
       "name": "Bikes",
       "slug": "bikes",
       "parent": 0,
-      "count": 48,
+      "count": 45,
       "link": "/bikes",
       "seoIntro": "High-end Road Bikes &amp; Gravel Bikes from Orbea, Colnago, Cervélo, and Basso At Bergasports, we understand that a bicycle is more than just a means of transport; it is an extension of your passion, performance, and style. Whether you are looking for the pure speed of the asphalt or the adventurous freedom of unpaved paths, our carefully selected collection of high-end road bikes and gravel bikes offers the very best the cycling world has to offer. With absolute top brands such as Orbea, Colnag",
       "seoFooterHtml": "<h1>High-end Road Bikes &amp; Gravel Bikes from Orbea, Colnago, Cervélo, and Basso</h1>\nAt Bergasports, we understand that a bicycle is more than just a means of transport; it is an extension of your passion, performance, and style. Whether you are looking for the pure speed of the asphalt or the adventurous freedom of unpaved paths, our carefully selected collection of <strong>high-end road bikes</strong> and gravel bikes offers the very best the cycling world has to offer. With absolute top brands such as Orbea, Colnago, Cervélo, and Basso, you are guaranteed to bring home technological perfection and Italian or Basque craftsmanship.\n<h2>Orbea: Basque innovation and versatility</h2>\nThe Basque brand Orbea is known for its innovative designs and excellent price-quality ratio in the premium segment. For pure climbers and all-rounders, the <strong>Orbea Orca</strong> is the ultimate machine: feather-light, stiff, and extremely agile. Are you looking for pure speed and aerodynamic advantage on the flats? Then the <strong>Orbea Orca Aero</strong> is your perfect match. For adventurers who want to combine comfort and performance on unpaved roads, the <strong>Orbea Terra</strong> is the absolute benchmark among gravel bikes. And with the <strong>Orbea Avant</strong>, you choose a comfortable endurance road bike, ideal for long, challenging rides.\n<h2>Colnago: Italian passion and legendary heritage</h2>\nColnago is synonymous with cycling history, exclusivity, and unparalleled handling. Every Colnago is a work of art on wheels. The legendary <strong>Colnago V4Rs</strong> and the exclusive C68 represent the absolute pinnacle of carbon technology and design. For gravel riders who refuse to compromise on speed and style, the brand-new <strong>Colnago G4-X</strong> is the ultimate choice. With a Colnago, you do not just ride a bike; you ride a legend.\n<h2>Cervélo: Aerodynamic perfection and pure speed</h2>\nCervélo is the brand for the performance-oriented cyclist who wants to optimize every watt. The <strong>Cervélo Caledonia</strong> is the perfect &#8220;modern road&#8221; bike: fast, aerodynamic, and designed for the most challenging roads and cobblestone sections. Do you prefer heading into the woods at maximum speed? The <strong>Cervélo Áspero</strong> and Áspero-5 redefine what is possible on a gravel bike. These are purebred racing machines built to break records, both on the road and on gravel.\n<h2>Basso: Handmade Italian craftsmanship</h2>\nBasso Bikes embodies pure Italian cycling culture. Handmade in Italy, with an extreme focus on detail, integration, and handling. The <strong>Basso Palta</strong> has become an icon in the gravel world, loved for its unique geometry that perfectly combines comfort with aggressive performance. Whether you choose the versatile Astra or the uncompromising Diamante for the road, with a Basso, you choose exclusivity and unparalleled handling.\n<h2>Buying Advice: How to choose the perfect high-end bike?</h2>\nChoosing a premium road bike or gravel bike is a personal process. When making your choice, consider the following aspects:\n<ul>\n \t<li><strong>Intended Use:</strong> Do you focus purely on speed on the road (Orca Aero, Y1RS), are you looking for comfort for long rides (Avant, Caledonia), or do you want the flexibility of gravel (Terra, Palta III, G4-X)?</li>\n \t<li><strong>Geometry:</strong> A sporty, low riding position maximizes aerodynamics, while an endurance or gravel geometry ensures less strain on your back and neck during long rides.</li>\n \t<li><strong>Components:</strong> Choose the precision of electronic shifting (Shimano Di2 or SRAM AXS) and the reliability of hydraulic disc brakes for maximum control under all conditions.</li>\n</ul>\n<h2>Frequently asked questions about our premium bikes</h2>\n<h3>How do I choose the right wheelset for my new bike?</h3>\nThe wheels largely determine the riding character of your bike. For flat roads, we recommend aerodynamic, deep-section carbon rims (such as the Scope Artech series). For hilly terrain or gravel rides, a shallower, lighter, and wider rim is often more comfortable and wind-resistant. We are happy to advise you on the perfect wheelset upgrade when purchasing your bike.",
@@ -205,7 +205,7 @@
           "name": "Gravelbike",
           "slug": "gravelbike",
           "parent": 72,
-          "count": 14,
+          "count": 13,
           "link": "/gravelbike",
           "seoIntro": null,
           "seoFooterHtml": null,
@@ -227,7 +227,7 @@
           "name": "Road bike",
           "slug": "road-bike",
           "parent": 72,
-          "count": 16,
+          "count": 15,
           "link": "/road-bike",
           "seoIntro": null,
           "seoFooterHtml": null,

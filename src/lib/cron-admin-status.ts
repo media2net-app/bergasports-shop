@@ -29,7 +29,7 @@ function formatCronTime(iso: string): string {
 
 export async function getCronAdminStatus(): Promise<CronAdminStatus> {
   const secretConfigured = Boolean(process.env.CRON_SECRET?.trim());
-  const emailConfigured = isOutboundEmailConfigured();
+  const emailConfigured = await isOutboundEmailConfigured();
   const { lastRun, logAvailable } = await getLastWinbackCronRun();
 
   if (!secretConfigured) {

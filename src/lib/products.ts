@@ -99,6 +99,15 @@ export type TrendyolJsonProduct = {
   wcCategories?: { id: number; name: string; slug: string }[];
   wcVariations?: WcVariationJson[];
   priceRangeMax?: number;
+  /** Extra specificaties (Label: waarde, één per regel). */
+  specsText?: string;
+  seoTitle?: string;
+  seoDescription?: string;
+  ogTitle?: string;
+  ogDescription?: string;
+  socialImage?: string;
+  imageAlt?: string;
+  noindex?: boolean;
 };
 
 type TrendyolRawProduct = TrendyolJsonProduct;
@@ -170,6 +179,14 @@ export type Product = {
   wcCategories?: { id: number; name: string; slug: string }[];
   wcVariations?: WcVariationJson[];
   priceRangeMax?: number;
+  specsText?: string;
+  seoTitle?: string;
+  seoDescription?: string;
+  ogTitle?: string;
+  ogDescription?: string;
+  socialImage?: string;
+  imageAlt?: string;
+  noindex?: boolean;
   /** Admin: homepage „Produse populare”. */
   featuredOnHomepage?: boolean;
 };
@@ -209,6 +226,14 @@ function wcLayerFromRaw(p: TrendyolJsonProduct): Partial<Product> {
   if (typeof p.priceRangeMax === "number") {
     out.priceRangeMax = p.priceRangeMax;
   }
+  if (p.specsText) out.specsText = p.specsText;
+  if (p.seoTitle) out.seoTitle = p.seoTitle;
+  if (p.seoDescription) out.seoDescription = p.seoDescription;
+  if (p.ogTitle) out.ogTitle = p.ogTitle;
+  if (p.ogDescription) out.ogDescription = p.ogDescription;
+  if (p.socialImage) out.socialImage = p.socialImage;
+  if (p.imageAlt) out.imageAlt = p.imageAlt;
+  if (p.noindex) out.noindex = true;
   return out;
 }
 

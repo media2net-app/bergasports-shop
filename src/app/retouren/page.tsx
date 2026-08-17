@@ -4,12 +4,13 @@ import Link from "next/link";
 import Footer from "@/components/layout/Footer";
 import Header from "@/components/layout/Header";
 import TrustBar from "@/components/layout/TrustBar";
+import { buildPageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "Retourneren | Bergasports",
+export const metadata: Metadata = buildPageMetadata({
+  title: "Retourneren",
   description: "Retourtermijn, voorwaarden en terugbetaling bij Bergasports.",
-  alternates: { canonical: "/retouren" },
-};
+  path: "/retouren",
+});
 
 export default function RetourenPage() {
   return (

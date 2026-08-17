@@ -8,6 +8,7 @@ import {
   buildAdminProductsQueryString,
 } from "@/lib/admin-products-list";
 import { decodeImportedProductTitle } from "@/lib/products";
+import { productAvailableStock, productStockState } from "@/lib/stock";
 import { isWritableFilesystem, readTrendyolDatabase } from "@/lib/trendyol-json-store";
 
 export const dynamic = "force-dynamic";
@@ -47,6 +48,7 @@ export default async function AdminProductsPage({ searchParams }: PageProps) {
 
   const listRows: AdminProductListRow[] = rows.map((p) => {
     const thumbUrl = typeof p.image === "string" ? p.image.trim() : "";
+    const available = productAvailableStock(p);
     return {
       id: p.id,
       catalogLabel: "Bergasports",
@@ -58,7 +60,8 @@ export default async function AdminProductsPage({ searchParams }: PageProps) {
           : p.priceCurrent != null
             ? `${p.priceCurrent} ${p.currency ?? "EUR"}`
             : "—",
-      stockLabel: "—",
+      stockLabel: available == null ? "—" : String(available),
+      stockState: productStockState(p),
       thumbUrl,
       featuredOnHomepage: Boolean(p.featuredOnHomepage),
       productStatus: p.productStatus === "concept" ? "concept" : "published",

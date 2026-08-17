@@ -7,6 +7,7 @@ import ApplePayButton from "@/components/payments/ApplePayButton";
 import { getTtclidFromDocument } from "@/lib/tiktok-client";
 import { tikTokIdentify } from "@/lib/tiktok-pixel";
 import { formatProductPrice } from "@/lib/products";
+import { LEGAL_PAGE_PATHS } from "@/lib/site-content";
 import { trackCommerceEvent } from "@/components/analytics/AnalyticsScripts";
 import Link from "next/link";
 
@@ -355,11 +356,11 @@ export default function CartCheckoutForm({
             />
             <span>
               Ik ga akkoord met de{" "}
-              <Link href="/termeni-si-conditii" className="underline">
+              <Link href={LEGAL_PAGE_PATHS.terms} className="underline">
                 algemene voorwaarden
               </Link>
               , het{" "}
-              <Link href="/politica-de-confidentialitate" className="underline">
+              <Link href={LEGAL_PAGE_PATHS.privacy} className="underline">
                 privacybeleid
               </Link>{" "}
               en het{" "}

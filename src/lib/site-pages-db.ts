@@ -17,6 +17,11 @@ function rowToPage(row: {
   blocks: Prisma.JsonValue | null;
   metaTitle: string | null;
   metaDescription: string | null;
+  ogTitle: string | null;
+  ogDescription: string | null;
+  socialImage: string | null;
+  imageAlt: string | null;
+  noindex: boolean;
   isPublished: boolean;
   sortOrder: number;
   updatedAt: Date;
@@ -31,6 +36,11 @@ function rowToPage(row: {
     blocks: (row.blocks as HomepageBlocks | null) ?? null,
     meta_title: row.metaTitle,
     meta_description: row.metaDescription,
+    og_title: row.ogTitle,
+    og_description: row.ogDescription,
+    social_image: row.socialImage,
+    image_alt: row.imageAlt,
+    noindex: row.noindex,
     is_published: row.isPublished,
     sort_order: row.sortOrder,
     updated_at: row.updatedAt.toISOString(),
@@ -79,6 +89,11 @@ export async function updateSitePage(id: number, input: SitePageUpdateInput): Pr
       blocks: (input.blocks ?? null) as Prisma.InputJsonValue,
       metaTitle: input.meta_title?.trim() || null,
       metaDescription: input.meta_description?.trim() || null,
+      ogTitle: input.og_title?.trim() || null,
+      ogDescription: input.og_description?.trim() || null,
+      socialImage: input.social_image?.trim() || null,
+      imageAlt: input.image_alt?.trim() || null,
+      noindex: Boolean(input.noindex),
       isPublished: input.is_published ?? true,
     },
   });
@@ -137,4 +152,43 @@ export async function upsertSitePageSeed(row: {
       sortOrder: row.sort_order,
     },
   });
+}
+
+export async function createSitePage(input: {
+  title: string;
+  slug: string;
+  path: string;
+  heading?: string | null;
+  body_html?: string;
+  meta_title?: string | null;
+  meta_description?: string | null;
+  og_title?: string | null;
+  og_description?: string | null;
+  social_image?: string | null;
+  image_alt?: string | null;
+  noindex?: boolean;
+  is_published?: boolean;
+}): Promise<SitePageRow> {
+  const prisma = requirePrisma();
+  const title = input.title.trim();
+  const created = await prisma.sitePage.create({
+    data: {
+      slug: input.slug,
+      path: input.path.startsWith("/") ? input.path : `/${input.path}`,
+      title,
+      heading: input.heading?.trim() || title,
+      bodyHtml: input.body_html ?? "",
+      metaTitle: input.meta_title?.trim() || null,
+      metaDescription: input.meta_description?.trim() || null,
+      ogTitle: input.og_title?.trim() || null,
+      ogDescription: input.og_description?.trim() || null,
+      socialImage: input.social_image?.trim() || null,
+      imageAlt: input.image_alt?.trim() || null,
+      noindex: Boolean(input.noindex),
+      isPublished: input.is_published ?? false,
+      sortOrder: 100,
+    },
+  });
+  invalidatePageCache(created.path);
+  return rowToPage(created);
 }

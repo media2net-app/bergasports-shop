@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 
 import ProductEditorForm from "@/components/admin/ProductEditorForm";
+import { listShopCategoryOptions } from "@/lib/categories-db";
 import { getProductRawById } from "@/lib/trendyol-json-store";
 
 export const dynamic = "force-dynamic";
@@ -13,10 +14,13 @@ export default async function AdminEditProductPage({ params }: PageProps) {
   if (Number.isNaN(id)) {
     notFound();
   }
-  const product = await getProductRawById(id);
+  const [product, categoryOptions] = await Promise.all([
+    getProductRawById(id),
+    listShopCategoryOptions().catch(() => []),
+  ]);
   if (!product) {
     notFound();
   }
 
-  return <ProductEditorForm initial={product} />;
+  return <ProductEditorForm initial={product} categoryOptions={categoryOptions} />;
 }

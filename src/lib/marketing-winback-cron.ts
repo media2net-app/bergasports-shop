@@ -37,7 +37,7 @@ async function logCronRun(result: WinbackCronRunResult): Promise<void> {
 }
 
 export async function runMarketingWinbackCron(): Promise<WinbackCronRunResult> {
-  if (!isOutboundEmailConfigured()) {
+  if (!(await isOutboundEmailConfigured())) {
     const result: WinbackCronRunResult = {
       ok: false,
       candidates: 0,

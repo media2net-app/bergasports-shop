@@ -87,7 +87,13 @@ function lineListUnit(item: CartItem): number {
   return item.price;
 }
 
-export function CartProvider({ children }: { children: React.ReactNode }) {
+export function CartProvider({
+  children,
+  freeShippingThreshold,
+}: {
+  children: React.ReactNode;
+  freeShippingThreshold?: number;
+}) {
   const { getProductById, prefetch } = useProductLookup();
   const [items, setItems] = useState<CartItem[]>([]);
   const [isOpen, setIsOpen] = useState(false);
@@ -445,6 +451,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
               <ShopDeliveryTrustPanel
                 subtotalAmount={checkoutTotal}
                 currency={primaryCurrency}
+                freeShippingThreshold={freeShippingThreshold}
                 className="mb-1"
               />
 

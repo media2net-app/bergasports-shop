@@ -1,14 +1,23 @@
+import type { Metadata } from "next";
 import { permanentRedirect } from "next/navigation";
 
 import ShopListingPage, { type ShopListingSearchParams } from "@/components/shop/ShopListingPage";
+import { buildPageMetadata } from "@/lib/seo";
 import {
   buildShopListingUrl,
   parseShopColorParams,
   parseShopSizeParams,
 } from "@/lib/shop-category-filter";
 import { parseShopSortParam } from "@/lib/shop-sort";
+import { PAGE_SEO } from "@/lib/site-content";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = buildPageMetadata({
+  absoluteTitle: PAGE_SEO.shop.title,
+  description: PAGE_SEO.shop.description,
+  path: "/shop",
+});
 
 type PageProps = {
   searchParams?: Promise<ShopListingSearchParams>;

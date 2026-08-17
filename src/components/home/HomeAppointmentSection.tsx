@@ -1,10 +1,11 @@
 import Link from "next/link";
 
 import { HOME_APPOINTMENT } from "@/lib/site-content";
-import { SITE_EMAIL } from "@/lib/site-brand";
-import { SHOP_PHONE_LABEL, SITE_ADDRESS, shopPhoneTelHref } from "@/lib/site-contact";
+import { shopPhoneTelHref } from "@/lib/site-contact";
+import { getShopPublicContact } from "@/lib/shop-runtime";
 
-export default function HomeAppointmentSection() {
+export default async function HomeAppointmentSection() {
+  const contact = await getShopPublicContact();
   return (
     <section
       className="rounded-2xl bg-[var(--topbar)] px-6 py-8 text-[var(--topbar-foreground)] md:px-10 md:py-10"
@@ -21,14 +22,14 @@ export default function HomeAppointmentSection() {
           <p className="mt-6 text-sm font-semibold text-white">{HOME_APPOINTMENT.phoneCta}</p>
           <ul className="mt-3 space-y-2 text-sm">
             <li>
-              <a href={shopPhoneTelHref()} className="font-semibold text-[var(--brand-mid)] hover:underline">
-                {SHOP_PHONE_LABEL}
+              <a href={shopPhoneTelHref(contact.phone)} className="font-semibold text-[var(--brand-mid)] hover:underline">
+                {contact.phone}
               </a>
             </li>
-            <li className="text-[var(--topbar-muted)]">{SITE_ADDRESS}</li>
+            <li className="text-[var(--topbar-muted)]">{contact.address}</li>
             <li>
-              <a href={`mailto:${SITE_EMAIL}`} className="text-[var(--topbar-muted)] hover:text-white hover:underline">
-                {SITE_EMAIL}
+              <a href={`mailto:${contact.email}`} className="text-[var(--topbar-muted)] hover:text-white hover:underline">
+                {contact.email}
               </a>
             </li>
           </ul>
@@ -44,7 +45,7 @@ export default function HomeAppointmentSection() {
 
         <form
           className="rounded-xl border border-white/10 bg-white/5 p-4 md:p-5"
-          action={`mailto:${SITE_EMAIL}`}
+          action={`mailto:${contact.email}`}
           method="post"
           encType="text/plain"
         >

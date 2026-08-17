@@ -255,8 +255,8 @@ export async function getOneMillionPlanSignals(): Promise<OneMillionPlanSignals 
         : null,
     analyticsSessionsLast7d,
     productsWithEasySalesMapping,
-    easySalesConfigured: Boolean(getEasySalesConfig()),
+    easySalesConfigured: Boolean(await getEasySalesConfig()),
     ordersPendingSlaBreach: orderSla.pendingOlderThan24h,
-    marketingEmailConfigured: isOutboundEmailConfigured(),
+    marketingEmailConfigured: await isOutboundEmailConfigured(),
   };
 }

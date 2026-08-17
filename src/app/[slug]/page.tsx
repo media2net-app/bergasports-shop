@@ -9,7 +9,10 @@ import CmsPageView from "@/components/site/CmsPageView";
 import { buildCategorySeoContent } from "@/lib/category-seo";
 import { loadCategorySeoOverrides, loadRalexCategories } from "@/lib/categories-db";
 import { loadCatalogProducts } from "@/lib/products-db";
+import { categoryDisplayName, categorySeoDefaults } from "@/lib/category-meta";
 import { formatRalexCategoryName } from "@/lib/ralex-categories";
+import { buildPageMetadata } from "@/lib/seo";
+import { SITE_META_DESCRIPTION } from "@/lib/site-content";
 import {
   findRalexCategoryNodeBySlug,
   resolveShopCategoryFilter,
@@ -29,6 +32,7 @@ const RESERVED = new Set([
   "despre-noi",
   "over-ons",
   "onderhoud",
+  "afspraak",
   "about-us",
   "service",
   "nieuws",
@@ -57,7 +61,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const categoriesFile = await loadRalexCategories();
   const category = findRalexCategoryNodeBySlug(categoriesFile.tree, slug);
   if (category) {
-    const name = formatRalexCategoryName(category.name);
+    const defaults = categorySeoDefaults(category.slug);
+    const name = categoryDisplayName(category.slug, formatRalexCategoryName(category.name));
     const canonical = shopCategoryPath(category.slug);
     const [catalog, overrides] = await Promise.all([
       loadCatalogProducts(),
@@ -75,23 +80,31 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       customIntro: overrides?.seoIntro,
       customFooterHtml: overrides?.seoFooterHtml,
     });
-    const metaTitle = overrides?.seoMetaTitle?.trim() || `${name} | Bergasports`;
-    const metaDescription = overrides?.seoMetaDescription?.trim() || seo.metaDescription;
-    return {
-      title: metaTitle,
-      description: metaDescription,
-      alternates: { canonical },
-      openGraph: {
-        title: metaTitle,
-        description: metaDescription,
-        url: canonical,
-      },
-    };
+    const seoTitle = overrides?.seoMetaTitle?.trim() || defaults?.seoTitle;
+    return buildPageMetadata({
+      absoluteTitle: seoTitle || undefined,
+      title: seoTitle ? undefined : name,
+      description: overrides?.seoMetaDescription?.trim() || seo.metaDescription,
+      path: canonical,
+      image: filteredProducts[0]?.image ?? null,
+      imageAlt: name,
+    });
   }
 
   const page = await getPublishedPageByPath(`/${slug}`);
   if (page) {
-    return { title: page.title };
+    const adminTitle = page.meta_title?.trim();
+    return buildPageMetadata({
+      absoluteTitle: adminTitle || undefined,
+      title: adminTitle ? undefined : page.title,
+      description: page.meta_description?.trim() || SITE_META_DESCRIPTION,
+      path: `/${slug}`,
+      image: page.social_image,
+      imageAlt: page.image_alt || page.title,
+      noindex: page.noindex,
+      ogTitle: page.og_title,
+      ogDescription: page.og_description,
+    });
   }
 
   return {};

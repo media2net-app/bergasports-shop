@@ -20,9 +20,21 @@ export async function POST(request: Request) {
     }
     const folderRaw = String(form.get("folder") ?? "uploads");
     const folder =
-      folderRaw === "products" || folderRaw === "pages" ? folderRaw : ("uploads" as const);
+      folderRaw === "products" || folderRaw === "pages" || folderRaw === "news" || folderRaw === "uploads"
+        ? folderRaw
+        : ("uploads" as const);
 
-    const uploaded = await uploadAdminImageFile(file, folder);
+    const uploaded = await uploadAdminImageFile(file, folder === "news" ? "uploads" : folder);
+    const { recordMediaAsset } = await import("@/lib/media-assets-db");
+    await recordMediaAsset({
+      url: uploaded.url,
+      pathname: uploaded.pathname,
+      filename: file.name || uploaded.pathname,
+      contentType: uploaded.contentType,
+      byteSize: uploaded.byteSize,
+      folder,
+      alt: String(form.get("alt") ?? "").trim() || null,
+    });
     return NextResponse.json({
       ok: true,
       url: uploaded.url,

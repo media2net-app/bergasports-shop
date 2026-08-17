@@ -25,13 +25,13 @@ export default function AdminUsersPanel() {
       const res = await fetch("/api/admin/users", { cache: "no-store" });
       const data = (await res.json()) as { users?: AdminUserRow[]; error?: string };
       if (!res.ok) {
-        setError(data.error ?? "Could not load users");
+        setError(data.error ?? "Gebruikers konden niet worden geladen");
         return;
       }
       setError("");
       setUsers(data.users ?? []);
     } catch {
-      setError("Network error");
+      setError("Geen verbinding met de server");
     } finally {
       setLoading(false);
     }
@@ -43,7 +43,7 @@ export default function AdminUsersPanel() {
 
   const addUser = async () => {
     if (!email.trim() || password.length < 8) {
-      setError("Email and password (min. 8 characters) required");
+      setError("Vul een e-mailadres en een wachtwoord van minimaal 8 tekens in");
       return;
     }
     setBusy(true);
@@ -56,7 +56,7 @@ export default function AdminUsersPanel() {
       });
       const data = (await res.json()) as { error?: string };
       if (!res.ok) {
-        setError(data.error ?? "Save failed");
+        setError(data.error ?? "Opslaan mislukt");
         return;
       }
       setEmail("");
@@ -64,7 +64,7 @@ export default function AdminUsersPanel() {
       setRole("admin");
       await load();
     } catch {
-      setError("Network error");
+      setError("Geen verbinding met de server");
     } finally {
       setBusy(false);
     }
@@ -81,19 +81,19 @@ export default function AdminUsersPanel() {
       });
       const data = (await res.json()) as { error?: string };
       if (!res.ok) {
-        setError(data.error ?? "Update failed");
+        setError(data.error ?? "Wijzigen mislukt");
         return;
       }
       await load();
     } catch {
-      setError("Network error");
+      setError("Geen verbinding met de server");
     } finally {
       setBusy(false);
     }
   };
 
   const removeUser = async (userEmail: string) => {
-    if (!window.confirm(`Delete user ${userEmail}?`)) {
+    if (!window.confirm(`Gebruiker ${userEmail} verwijderen?`)) {
       return;
     }
     setBusy(true);
@@ -104,12 +104,12 @@ export default function AdminUsersPanel() {
       });
       const data = (await res.json()) as { error?: string };
       if (!res.ok) {
-        setError(data.error ?? "Delete failed");
+        setError(data.error ?? "Verwijderen mislukt");
         return;
       }
       await load();
     } catch {
-      setError("Network error");
+      setError("Geen verbinding met de server");
     } finally {
       setBusy(false);
     }
@@ -120,10 +120,10 @@ export default function AdminUsersPanel() {
       {error ? <div className="admin-error-box">{error}</div> : null}
 
       <div className="admin-panel admin-stack-tight">
-        <h2 className="admin-panel-title admin-m-0">New user</h2>
+        <h2 className="admin-panel-title admin-m-0">Nieuwe gebruiker</h2>
         <div className="admin-form-grid">
           <label className="admin-label">
-            Email
+            E-mailadres
             <input
               className="admin-field"
               type="email"
@@ -133,7 +133,7 @@ export default function AdminUsersPanel() {
             />
           </label>
           <label className="admin-label">
-            Password
+            Wachtwoord
             <input
               className="admin-field"
               type="password"
@@ -143,7 +143,7 @@ export default function AdminUsersPanel() {
             />
           </label>
           <label className="admin-label">
-            Role
+            Rol
             <select className="admin-field" value={role} onChange={(e) => setRole(e.target.value as AdminRole)}>
               <option value="admin">Admin</option>
               <option value="super_admin">Super admin</option>
@@ -151,7 +151,7 @@ export default function AdminUsersPanel() {
           </label>
         </div>
         <button type="button" className="admin-btn-primary" disabled={busy} onClick={() => void addUser()}>
-          {busy ? "Saving…" : "Add user"}
+          {busy ? "Opslaan…" : "Gebruiker toevoegen"}
         </button>
       </div>
 
@@ -159,9 +159,9 @@ export default function AdminUsersPanel() {
         <table className="admin-table">
           <thead>
             <tr>
-              <th>Email</th>
-              <th>Role</th>
-              <th>Created</th>
+              <th>E-mailadres</th>
+              <th>Rol</th>
+              <th>Aangemaakt</th>
               <th />
             </tr>
           </thead>
@@ -169,13 +169,13 @@ export default function AdminUsersPanel() {
             {loading ? (
               <tr>
                 <td colSpan={4} className="admin-muted">
-                  Loading…
+                  Laden…
                 </td>
               </tr>
             ) : users.length === 0 ? (
               <tr>
                 <td colSpan={4} className="admin-muted">
-                  No users yet.
+                  Nog geen gebruikers.
                 </td>
               </tr>
             ) : (
@@ -194,7 +194,7 @@ export default function AdminUsersPanel() {
                     </select>
                   </td>
                   <td className="admin-muted" style={{ fontSize: "0.8rem" }}>
-                    {u.created_at ? new Date(u.created_at).toLocaleDateString("en-GB") : "—"}
+                    {u.created_at ? new Date(u.created_at).toLocaleDateString("nl-NL") : "—"}
                   </td>
                   <td>
                     <button
@@ -203,7 +203,7 @@ export default function AdminUsersPanel() {
                       disabled={busy}
                       onClick={() => void removeUser(u.email)}
                     >
-                      Delete
+                      Verwijderen
                     </button>
                   </td>
                 </tr>

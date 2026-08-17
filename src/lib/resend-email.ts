@@ -1,5 +1,7 @@
 import "server-only";
 
+import { getRuntimeSetting } from "@/lib/site-settings-db";
+
 export type ResendEmailInput = {
   to: string | string[];
   subject: string;
@@ -7,18 +9,22 @@ export type ResendEmailInput = {
   html?: string;
 };
 
-function resendFromAddress(): string | null {
-  return process.env.ORDER_NOTIFICATION_FROM?.trim() || "Bergasports <info@bergasports.com>";
+async function resendFromAddress(): Promise<string> {
+  return (
+    (await getRuntimeSetting("ORDER_NOTIFICATION_FROM")).trim() ||
+    (await getRuntimeSetting("SMTP_FROM")).trim() ||
+    "Bergasports <info@bergasports.com>"
+  );
 }
 
-export function isResendConfigured(): boolean {
-  return Boolean(process.env.RESEND_API_KEY?.trim());
+export async function isResendConfigured(): Promise<boolean> {
+  return Boolean((await getRuntimeSetting("RESEND_API_KEY")).trim());
 }
 
 /** Send email via Resend API. Returns false when skipped (no API key) or on failure. */
 export async function sendResendEmail(input: ResendEmailInput): Promise<boolean> {
-  const apiKey = process.env.RESEND_API_KEY?.trim();
-  const from = resendFromAddress();
+  const apiKey = (await getRuntimeSetting("RESEND_API_KEY")).trim();
+  const from = await resendFromAddress();
   if (!apiKey || !from) {
     return false;
   }

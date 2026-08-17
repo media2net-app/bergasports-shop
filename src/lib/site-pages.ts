@@ -21,6 +21,11 @@ export type SitePageRow = {
   blocks: HomepageBlocks | null;
   meta_title: string | null;
   meta_description: string | null;
+  og_title: string | null;
+  og_description: string | null;
+  social_image: string | null;
+  image_alt: string | null;
+  noindex: boolean;
   is_published: boolean;
   sort_order: number;
   updated_at: string;
@@ -33,6 +38,11 @@ export type SitePageUpdateInput = {
   blocks?: HomepageBlocks | null;
   meta_title?: string | null;
   meta_description?: string | null;
+  og_title?: string | null;
+  og_description?: string | null;
+  social_image?: string | null;
+  image_alt?: string | null;
+  noindex?: boolean;
   is_published?: boolean;
 };
 

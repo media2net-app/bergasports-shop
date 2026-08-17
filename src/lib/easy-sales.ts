@@ -1,6 +1,7 @@
 import "server-only";
 
 import type { CreateOrderInput } from "@/lib/orders";
+import { getRuntimeSetting } from "@/lib/site-settings-db";
 
 const DEFAULT_BASE_URL = "https://easy-sales.com/api/v2";
 
@@ -13,22 +14,25 @@ export type EasySalesConfig = {
   clientSecret?: string;
 };
 
-export function getEasySalesConfig(): EasySalesConfig | null {
-  const apiToken = process.env.EASY_SALES_API_TOKEN?.trim();
-  const websiteToken = process.env.EASY_SALES_WEBSITE_TOKEN?.trim();
+export async function getEasySalesConfig(): Promise<EasySalesConfig | null> {
+  const [apiToken, websiteToken, baseUrlRaw, clientId, clientSecret] = await Promise.all([
+    getRuntimeSetting("EASY_SALES_API_TOKEN"),
+    getRuntimeSetting("EASY_SALES_WEBSITE_TOKEN"),
+    getRuntimeSetting("EASY_SALES_API_BASE_URL"),
+    getRuntimeSetting("EASY_SALES_CLIENT_ID"),
+    getRuntimeSetting("EASY_SALES_CLIENT_SECRET"),
+  ]);
   if (!apiToken || !websiteToken) return null;
 
-  const baseUrl = (process.env.EASY_SALES_API_BASE_URL?.trim() || DEFAULT_BASE_URL).replace(/\/$/, "");
-  const clientId = process.env.EASY_SALES_CLIENT_ID?.trim() || undefined;
-  const clientSecret = process.env.EASY_SALES_CLIENT_SECRET?.trim() || undefined;
+  const baseUrl = (baseUrlRaw.trim() || DEFAULT_BASE_URL).replace(/\/$/, "");
 
   return {
     enabled: true,
     apiToken,
     websiteToken,
     baseUrl,
-    clientId,
-    clientSecret,
+    clientId: clientId.trim() || undefined,
+    clientSecret: clientSecret.trim() || undefined,
   };
 }
 
@@ -225,7 +229,7 @@ export type EasySalesSyncResult =
 export async function syncOrderToEasySales(
   input: CreateOrderInput & { orderNumber: string; createdAt?: string },
 ): Promise<EasySalesSyncResult> {
-  const config = getEasySalesConfig();
+  const config = await getEasySalesConfig();
   if (!config) {
     return { ok: false, error: "Easy-Sales is not configured (missing API token or website token)." };
   }
@@ -252,7 +256,7 @@ export async function testEasySalesConnection(): Promise<{
   message: string;
   websites?: unknown;
 }> {
-  const config = getEasySalesConfig();
+  const config = await getEasySalesConfig();
   if (!config) {
     return {
       ok: false,

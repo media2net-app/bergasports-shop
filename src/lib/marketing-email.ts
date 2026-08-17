@@ -3,6 +3,7 @@ import "server-only";
 import { requirePrisma } from "@/lib/database";
 import type { OrderWithItems } from "@/lib/orders";
 import { sendOutboundEmail, isOutboundEmailConfigured } from "@/lib/outbound-email";
+import { getEmailLogoUrlSetting, getWinBackEmailSettings } from "@/lib/shop-runtime";
 import {
   buildPostPurchaseEmailParts,
   buildWelcomeEmailParts,
@@ -57,7 +58,7 @@ export async function sendWelcomeMarketingEmail(
   email: string,
   orderId?: number,
 ): Promise<boolean> {
-  if (!isOutboundEmailConfigured()) {
+  if (!(await isOutboundEmailConfigured())) {
     return false;
   }
   const to = email.trim();
@@ -72,7 +73,8 @@ export async function sendWelcomeMarketingEmail(
     return false;
   }
 
-  const { subject, text, html } = buildWelcomeEmailParts(customerName.trim() || "client");
+  const logoUrl = await getEmailLogoUrlSetting();
+  const { subject, text, html } = buildWelcomeEmailParts(customerName.trim() || "client", { logoUrl });
   const ok = await sendOutboundEmail({ to, subject, text, html });
   if (ok) {
     await logMarketingEmail(to, "welcome", orderId);
@@ -81,7 +83,7 @@ export async function sendWelcomeMarketingEmail(
 }
 
 export async function sendPostPurchaseMarketingEmail(order: OrderWithItems): Promise<boolean> {
-  if (!isOutboundEmailConfigured()) {
+  if (!(await isOutboundEmailConfigured())) {
     return false;
   }
   const to = order.customer_email?.trim();
@@ -92,7 +94,8 @@ export async function sendPostPurchaseMarketingEmail(order: OrderWithItems): Pro
     return false;
   }
 
-  const { subject, text, html } = buildPostPurchaseEmailParts(order);
+  const logoUrl = await getEmailLogoUrlSetting();
+  const { subject, text, html } = buildPostPurchaseEmailParts(order, { logoUrl });
   const ok = await sendOutboundEmail({ to, subject, text, html });
   if (ok) {
     await logMarketingEmail(to, "post_purchase", order.id);
@@ -104,7 +107,7 @@ export async function sendWinBackMarketingEmail(
   customerName: string,
   email: string,
 ): Promise<boolean> {
-  if (!isOutboundEmailConfigured()) {
+  if (!(await isOutboundEmailConfigured())) {
     return false;
   }
   const to = email.trim();
@@ -126,7 +129,12 @@ export async function sendWinBackMarketingEmail(
     return false;
   }
 
-  const { subject, text, html } = buildWinBackEmailParts(customerName.trim() || "client");
+  const [logoUrl, winBack] = await Promise.all([getEmailLogoUrlSetting(), getWinBackEmailSettings()]);
+  const { subject, text, html } = buildWinBackEmailParts(customerName.trim() || "client", {
+    logoUrl,
+    winBackCode: winBack.code,
+    winBackExpiryDays: winBack.expiryDays,
+  });
   const ok = await sendOutboundEmail({ to, subject, text, html });
   if (ok) {
     await logMarketingEmail(to, "win_back");

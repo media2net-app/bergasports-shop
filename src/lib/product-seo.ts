@@ -1,5 +1,9 @@
 import { productPath } from "@/lib/product-slug";
-import { formatProductCardPrice, type Product } from "@/lib/products";
+import {
+  decodeImportedProductTitle,
+  formatProductCardPrice,
+  type Product,
+} from "@/lib/products";
 import { SITE_BRAND_SHORT } from "@/lib/site-brand";
 
 function stripHtml(html: string): string {
@@ -9,7 +13,82 @@ function stripHtml(html: string): string {
     .trim();
 }
 
+/** Zoekterm per categorie, voor een titel die verder komt dan alleen de productnaam. */
+const CATEGORY_KEYWORDS: { match: RegExp; keyword: string }[] = [
+  { match: /road|race/i, keyword: "racefiets" },
+  { match: /gravel/i, keyword: "gravelbike" },
+  { match: /mtb|mountain/i, keyword: "mountainbike" },
+  { match: /skate|skeeler/i, keyword: "skeelers" },
+  { match: /wheel|wiel|scope/i, keyword: "wielset" },
+  { match: /shoe|schoen/i, keyword: "wielrenschoenen" },
+  { match: /helmet|helm/i, keyword: "fietshelm" },
+  { match: /glass|bril/i, keyword: "sportbril" },
+  { match: /wear|kleding|lafuga/i, keyword: "fietskleding" },
+  { match: /cleat|schoenplaat/i, keyword: "schoenplaatjes" },
+  { match: /group|groepset/i, keyword: "groepset" },
+];
+
+function productKeyword(product: Product): string | null {
+  const haystack = `${product.category ?? ""} ${product.name}`;
+  for (const { match, keyword } of CATEGORY_KEYWORDS) {
+    if (match.test(haystack)) {
+      return keyword;
+    }
+  }
+  return null;
+}
+
+/**
+ * SEO-titel uit productnaam + merk + zoekterm, afgekapt op wat Google toont.
+ * Zodra er een SEO-veld in de admin staat, gaat die waarde hier vóór.
+ */
+const MAX_TITLE_LENGTH = 65;
+
+function shortenToWords(text: string, maxLength: number): string {
+  if (text.length <= maxLength) {
+    return text;
+  }
+  const cut = text.slice(0, maxLength);
+  const lastSpace = cut.lastIndexOf(" ");
+  return `${(lastSpace > 20 ? cut.slice(0, lastSpace) : cut).trim()}…`;
+}
+
+export function productSeoTitle(product: Product): string {
+  const custom = product.seoTitle?.trim();
+  if (custom) {
+    return custom;
+  }
+  const name = decodeImportedProductTitle(product.name).trim() || product.name;
+  const brand = product.brand?.trim();
+  /* Het eigen merk voegt niets toe: dat staat al in de suffix. */
+  const useBrand =
+    brand &&
+    !name.toLowerCase().includes(brand.toLowerCase()) &&
+    brand.toLowerCase() !== SITE_BRAND_SHORT.toLowerCase();
+  const withBrand = useBrand ? `${name} ${brand}` : name;
+  const keyword = productKeyword(product);
+  const suffix = ` | ${SITE_BRAND_SHORT}`;
+
+  const candidates = [
+    keyword && !withBrand.toLowerCase().includes(keyword)
+      ? `${withBrand} ${keyword} kopen${suffix}`
+      : null,
+    `${withBrand} kopen${suffix}`,
+    `${withBrand}${suffix}`,
+  ].filter((v): v is string => Boolean(v));
+
+  const fits = candidates.find((title) => title.length <= MAX_TITLE_LENGTH);
+  if (fits) {
+    return fits;
+  }
+  return `${shortenToWords(withBrand, MAX_TITLE_LENGTH - suffix.length)}${suffix}`;
+}
+
 export function productMetaDescription(product: Product): string {
+  const custom = product.seoDescription?.trim();
+  if (custom) {
+    return custom.slice(0, 160);
+  }
   const fromShort = product.wcShortDescriptionHtml
     ? stripHtml(product.wcShortDescriptionHtml)
     : "";

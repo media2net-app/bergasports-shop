@@ -1,3 +1,4 @@
+import { categoryDisplayName, categorySeoDefaults } from "@/lib/category-meta";
 import { productPath } from "@/lib/product-slug";
 import { decodeImportedProductTitle, type Product } from "@/lib/products";
 import { formatRalexCategoryName, type RalexCategoryNode } from "@/lib/ralex-categories";
@@ -143,8 +144,9 @@ export function buildCategorySeoContent(params: {
   customIntro?: string | null;
   customFooterHtml?: string | null;
 }): CategorySeoContent {
-  const displayName = formatRalexCategoryName(params.categoryNode.name);
   const slug = params.categoryNode.slug;
+  const displayName = categoryDisplayName(slug, formatRalexCategoryName(params.categoryNode.name));
+  const defaults = categorySeoDefaults(slug);
   const count = params.productsInCategory.length;
   const topic = categoryTopicPhrase(slug, displayName);
   const productLinks = pickProductLinks(params.productsInCategory);
@@ -155,17 +157,18 @@ export function buildCategorySeoContent(params: {
   const intro =
     params.customIntro?.trim() ||
     `Ontdek ${countLabel} in de categorie ${displayName} bij ${SITE_BRAND_SHORT}. ` +
-      `Online vind je ${topic}, met levering in Nederland en België, snelle bestelling en rembours bij aflevering.`;
+      `Je vindt hier ${topic}, met persoonlijk advies uit Dedemsvaart en levering in Nederland en België.`;
 
+  const autoDescription = defaults?.seoDescription ?? intro;
   const metaDescription =
-    intro.length > 155 ? `${intro.slice(0, 152).trim()}…` : intro;
+    autoDescription.length > 155 ? `${autoDescription.slice(0, 152).trim()}…` : autoDescription;
 
   const footerTitle = `${displayName} – online bij ${SITE_BRAND_SHORT}`;
 
   const footerParagraphs = [
     `Bij ${SITE_BRAND_SHORT} vind je in de categorie ${displayName} een selectie ${topic} voor serieuze fietsers en atleten. ` +
       `Vergelijk modellen, maten en specificaties direct op de site — van racefiets tot wielen, schoenen en accessoires.`,
-    `Bestellen is eenvoudig: voeg producten toe aan je winkelwagen, vul je bezorggegevens in en betaal rembours bij ontvangst. ` +
+    `Bestellen is eenvoudig: voeg producten toe aan je winkelwagen, vul je bezorggegevens in en betaal veilig met iDEAL, Apple Pay of creditcard. ` +
       `Controleer de productbeschrijving voor maat, materiaal en technische details vóór je bestelt.`,
     count > 0
       ? `In deze categorie staan nu ${count} artikelen in de webshop. ` +

@@ -136,19 +136,31 @@ export default function HeaderShopMegaMenu({ label = "Webshop" }: Props) {
 
         <div className="mx-auto w-full max-w-[1440px] px-4 md:px-6">
           <div className="overflow-hidden rounded-b-2xl border border-white/10 bg-[#111111] shadow-2xl">
-            <div className="grid gap-8 px-6 py-8 md:grid-cols-2 lg:grid-cols-[repeat(4,minmax(0,1fr))_minmax(240px,300px)] lg:px-10 lg:py-10">
+            <div className="grid gap-x-6 gap-y-8 px-6 py-8 md:grid-cols-3 lg:grid-cols-[repeat(5,minmax(0,1fr))_minmax(220px,280px)] lg:px-10 lg:py-10">
               {WEBSHOP_MEGA_MENU.columns.map((column) => (
                 <div key={column.title}>
-                  <p className="text-sm font-bold text-white">{column.title}</p>
-                  <ul className="mt-3 space-y-0.5">
-                    {column.links.map((link) => (
-                      <li key={link.href}>
-                        <Link href={link.href} className={columnLinkClass} onClick={() => setOpen(false)}>
-                          {link.label}
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
+                  {column.href ? (
+                    <Link
+                      href={column.href}
+                      className="text-sm font-bold text-white transition hover:text-[var(--brand-mid)]"
+                      onClick={() => setOpen(false)}
+                    >
+                      {column.title}
+                    </Link>
+                  ) : (
+                    <p className="text-sm font-bold text-white">{column.title}</p>
+                  )}
+                  {column.links.length > 0 ? (
+                    <ul className="mt-3 space-y-0.5">
+                      {column.links.map((link) => (
+                        <li key={link.href}>
+                          <Link href={link.href} className={columnLinkClass} onClick={() => setOpen(false)}>
+                            {link.label}
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : null}
                 </div>
               ))}
 

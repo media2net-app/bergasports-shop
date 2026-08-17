@@ -8,7 +8,11 @@ import { isBergasportsCatalogSource } from "@/lib/bergasports-catalog";
 import { requirePrisma, isDatabaseConfigured } from "@/lib/database";
 import { normalizeCategoryShopLink } from "@/lib/category-shop-link";
 import type { RalexCategoriesFile, RalexCategoryNode, RalexCategoryRecord } from "@/lib/ralex-categories";
-import { filterShopCategoryRecords } from "@/lib/ralex-categories";
+import {
+  filterShopCategoryRecords,
+  formatRalexCategoryName,
+  isExcludedShopCategorySlug,
+} from "@/lib/ralex-categories";
 import { buildCategoryTreeFromRecords } from "@/lib/ralex-categories-file";
 
 type CategoryRow = {
@@ -118,10 +122,12 @@ async function fetchCatalogMetaRow() {
   };
 }
 
-function invalidateCategoriesCache() {
+export function invalidateCategoriesCache() {
   revalidatePath("/");
   revalidatePath("/shop");
   revalidatePath("/categorii");
+  revalidatePath("/admin/categories");
+  revalidatePath("/sitemap.xml");
 }
 
 export async function readRalexCategoriesFromDb(): Promise<RalexCategoriesFile> {
@@ -182,6 +188,31 @@ export async function loadRalexCategories(): Promise<RalexCategoriesFile> {
   }
 }
 
+export async function listShopCategoryOptions(): Promise<{ slug: string; name: string; group: string }[]> {
+  const file = await loadRalexCategories();
+  const seen = new Set<string>();
+  const out: { slug: string; name: string; group: string }[] = [];
+
+  const walk = (nodes: RalexCategoryNode[], parentName: string) => {
+    for (const node of nodes) {
+      if (isExcludedShopCategorySlug(node.slug)) {
+        continue;
+      }
+      const slug = node.slug.trim().toLowerCase();
+      if (!slug || seen.has(slug)) {
+        continue;
+      }
+      seen.add(slug);
+      const name = formatRalexCategoryName(node.name);
+      out.push({ slug, name, group: parentName });
+      walk(node.children ?? [], name);
+    }
+  };
+
+  walk(file.tree, "");
+  return out;
+}
+
 export async function writeRalexCategoriesToDb(data: RalexCategoriesFile): Promise<void> {
   const prisma = requirePrisma();
 
@@ -205,7 +236,11 @@ export async function writeRalexCategoriesToDb(data: RalexCategoriesFile): Promi
     await prisma.category.upsert({
       where: { id: row.id },
       create: row,
-      update: row,
+      update: {
+        productCount: row.productCount,
+        importCompletedAt: row.importCompletedAt,
+        importedProductCount: row.importedProductCount,
+      },
     });
   }
   const excludedIds = data.categories.filter((c) => !rows.some((r) => r.id === c.id)).map((c) => c.id);

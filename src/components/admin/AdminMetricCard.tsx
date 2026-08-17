@@ -13,6 +13,7 @@ type AdminMetricCardProps = {
   hero?: boolean;
   icon?: ReactNode;
   iconTone?: IconTone;
+  featured?: boolean;
 };
 
 export default function AdminMetricCard({
@@ -23,12 +24,13 @@ export default function AdminMetricCard({
   href,
   highlight,
   hero,
+  featured,
   icon,
   iconTone = "default",
 }: AdminMetricCardProps) {
   const card = (
     <div
-      className={`admin-metric-card${highlight ? " is-highlight" : ""}${hero ? " is-hero" : ""}`}
+      className={`admin-metric-card${highlight ? " is-highlight" : ""}${hero ? " is-hero" : ""}${featured ? " is-featured" : ""}`}
     >
       <div className="admin-metric-card-top">
         <p className="admin-metric-label">{label}</p>

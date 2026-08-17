@@ -1,5 +1,6 @@
 import type { OrderItemRow, OrderWithItems } from "@/lib/orders";
 import { resolveSiteEmailLogoUrl } from "@/lib/site-brand";
+import { LEGAL_PAGE_PATHS } from "@/lib/site-content";
 import {
   emailButton,
   emailDetailTable,
@@ -13,8 +14,8 @@ import {
 
 export type OrderStatusEmailKind = "received" | "confirmed" | "shipped" | "delivered" | "cancelled";
 
-function logoUrlFromEnv(): string {
-  return resolveSiteEmailLogoUrl();
+function logoUrlFromOpts(logoUrl?: string): string {
+  return logoUrl?.trim() || resolveSiteEmailLogoUrl();
 }
 
 function shippingAddressLine(order: Pick<OrderWithItems, "shipping_address" | "shipping_city" | "shipping_county" | "shipping_postal_code">): string {
@@ -132,9 +133,13 @@ type CustomerEmailSpec = {
   includeProducts?: boolean;
 };
 
-function buildCustomerStatusEmail(order: OrderWithItems, spec: CustomerEmailSpec): { subject: string; text: string; html: string } {
+function buildCustomerStatusEmail(
+  order: OrderWithItems,
+  spec: CustomerEmailSpec,
+  logoUrl?: string,
+): { subject: string; text: string; html: string } {
   const shop = transactionalEmailSiteUrl();
-  const logoUrl = logoUrlFromEnv();
+  const resolvedLogo = logoUrlFromOpts(logoUrl);
   const includeProducts = spec.includeProducts !== false;
 
   const text = [
@@ -164,7 +169,7 @@ function buildCustomerStatusEmail(order: OrderWithItems, spec: CustomerEmailSpec
     title: spec.title,
     innerHtml: inner,
     siteUrl: shop,
-    logoUrl,
+    logoUrl: resolvedLogo,
   });
 
   return { subject: spec.subject, text, html };
@@ -173,12 +178,14 @@ function buildCustomerStatusEmail(order: OrderWithItems, spec: CustomerEmailSpec
 export function buildOrderStatusEmailParts(
   kind: OrderStatusEmailKind,
   order: OrderWithItems,
+  logoUrl?: string,
 ): { subject: string; text: string; html: string } {
   const nr = order.order_number;
+  const mail = (spec: CustomerEmailSpec) => buildCustomerStatusEmail(order, spec, logoUrl);
 
   switch (kind) {
     case "received":
-      return buildCustomerStatusEmail(order, {
+      return mail({
         kind,
         subject: `Bestelling ${nr} ontvangen`,
         title: "Je bestelling is ontvangen",
@@ -189,7 +196,7 @@ export function buildOrderStatusEmailParts(
         showShopButton: true,
       });
     case "confirmed":
-      return buildCustomerStatusEmail(order, {
+      return mail({
         kind,
         subject: `Bestelling ${nr} bevestigd`,
         title: "Bestelling bevestigd",
@@ -199,18 +206,22 @@ export function buildOrderStatusEmailParts(
         ],
       });
     case "shipped":
-      return buildCustomerStatusEmail(order, {
+      return mail({
         kind,
         subject: `Bestelling ${nr} verzonden`,
         title: "Bestelling verzonden",
         intro: [
           "Goed nieuws — je pakket is onderweg.",
-          "De bezorger neemt telefonisch contact op voor de levering. Houd je telefoonnummer bij de hand.",
+          order.tracking_url
+            ? `Volg je zending: ${order.tracking_url}`
+            : order.tracking_code
+              ? `Je trackingcode is ${order.tracking_code}.`
+              : "De bezorger neemt telefonisch contact op voor de levering. Houd je telefoonnummer bij de hand.",
         ],
       });
     case "delivered": {
       const shop = transactionalEmailSiteUrl();
-      return buildCustomerStatusEmail(order, {
+      return mail({
         kind,
         subject: `Bestelling ${nr} geleverd`,
         title: "Bestelling geleverd",
@@ -219,15 +230,18 @@ export function buildOrderStatusEmailParts(
           "Voor retour (14 dagen) kun je ons retourbeleid op de website bekijken.",
         ],
         extraHtml: [
-          emailButton(`${shop}/livrare-si-retur`, "Verzending & retour"),
+          emailButton(`${shop}${LEGAL_PAGE_PATHS.returns}`, "Retourneren"),
           emailButton(`${shop}/shop`, "Opnieuw bestellen"),
         ].join(""),
-        extraPlain: [`Retourbeleid: ${shop}/livrare-si-retur`, `Opnieuw bestellen: ${shop}/shop`],
+        extraPlain: [
+          `Retourbeleid: ${shop}${LEGAL_PAGE_PATHS.returns}`,
+          `Opnieuw bestellen: ${shop}/shop`,
+        ],
         includeProducts: true,
       });
     }
     case "cancelled":
-      return buildCustomerStatusEmail(order, {
+      return mail({
         kind,
         subject: `Bestelling ${nr} geannuleerd`,
         title: "Bestelling geannuleerd",
@@ -306,7 +320,10 @@ function buildAdminNewOrderInner(input: AdminNewOrderEmailInput, leadParagraphs:
   ].join("");
 }
 
-export function buildAdminNewOrderEmailParts(input: AdminNewOrderEmailInput): { subject: string; text: string; html: string } {
+export function buildAdminNewOrderEmailParts(
+  input: AdminNewOrderEmailInput,
+  logoUrl?: string,
+): { subject: string; text: string; html: string } {
   const shop = transactionalEmailSiteUrl();
   const adminUrl = `${shop}/admin/orders`;
   const subject = `Nieuwe bestelling ${input.orderNumber}`;
@@ -338,7 +355,7 @@ export function buildAdminNewOrderEmailParts(input: AdminNewOrderEmailInput): { 
     title: "Nieuwe bestelling",
     innerHtml: inner,
     siteUrl: shop,
-    logoUrl: logoUrlFromEnv(),
+    logoUrl: logoUrlFromOpts(logoUrl),
   });
 
   return { subject, text, html };
@@ -348,6 +365,7 @@ export function buildAdminNewOrderEmailParts(input: AdminNewOrderEmailInput): { 
 export function buildAdminNewOrderTestEmailParts(
   input: AdminNewOrderEmailInput,
   subjectPrefix: string,
+  logoUrl?: string,
 ): { subject: string; text: string; html: string } {
   const shop = transactionalEmailSiteUrl();
   const adminUrl = `${shop}/admin/orders`;
@@ -376,7 +394,7 @@ export function buildAdminNewOrderTestEmailParts(
     title: "Nieuwe bestelling (test)",
     innerHtml: inner,
     siteUrl: shop,
-    logoUrl: logoUrlFromEnv(),
+    logoUrl: logoUrlFromOpts(logoUrl),
   });
 
   return { subject, text, html };

@@ -31,13 +31,13 @@ export default function AdminOrderStatusSelect({
       const data = (await res.json()) as { error?: string };
       if (!res.ok) {
         setStatus(currentStatus);
-        setError(data.error ?? "Failed to update status");
+        setError(data.error ?? "Status bijwerken mislukt");
       } else {
         router.refresh();
       }
     } catch {
       setStatus(currentStatus);
-      setError("Network error");
+      setError("Geen verbinding");
     } finally {
       setLoading(false);
     }

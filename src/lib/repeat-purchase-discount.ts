@@ -1,17 +1,18 @@
 import "server-only";
 
 import { requirePrisma } from "@/lib/database";
+import { getRuntimeSetting } from "@/lib/site-settings-db";
 
-export function repeatOrderDiscountPercent(): number {
-  const raw = Number(process.env.REPEAT_ORDER_DISCOUNT_PERCENT?.trim() || "10");
+export async function repeatOrderDiscountPercent(): Promise<number> {
+  const raw = Number((await getRuntimeSetting("REPEAT_ORDER_DISCOUNT_PERCENT")).trim() || "10");
   if (!Number.isFinite(raw) || raw <= 0 || raw > 30) {
     return 10;
   }
   return raw;
 }
 
-export function repeatOrderPromoCode(): string {
-  return process.env.REPEAT_ORDER_PROMO_CODE?.trim() || "CLIENT10";
+export async function repeatOrderPromoCode(): Promise<string> {
+  return (await getRuntimeSetting("REPEAT_ORDER_PROMO_CODE")).trim() || "CLIENT10";
 }
 
 export async function customerQualifiesForRepeatDiscount(customerPhone: string): Promise<boolean> {
@@ -26,11 +27,11 @@ export async function customerQualifiesForRepeatDiscount(customerPhone: string):
   return count > 0;
 }
 
-export function applyRepeatDiscount(subtotal: number, discountTotal: number): {
+export async function applyRepeatDiscount(subtotal: number, discountTotal: number): Promise<{
   discountTotal: number;
   repeatDiscountApplied: number;
-} {
-  const percent = repeatOrderDiscountPercent();
+}> {
+  const percent = await repeatOrderDiscountPercent();
   const repeatAmount = Math.round(subtotal * (percent / 100) * 100) / 100;
   if (repeatAmount <= 0) {
     return { discountTotal, repeatDiscountApplied: 0 };

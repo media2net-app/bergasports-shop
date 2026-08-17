@@ -1,9 +1,20 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
 import { useProductVariation } from "@/components/product/ProductVariationContext";
 import OptimizedProductImage from "@/components/ui/OptimizedProductImage";
+
+const arrowClassName =
+  "absolute top-1/2 -translate-y-1/2 rounded-full border border-[var(--brand-border)] bg-white/95 p-2.5 text-[var(--foreground)] transition hover:border-[var(--brand)] hover:text-[var(--brand)] lg:opacity-0 lg:group-hover:opacity-100 lg:focus-visible:opacity-100";
+
+function thumbClassName(active: boolean): string {
+  return `overflow-hidden rounded-xl border transition ${
+    active
+      ? "border-[var(--brand)] ring-1 ring-[var(--brand)]"
+      : "border-[var(--brand-border)] hover:border-[var(--brand)]/50"
+  }`;
+}
 
 type ProductImageGalleryProps = {
   images: string[];
@@ -31,10 +42,13 @@ export default function ProductImageGallery({
   }, [images, highlightImage]);
 
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [renderedHighlight, setRenderedHighlight] = useState(highlightImage);
 
-  useEffect(() => {
+  /* Nieuwe variantfoto: terug naar de eerste slide, tijdens render i.p.v. in een effect. */
+  if (renderedHighlight !== highlightImage) {
+    setRenderedHighlight(highlightImage);
     setSelectedIndex(0);
-  }, [highlightImage]);
+  }
 
   const prevImage = () => {
     setSelectedIndex((prev) => (prev === 0 ? galleryImages.length - 1 : prev - 1));
@@ -52,9 +66,9 @@ export default function ProductImageGallery({
             {galleryImages.slice(0, 6).map((imageUrl, index) => (
               <button
                 key={`${imageUrl}-${index}`}
-                className={`overflow-hidden rounded-lg border ${
-                  index === selectedIndex ? "border-[#B38F27]" : "border-[#e5dcc8]"
-                }`}
+                className={thumbClassName(index === selectedIndex)}
+                aria-label={`Afbeelding ${index + 1} bekijken`}
+                aria-current={index === selectedIndex}
                 onClick={() => setSelectedIndex(index)}
               >
                 <OptimizedProductImage
@@ -67,49 +81,52 @@ export default function ProductImageGallery({
           </div>
         ) : null}
 
-        <div className="relative w-full">
+        <div className="group relative w-full">
           <OptimizedProductImage
             src={galleryImages[selectedIndex]}
             alt={name}
             variant="galleryHero"
             priority={selectedIndex === 0}
-            wrapperClassName="rounded-2xl border border-[#e5dcc8]"
+            wrapperClassName="rounded-2xl border border-[var(--brand-border)]"
           />
 
           {galleryImages.length > 1 ? (
             <>
               <button
-                className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-2.5 text-[var(--foreground)] shadow transition hover:bg-white md:left-3"
+                className={`${arrowClassName} left-3`}
                 onClick={prevImage}
                 aria-label="Vorige afbeelding"
               >
                 &#8592;
               </button>
               <button
-                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-2.5 text-[var(--foreground)] shadow transition hover:bg-white md:right-3"
+                className={`${arrowClassName} right-3`}
                 onClick={nextImage}
                 aria-label="Volgende afbeelding"
               >
                 &#8594;
               </button>
+              <p className="pointer-events-none absolute bottom-3 right-3 rounded-full bg-white/90 px-2.5 py-1 text-xs font-semibold text-[var(--foreground)]/70">
+                {selectedIndex + 1} / {galleryImages.length}
+              </p>
             </>
           ) : null}
         </div>
       </div>
 
       {galleryImages.length > 1 ? (
-        <div className="mt-3 grid grid-cols-4 gap-3 lg:hidden">
-          {galleryImages.slice(0, 8).map((imageUrl, index) => (
+        <div className="mt-3 grid grid-cols-5 gap-2 lg:hidden">
+          {galleryImages.slice(0, 10).map((imageUrl, index) => (
             <button
               key={`${imageUrl}-${index}`}
-              className={`overflow-hidden rounded-lg border ${
-                index === selectedIndex ? "border-[#B38F27]" : "border-[#e5dcc8]"
-              }`}
+              className={thumbClassName(index === selectedIndex)}
+              aria-label={`Afbeelding ${index + 1} bekijken`}
+              aria-current={index === selectedIndex}
               onClick={() => setSelectedIndex(index)}
             >
               <OptimizedProductImage
                 src={imageUrl}
-                alt={`${name} miniatura ${index + 1}`}
+                alt={`${name} miniatuur ${index + 1}`}
                 variant="galleryThumb"
               />
             </button>

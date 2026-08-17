@@ -117,6 +117,16 @@ export async function getMolliePayment(paymentId: string): Promise<MolliePayment
   return mollieFetch<MolliePayment>(`/payments/${encodeURIComponent(paymentId)}`);
 }
 
+export async function refundMolliePayment(
+  paymentId: string,
+  amount: MollieAmount,
+): Promise<{ id: string; status: string }> {
+  return mollieFetch(`/payments/${encodeURIComponent(paymentId)}/refunds`, {
+    method: "POST",
+    body: JSON.stringify({ amount }),
+  });
+}
+
 export function mollieCheckoutUrl(payment: MolliePayment): string | null {
   return payment._links?.checkout?.href ?? null;
 }

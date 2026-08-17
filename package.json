@@ -23,7 +23,9 @@
     "verify:phase1-plan": "node scripts/verify-phase1-plan.mjs",
     "test:smtp-order": "npx tsx scripts/test-smtp-order-email.ts",
     "normalize:category-links": "node scripts/normalize-category-links.mjs",
-    "seed:site-pages": "node scripts/seed-site-pages-prisma.mjs",
+    "seed:site-pages": "npx tsx scripts/seed-site-pages.ts",
+    "admin:user": "npx tsx scripts/create-admin-user.ts",
+    "stock:init": "npx tsx scripts/set-initial-stock.ts",
     "migrate:prisma": "node scripts/run-prisma-migration.mjs",
     "mirror:all-images": "BASE_URL=http://localhost:3060 node scripts/mirror-all-product-images.mjs"
   },
@@ -35,6 +37,7 @@
     "next": "16.2.4",
     "nodemailer": "^8.0.7",
     "pg": "^8.21.0",
+    "quill": "^2.0.3",
     "react": "19.2.4",
     "react-dom": "19.2.4"
   },

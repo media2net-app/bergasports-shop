@@ -6,6 +6,7 @@ import Footer from "@/components/layout/Footer";
 import Header from "@/components/layout/Header";
 import TrustBar from "@/components/layout/TrustBar";
 import { loadNewsPostBySlug, loadNewsPosts } from "@/lib/news-db";
+import { buildPageMetadata, newsArticleJsonLd } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
@@ -15,11 +16,21 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const post = await loadNewsPostBySlug(slug);
   if (!post) return { title: "Nieuws" };
-  return {
-    title: `${post.title} | Bergasports`,
-    description: post.excerpt || undefined,
-    alternates: { canonical: `/nieuws/${post.slug}` },
-  };
+  return buildPageMetadata({
+    title: post.seoTitle?.trim() || post.title,
+    description:
+      post.seoDescription?.trim() ||
+      post.excerpt?.trim() ||
+      `${post.title} — nieuws van Bergasports in Dedemsvaart.`,
+    path: `/nieuws/${post.slug}`,
+    image: post.socialImage || post.coverImage,
+    imageAlt: post.imageAlt || post.title,
+    type: "article",
+    publishedTime: post.publishedAt ? new Date(post.publishedAt).toISOString() : undefined,
+    noindex: post.noindex,
+    ogTitle: post.ogTitle,
+    ogDescription: post.ogDescription,
+  });
 }
 
 export default async function NieuwsArticlePage({ params }: Props) {
@@ -30,6 +41,10 @@ export default async function NieuwsArticlePage({ params }: Props) {
 
   return (
     <main className="min-h-screen bg-[#faf8f5]/40">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(newsArticleJsonLd(post)) }}
+      />
       <TrustBar />
       <Header />
       <article className="mx-auto w-full max-w-[760px] px-4 py-10 md:py-14">
@@ -49,10 +64,10 @@ export default async function NieuwsArticlePage({ params }: Props) {
         {post.excerpt ? <p className="mt-4 text-lg text-[var(--foreground)]/75">{post.excerpt}</p> : null}
         {post.coverImage ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={post.coverImage} alt="" className="mt-8 w-full object-cover" />
+          <img src={post.coverImage} alt={post.imageAlt || post.title} className="mt-8 w-full object-cover" />
         ) : null}
         <div
-          className="prose prose-neutral mt-8 max-w-none text-[var(--foreground)]/85"
+          className="cms-html mt-8 max-w-none text-[var(--foreground)]/85"
           dangerouslySetInnerHTML={{ __html: post.bodyHtml }}
         />
       </article>

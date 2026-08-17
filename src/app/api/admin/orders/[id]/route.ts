@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 import { guardAdminApi } from "@/lib/admin-api-guard";
 import { ORDER_STATUSES, type OrderStatus } from "@/lib/orders";
-import { getOrderById, updateOrderStatus } from "@/lib/orders-db";
+import { getOrderById, updateOrderFulfillment, updateOrderStatus } from "@/lib/orders-db";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -43,23 +43,38 @@ export async function PATCH(request: Request, context: RouteContext) {
     return NextResponse.json({ error: "Invalid ID" }, { status: 400 });
   }
 
-  let body: { status?: string };
+  let body: {
+    status?: string;
+    customer_name?: string;
+    customer_email?: string | null;
+    customer_phone?: string;
+    shipping_address?: string;
+    shipping_city?: string;
+    shipping_county?: string | null;
+    shipping_postal_code?: string | null;
+    notes?: string | null;
+    tracking_code?: string | null;
+    tracking_url?: string | null;
+    shipping_carrier?: string | null;
+  };
   try {
-    body = (await request.json()) as { status?: string };
+    body = (await request.json()) as typeof body;
   } catch {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const status = body.status;
-  if (!status || !ORDER_STATUSES.includes(status as OrderStatus)) {
-    return NextResponse.json({ error: "Invalid status" }, { status: 400 });
-  }
-
   try {
-    const order = await updateOrderStatus(id, status as OrderStatus);
+    if (body.status) {
+      if (!ORDER_STATUSES.includes(body.status as OrderStatus)) {
+        return NextResponse.json({ error: "Invalid status" }, { status: 400 });
+      }
+      const order = await updateOrderStatus(id, body.status as OrderStatus);
+      return NextResponse.json(order);
+    }
+    const order = await updateOrderFulfillment(id, body);
     return NextResponse.json(order);
   } catch (e) {
-    const message = e instanceof Error ? e.message : "Failed to update status";
+    const message = e instanceof Error ? e.message : "Failed to update";
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

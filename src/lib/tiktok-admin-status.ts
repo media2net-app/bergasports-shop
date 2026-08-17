@@ -1,6 +1,7 @@
 import "server-only";
 
-import { isTikTokEventsApiConfigured, TIKTOK_PIXEL_ID } from "@/lib/tiktok-events-api";
+import { isTikTokEventsApiConfigured } from "@/lib/tiktok-events-api";
+import { getRuntimeSetting } from "@/lib/site-settings-db";
 
 export type TikTokAdminStatus = {
   ok: boolean;
@@ -11,21 +12,24 @@ export type TikTokAdminStatus = {
   eventsApiConfigured: boolean;
 };
 
-export function getTikTokAdminStatus(): TikTokAdminStatus {
-  const pixelConfigured = Boolean(TIKTOK_PIXEL_ID);
-  const eventsApiConfigured = isTikTokEventsApiConfigured();
+export async function getTikTokAdminStatus(): Promise<TikTokAdminStatus> {
+  const [pixelId, eventsApiConfigured] = await Promise.all([
+    getRuntimeSetting("NEXT_PUBLIC_TIKTOK_PIXEL_ID"),
+    isTikTokEventsApiConfigured(),
+  ]);
+  const pixelConfigured = Boolean(pixelId.trim() || process.env.TIKTOK_PIXEL_ID?.trim());
 
   if (!pixelConfigured) {
     return {
       ok: false,
       label: "Not configured",
-      detail: "Set NEXT_PUBLIC_TIKTOK_PIXEL_ID on the server",
+      detail: "Zet TikTok Pixel ID onder Instellingen → Pixels",
       pixelConfigured: false,
       eventsApiConfigured: false,
     };
   }
 
-  const suffix = TIKTOK_PIXEL_ID.slice(-4);
+  const suffix = (pixelId.trim() || process.env.TIKTOK_PIXEL_ID?.trim() || "").slice(-4);
 
   return {
     ok: true,

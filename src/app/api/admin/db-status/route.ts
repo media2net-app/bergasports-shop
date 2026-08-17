@@ -25,8 +25,8 @@ export async function GET() {
   if (!prisma) {
     return NextResponse.json({
       ok: false,
-      label: "Not configured",
-      detail: "DATABASE_URL is missing",
+      label: "Niet ingesteld",
+      detail: "DATABASE_URL ontbreekt",
     });
   }
 
@@ -37,15 +37,15 @@ export async function GET() {
 
     return NextResponse.json({
       ok: true,
-      label: "Connected",
-      detail: "Prisma Postgres reachable",
+      label: "Verbonden",
+      detail: "Prisma Postgres bereikbaar",
       latencyMs,
     });
   } catch (e) {
     const message = e instanceof Error ? e.message : "Unknown error";
     return NextResponse.json({
       ok: false,
-      label: "No connection",
+      label: "Geen verbinding",
       detail: message,
       latencyMs: Date.now() - started,
     });

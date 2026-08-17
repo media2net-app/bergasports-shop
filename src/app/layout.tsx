@@ -14,7 +14,9 @@ import {
   SITE_TAGLINE,
 } from "@/lib/site-brand";
 import { SITE_META_DESCRIPTION } from "@/lib/site-content";
+import { DEFAULT_OG_IMAGE } from "@/lib/seo";
 import { getRuntimeSetting } from "@/lib/site-settings-db";
+import { getFreeShippingThresholdSetting } from "@/lib/shop-runtime";
 import "./globals.css";
 
 const ubuntu = Ubuntu({
@@ -32,7 +34,7 @@ export const viewport: Viewport = {
   themeColor: "#1a1a1a",
 };
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   metadataBase: new URL(SITE_DEFAULT_URL),
   title: {
     default: `${SITE_BRAND_NAME}: Fietsenwinkel Orbea | Colnago | Basso | Cervelo | Nimbl`,
@@ -43,16 +45,52 @@ export const metadata: Metadata = {
     icon: SITE_LOGO_SRC,
     apple: SITE_LOGO_SRC,
   },
+  openGraph: {
+    type: "website",
+    siteName: SITE_BRAND_NAME,
+    locale: "nl_NL",
+    title: SITE_TAGLINE,
+    description: SITE_META_DESCRIPTION,
+    url: "/",
+    images: [DEFAULT_OG_IMAGE],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: SITE_BRAND_NAME,
+    description: SITE_META_DESCRIPTION,
+    images: [DEFAULT_OG_IMAGE.url],
+  },
 };
+
+/**
+ * Verificatiecodes komen uit de admin-instellingen (met env als fallback),
+ * zodat Search Console gekoppeld kan worden zonder deploy.
+ */
+export async function generateMetadata(): Promise<Metadata> {
+  const [google, bing] = await Promise.all([
+    getRuntimeSetting("GOOGLE_SITE_VERIFICATION"),
+    getRuntimeSetting("BING_SITE_VERIFICATION"),
+  ]);
+
+  return {
+    ...baseMetadata,
+    ...(google?.trim() ? { verification: { google: google.trim() } } : {}),
+    ...(bing?.trim() ? { other: { "msvalidate.01": bing.trim() } } : {}),
+  };
+}
 
 export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const [ga4, gtm] = await Promise.all([
+  const [ga4, gtm, metaPixel, googleAds, tiktokPixel, freeShippingThreshold] = await Promise.all([
     getRuntimeSetting("NEXT_PUBLIC_GA4_ID"),
     getRuntimeSetting("NEXT_PUBLIC_GTM_ID"),
+    getRuntimeSetting("NEXT_PUBLIC_META_PIXEL_ID"),
+    getRuntimeSetting("NEXT_PUBLIC_GOOGLE_ADS_ID"),
+    getRuntimeSetting("NEXT_PUBLIC_TIKTOK_PIXEL_ID"),
+    getFreeShippingThresholdSetting().catch(() => 50),
   ]);
 
   return (
@@ -66,8 +104,14 @@ export default async function RootLayout({
         <CookieConsentProvider>
           <CategoriesProviderRoot>
             <ProductLookupProvider>
-              <CartProvider>
-                <ShopAnalyticsShell>{children}</ShopAnalyticsShell>
+              <CartProvider freeShippingThreshold={freeShippingThreshold}>
+                <ShopAnalyticsShell
+                  tiktokPixelId={tiktokPixel}
+                  metaPixelId={metaPixel}
+                  googleAdsId={googleAds}
+                >
+                  {children}
+                </ShopAnalyticsShell>
                 <CookieConsentBanner />
               </CartProvider>
             </ProductLookupProvider>

@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+import { stockStateLabel, type StockState } from "@/lib/stock";
+
 export type AdminProductListRow = {
   id: number;
   catalogLabel: string;
@@ -11,9 +13,17 @@ export type AdminProductListRow = {
   category: string;
   priceLabel: string;
   stockLabel: string;
+  stockState: StockState;
   thumbUrl: string;
   featuredOnHomepage?: boolean;
   productStatus?: "published" | "concept";
+};
+
+const STOCK_STATE_CLASS: Record<StockState, string> = {
+  in_stock: "admin-badge-stock admin-badge-stock--in",
+  low_stock: "admin-badge-stock admin-badge-stock--low",
+  out_of_stock: "admin-badge-stock admin-badge-stock--out",
+  unmanaged: "admin-badge-stock",
 };
 
 type Props = {
@@ -69,7 +79,7 @@ export default function AdminProductsInteractiveList({ rows, exportHref, canWrit
     }
     if (
       !window.confirm(
-        `Permanently delete ${ids.length} product(s) from the catalog? This cannot be undone without a backup.`,
+        `${ids.length} product(en) definitief verwijderen uit de catalogus? Dit kan niet ongedaan worden gemaakt.`,
       )
     ) {
       return;
@@ -84,14 +94,14 @@ export default function AdminProductsInteractiveList({ rows, exportHref, canWrit
       });
       const data = (await res.json()) as { error?: string; removed?: number };
       if (!res.ok) {
-        setBulkError(data.error ?? "Delete failed");
+        setBulkError(data.error ?? "Verwijderen mislukt");
         setBusy(false);
         return;
       }
       setSelected(new Set());
       router.refresh();
     } catch {
-      setBulkError("Network error");
+      setBulkError("Geen verbinding met de server");
     }
     setBusy(false);
   }, [canWrite, selected, router]);
@@ -104,18 +114,18 @@ export default function AdminProductsInteractiveList({ rows, exportHref, canWrit
             type="button"
             className="admin-btn-danger"
             disabled={!canWrite || selected.size === 0 || busy}
-            title={!canWrite ? "Only available with local write access" : undefined}
+            title={!canWrite ? "Alleen beschikbaar met schrijfrechten op de database" : undefined}
             onClick={() => void bulkDelete()}
           >
-            {busy ? "Working…" : `Delete selected (${selected.size})`}
+            {busy ? "Bezig…" : `Verwijder selectie (${selected.size})`}
           </button>
           <a href={exportHref} className="admin-btn-secondary" download>
-            Download this page (JSON)
+            Download deze pagina (JSON)
           </a>
         </div>
         {!canWrite ? (
           <p className="admin-muted admin-m-0 admin-bulk-toolbar-hint">
-            Bulk delete only works with database write access (not on read-only deploys).
+            Verwijderen werkt alleen met schrijfrechten op de database.
           </p>
         ) : null}
       </div>
@@ -133,17 +143,17 @@ export default function AdminProductsInteractiveList({ rows, exportHref, canWrit
                     className="admin-checkbox"
                     checked={allSelected}
                     onChange={toggleAll}
-                    aria-label="Select all on this page"
+                    aria-label="Alles op deze pagina selecteren"
                   />
                 </th>
-                <th scope="col">Photo</th>
+                <th scope="col">Foto</th>
                 <th scope="col">ID</th>
-                <th scope="col">Catalog</th>
-                <th scope="col">Name</th>
-                <th scope="col">Price</th>
-                <th scope="col">Stock</th>
-                <th scope="col">Category</th>
-                <th className="admin-td-right" scope="col" aria-label="Actions" />
+                <th scope="col">Catalogus</th>
+                <th scope="col">Naam</th>
+                <th scope="col">Prijs</th>
+                <th scope="col">Voorraad</th>
+                <th scope="col">Categorie</th>
+                <th className="admin-td-right" scope="col" aria-label="Acties" />
               </tr>
             </thead>
             <tbody>
@@ -152,7 +162,7 @@ export default function AdminProductsInteractiveList({ rows, exportHref, canWrit
                   key={p.id}
                   className="admin-table-row-click"
                   onClick={() => router.push(`/admin/products/${p.id}`)}
-                  title="Click to edit"
+                  title="Klik om te bewerken"
                 >
                   <td className="admin-td-checkbox" onClick={(e) => e.stopPropagation()}>
                     <input
@@ -160,7 +170,7 @@ export default function AdminProductsInteractiveList({ rows, exportHref, canWrit
                       className="admin-checkbox"
                       checked={selected.has(p.id)}
                       onChange={() => toggleRow(p.id)}
-                      aria-label={`Select product ${p.id}`}
+                      aria-label={`Product ${p.id} selecteren`}
                     />
                   </td>
                   <td className="admin-thumb-cell">
@@ -184,8 +194,10 @@ export default function AdminProductsInteractiveList({ rows, exportHref, canWrit
                     ) : null}
                   </td>
                   <td className="admin-td-mono">{p.priceLabel}</td>
-                  <td className="admin-td-mono" title={p.stockLabel}>
-                    {p.stockLabel}
+                  <td>
+                    <span className={STOCK_STATE_CLASS[p.stockState]} title={stockStateLabel(p.stockState)}>
+                      {p.stockLabel === "—" ? stockStateLabel(p.stockState) : p.stockLabel}
+                    </span>
                   </td>
                   <td className="admin-td-truncate" title={p.category}>
                     {p.category}
@@ -196,7 +208,7 @@ export default function AdminProductsInteractiveList({ rows, exportHref, canWrit
                       className="admin-link-action"
                       onClick={(e) => e.stopPropagation()}
                     >
-                      Edit
+                      Bewerken
                     </Link>
                   </td>
                 </tr>
@@ -206,7 +218,7 @@ export default function AdminProductsInteractiveList({ rows, exportHref, canWrit
         </div>
       </div>
 
-      <div className="admin-product-cards-mobile" aria-label="Products (mobile)">
+      <div className="admin-product-cards-mobile" aria-label="Producten (mobiel)">
         {rows.map((p) => (
           <div
             key={p.id}
@@ -228,7 +240,7 @@ export default function AdminProductsInteractiveList({ rows, exportHref, canWrit
             }}
             role="button"
             tabIndex={0}
-            title="Click to edit"
+            title="Klik om te bewerken"
           >
             <input
               type="checkbox"
@@ -236,7 +248,7 @@ export default function AdminProductsInteractiveList({ rows, exportHref, canWrit
               checked={selected.has(p.id)}
               onChange={() => toggleRow(p.id)}
               onClick={(e) => e.stopPropagation()}
-              aria-label={`Select product ${p.id}`}
+              aria-label={`Product ${p.id} selecteren`}
             />
             <div className="admin-product-card">
               <div className="admin-thumb-wrap">
@@ -253,7 +265,8 @@ export default function AdminProductsInteractiveList({ rows, exportHref, canWrit
                 </div>
                 <div className="admin-product-card-meta">
                   {p.catalogLabel}
-                  {p.category ? ` · ${p.category}` : ""} · {p.priceLabel}
+                  {p.category ? ` · ${p.category}` : ""} · {p.priceLabel} ·{" "}
+                  {p.stockLabel === "—" ? stockStateLabel(p.stockState) : `${p.stockLabel} op voorraad`}
                 </div>
               </div>
               <span className="admin-link-action">→</span>

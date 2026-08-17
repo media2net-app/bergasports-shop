@@ -1,0 +1,31 @@
+---
+description: Nooit zelf een build of dev-server starten; de gebruiker doet dat
+alwaysApply: true
+---
+
+# Niet zelf builden
+
+Start **nooit** zelf een build of dev-server. De gebruiker draait die zelf (dev-server staat op poort 3060).
+
+```bash
+# ❌ NIET doen
+npm run build
+npm run dev
+npm start
+next build
+```
+
+## Wat wel
+
+Verifieer wijzigingen zonder build:
+
+```bash
+npm run lint        # eslint
+npx tsc --noEmit    # types
+```
+
+Gebruik verder de linter-diagnostiek van de editor, en `curl http://localhost:3060/...`
+om te checken of een pagina rendert op de dev-server die al draait.
+
+Is een build echt nodig om iets te bevestigen? Meld dat en laat de gebruiker het uitvoeren —
+draai het niet zelf.

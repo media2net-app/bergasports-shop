@@ -15,3 +15,15 @@ export function shopPhoneTelHref(phone: string = SHOP_PHONE_LABEL): string {
   }
   return `tel:+${digits}`;
 }
+
+/** WhatsApp-chatlink (`https://wa.me/316…`) uit een NL- of internationaal nummer. */
+export function whatsappHref(raw: string): string | null {
+  const digits = raw.replace(/\D/g, "");
+  if (digits.length < 9) return null;
+  const intl = digits.startsWith("00")
+    ? digits.slice(2)
+    : digits.startsWith("0")
+      ? `31${digits.slice(1)}`
+      : digits;
+  return `https://wa.me/${intl}`;
+}

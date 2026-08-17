@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 
 import Footer from "@/components/layout/Footer";
@@ -6,8 +7,16 @@ import TrustBar from "@/components/layout/TrustBar";
 import { getMolliePayment } from "@/lib/mollie";
 import { getOrderByNumber, markMollieOrderPaid } from "@/lib/orders-db";
 import { formatProductPrice } from "@/lib/products";
+import { buildPageMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = buildPageMetadata({
+  title: "Bestelling afgerond",
+  description: "Status van je betaling en bestelling bij Bergasports.",
+  path: "/checkout/return",
+  noindex: true,
+});
 
 type PageProps = {
   searchParams?: Promise<{ order?: string }>;

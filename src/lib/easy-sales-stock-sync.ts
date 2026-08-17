@@ -62,7 +62,7 @@ function stockFieldsChanged(a: TrendyolJsonProduct, b: TrendyolJsonProduct): boo
 }
 
 export async function syncStockFromEasySales(): Promise<EasySalesStockSyncSummary> {
-  const config = getEasySalesConfig();
+  const config = await getEasySalesConfig();
   if (!config) {
     return {
       ok: false,

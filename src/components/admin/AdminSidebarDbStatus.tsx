@@ -24,20 +24,20 @@ export default function AdminSidebarDbStatus() {
           return;
         }
         if (!res.ok && res.status === 401) {
-          setPayload({ ok: false, label: "Not signed in", detail: data.error });
+          setPayload({ ok: false, label: "Niet ingelogd", detail: data.error });
           setState("ready");
           return;
         }
         setPayload({
           ok: Boolean(data.ok),
-          label: data.label ?? (data.ok ? "Connected" : "Error"),
+          label: data.label ?? (data.ok ? "Verbonden" : "Fout"),
           detail: data.detail,
           latencyMs: data.latencyMs,
         });
         setState("ready");
       } catch {
         if (!cancelled) {
-          setPayload({ ok: false, label: "No connection", detail: "Network error" });
+          setPayload({ ok: false, label: "Geen verbinding", detail: "Netwerkfout" });
           setState("error");
         }
       }
@@ -66,7 +66,7 @@ export default function AdminSidebarDbStatus() {
         <span className="admin-sidebar-db-status-title">Database</span>
       </div>
       <div className="admin-sidebar-db-status-line">
-        {state === "loading" ? "Checking…" : (payload?.label ?? "—")}
+        {state === "loading" ? "Controleren…" : (payload?.label ?? "—")}
       </div>
       {payload?.latencyMs != null && state !== "loading" ? (
         <div className="admin-sidebar-db-status-meta">{payload.latencyMs} ms</div>
