@@ -399,7 +399,7 @@ async function main() {
     return;
   }
 
-  const env = { ...loadEnvFile(".env"), ...loadEnvFile(".env.local") };
+  const env = { ...loadEnvFile(".env"), ...loadEnvFile(".env.local"), ...process.env };
   const databaseUrl = env.DATABASE_URL;
   if (!databaseUrl) {
     console.error("DATABASE_URL ontbreekt in .env / .env.local");
@@ -407,7 +407,16 @@ async function main() {
   }
 
   const now = new Date().toISOString();
-  const pool = new pg.Pool({ connectionString: databaseUrl });
+  const isLocal = /localhost|127\.0\.0\.1/i.test(databaseUrl);
+  const pool = new pg.Pool(
+    isLocal
+      ? { connectionString: databaseUrl }
+      : {
+          connectionString: databaseUrl,
+          ssl: { rejectUnauthorized: false },
+          max: 1,
+        },
+  );
   const usedBySlug = new Map();
 
   try {
@@ -428,6 +437,8 @@ async function main() {
 
       const deletedCats = await client.query("DELETE FROM categories");
       console.log(`Categorieën gewist: ${deletedCats.rowCount ?? 0}`);
+      const deletedProducts = await client.query("DELETE FROM products");
+      console.log(`Producten gewist: ${deletedProducts.rowCount ?? 0}`);
 
       for (const c of categories) {
         await client.query(

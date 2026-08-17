@@ -5,7 +5,8 @@ import TrustBar from "@/components/layout/TrustBar";
 import ShopProductCard from "@/components/shop/ShopProductCard";
 import ShopSidebar from "@/components/shop/ShopSidebar";
 import ShopToolbar from "@/components/shop/ShopToolbar";
-import { CategorySeoFooter, CategorySeoIntro } from "@/components/shop/CategorySeoContent";
+import { CategorySeoFooter } from "@/components/shop/CategorySeoContent";
+import { CategorySeoIntroCollapsible } from "@/components/shop/CategorySeoIntroCollapsible";
 import {
   applyShopFacetFilters,
   applyShopSearchQuery,
@@ -185,7 +186,9 @@ export default async function ShopListingPage({ pathCategorySlug, searchParams }
           </p>
         ) : null}
 
-        {showCategorySeoIntro && categorySeo ? <CategorySeoIntro seo={categorySeo} /> : null}
+        {showCategorySeoIntro && categorySeo ? (
+          <CategorySeoIntroCollapsible seo={categorySeo} />
+        ) : null}
 
         {!catResolved.unknownCategory && total === 0 && searchTrimmed ? (
           <div className="mt-4 rounded-xl border border-[#e5dcc8] bg-white px-4 py-3 text-sm text-[var(--foreground)]/85">

@@ -51,16 +51,18 @@ export async function GET() {
 }
 
 function defaultNewProduct(id: number): TrendyolJsonProduct {
+  const slug = `nieuw-product-${id}`;
   return {
     id,
     name: "Nieuw product",
     brand: "",
     category: "",
     merchantId: 1185891,
-    url: "",
+    slug,
+    url: `https://www.bergasports.com/product/${slug}`,
     image: "",
     images: [],
-    currency: "Lei",
+    currency: "EUR",
     priceCurrent: 0,
     priceCurrentText: "0",
     priceDiscounted: 0,

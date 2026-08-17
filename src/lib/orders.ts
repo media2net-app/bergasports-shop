@@ -1,4 +1,5 @@
 export const ORDER_STATUSES = [
+  "awaiting_payment",
   "pending",
   "confirmed",
   "processing",
@@ -10,6 +11,7 @@ export const ORDER_STATUSES = [
 export type OrderStatus = (typeof ORDER_STATUSES)[number];
 
 export const ORDER_STATUS_LABEL: Record<OrderStatus, string> = {
+  awaiting_payment: "Wacht op betaling",
   pending: "Pending",
   confirmed: "Confirmed",
   processing: "Processing",
@@ -65,6 +67,7 @@ export type OrderRow = {
   shipping_postal_code: string | null;
   notes: string | null;
   payment_method: string;
+  mollie_payment_id: string | null;
   currency: string;
   subtotal: number;
   discount_total: number;

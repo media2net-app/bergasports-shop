@@ -6,6 +6,9 @@ import { loadCatalogProducts } from "@/lib/products-db";
 import { flattenRalexCategoryTree } from "@/lib/ralex-categories";
 import { shopCategoryPath } from "@/lib/shop-category-filter";
 import { requirePrisma } from "@/lib/database";
+import { loadNewsPosts } from "@/lib/news-db";
+
+export const dynamic = "force-dynamic";
 
 function siteUrl(): string {
   return (process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.bergasports.com").replace(/\/$/, "");
@@ -14,14 +17,17 @@ function siteUrl(): string {
 const STATIC_PATHS = [
   "/",
   "/shop",
-  "/categorii",
   "/contact",
+  "/over-ons",
+  "/onderhoud",
+  "/nieuws",
+  "/verzending",
+  "/retouren",
+  "/account",
   "/despre-noi",
   "/termeni-si-conditii",
   "/politica-de-confidentialitate",
   "/politica-cookies",
-  "/livrare-si-retur",
-  "/metode-de-plata",
 ] as const;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
@@ -57,6 +63,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "weekly",
       priority: 0.75,
     });
+  }
+
+  try {
+    const news = await loadNewsPosts({ limit: 200 });
+    for (const post of news) {
+      entries.push({
+        url: `${base}/nieuws/${post.slug}`,
+        lastModified: post.publishedAt ?? now,
+        changeFrequency: "weekly",
+        priority: 0.55,
+      });
+    }
+  } catch {
+    /* news optional */
   }
 
   try {

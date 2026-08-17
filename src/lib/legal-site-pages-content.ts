@@ -11,17 +11,18 @@ const p = (blocks: string[]) => blocks.map((html) => `<p>${html}</p>`).join("\n"
 export const legalSitePagesSeed = [
   {
     slug: "about",
-    path: "/despre-noi",
-    title: `Over ons | ${SITE_BRAND_NAME}`,
-    heading: "Over ons",
-    meta_title: `Over ons | ${SITE_BRAND_NAME}`,
-    meta_description: `${SITE_BRAND_NAME} — webshop voor racefietsen, wielrenschoenen, wielen en accessoires. Advies en service in Dedemsvaart.`,
+    path: "/over-ons",
+    title: `Over Bergasports | Ingmar Berga`,
+    heading: "Over Bergasports",
+    meta_title: `Over Bergasports | Ingmar Berga`,
+    meta_description: `Van topsport naar ${SITE_BRAND_NAME}. Persoonlijk advies, hoogwaardig materiaal en ervaring in Dedemsvaart.`,
     sort_order: 10,
     body_html: p([
-      `<strong>${SITE_BRAND_NAME}</strong> is meer dan een winkel — je sportpartner in Dedemsvaart.`,
-      "Wij bieden een exclusieve selectie racefietsen (o.a. Colnago, Cipollini, Orbea, Titici, Sensa), wielen, schoenen en accessoires, met deskundig advies op maat.",
-      "Van 2004 tot 2022 was ik professioneel actief in schaatsen en skeeleren. Vandaag help ik atleten en wielrenners met het juiste materiaal — van complete racefiets tot wielen, schoenen of brillen.",
-      "Plan vrijblijvend een afspraak via onze <a href=\"/contact\">contactpagina</a>.",
+      "<strong>Meer dan een winkel. Je sportpartner.</strong>",
+      "Mijn naam is Ingmar Berga. Van 2004 tot 2022 stond mijn leven in het teken van topsport. Als professioneel schaatser en skeeleraar heb ik ervaren hoe belangrijk materiaal, techniek en persoonlijke begeleiding zijn.",
+      `Die ervaring vormt de basis van ${SITE_BRAND_NAME}. Bij het leveren van sportmateriaal draait het niet alleen om een product verkopen — het gaat om de vraag: <em>Wat heb jij nodig om beter te worden?</em>`,
+      "Daarom kijken we naar jouw niveau, doelen, rijstijl, lichaam, huidige materiaal en hoe je het daadwerkelijk gebruikt.",
+      'Plan vrijblijvend een afspraak via onze <a href="/contact">contactpagina</a>.',
     ]),
   },
   {

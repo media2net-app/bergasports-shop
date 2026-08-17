@@ -1,35 +1,23 @@
 import Link from "next/link";
 
-import {
-  easySalesSyncBadgeClass,
-  easySalesSyncLabel,
-  type EasySalesSyncStatus,
-} from "@/lib/easy-sales-sync-status";
+import AdminWooCommerceOrdersSyncButton from "@/components/admin/AdminWooCommerceOrdersSyncButton";
 import { ORDER_STATUSES, ORDER_STATUS_LABEL, type OrderStatus } from "@/lib/orders";
 import { countOrdersByStatus, listOrders } from "@/lib/orders-db";
 import { getOrderSlaSummary } from "@/lib/order-sla";
 import { formatProductPrice } from "@/lib/products";
+import { isWooCommerceApiConfigured } from "@/lib/woocommerce-api";
 
 export const dynamic = "force-dynamic";
 
 type PageProps = {
-  searchParams?: Promise<{ status?: string; page?: string; esync?: string }>;
+  searchParams?: Promise<{ status?: string; page?: string }>;
 };
 
-type EasySalesSyncFilter = "all" | "failed" | "pending" | "synced";
-
 function formatDate(iso: string) {
-  return new Date(iso).toLocaleString("en-GB", {
+  return new Date(iso).toLocaleString("nl-NL", {
     dateStyle: "short",
     timeStyle: "short",
   });
-}
-
-function parseEsync(raw: string | undefined): EasySalesSyncFilter {
-  if (raw === "failed" || raw === "pending" || raw === "synced") {
-    return raw;
-  }
-  return "all";
 }
 
 export default async function AdminOrdersPage({ searchParams }: PageProps) {
@@ -39,22 +27,19 @@ export default async function AdminOrdersPage({ searchParams }: PageProps) {
     rawStatus && (rawStatus === "all" || ORDER_STATUSES.includes(rawStatus as OrderStatus))
       ? (rawStatus as OrderStatus | "all")
       : "all";
-  const esync = parseEsync(sp.esync);
   const page = Math.max(1, Number.parseInt(String(sp.page ?? "1"), 10) || 1);
+  const wcConfigured = await isWooCommerceApiConfigured();
 
   const [{ orders, total, totalPages, page: currentPage }, counts, sla] = await Promise.all([
-    listOrders({ status, easySalesSync: esync, page, pageSize: 25 }),
+    listOrders({ status, page, pageSize: 25 }),
     countOrdersByStatus(),
     getOrderSlaSummary(24),
   ]);
 
-  const filterHref = (s: OrderStatus | "all", e: EasySalesSyncFilter, p = 1) => {
+  const filterHref = (s: OrderStatus | "all", p = 1) => {
     const q = new URLSearchParams();
     if (s !== "all") {
       q.set("status", s);
-    }
-    if (e !== "all") {
-      q.set("esync", e);
     }
     if (p > 1) {
       q.set("page", String(p));
@@ -68,9 +53,6 @@ export default async function AdminOrdersPage({ searchParams }: PageProps) {
     if (status !== "all") {
       q.set("status", status);
     }
-    if (esync !== "all") {
-      q.set("esync", esync);
-    }
     const qs = q.toString();
     return qs ? `/api/admin/orders/export?${qs}` : "/api/admin/orders/export";
   };
@@ -79,59 +61,56 @@ export default async function AdminOrdersPage({ searchParams }: PageProps) {
     <div className="admin-stack">
       {sla.pendingOlderThan24h > 0 ? (
         <div className="rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950" role="status">
-          <strong>SLA:</strong> {sla.pendingOlderThan24h} pending order
-          {sla.pendingOlderThan24h === 1 ? "" : "s"} older than 24h.
+          <strong>SLA:</strong> {sla.pendingOlderThan24h} open bestelling
+          {sla.pendingOlderThan24h === 1 ? "" : "en"} ouder dan 24u.
           <Link href="/admin/orders?status=pending" className="ml-2 font-semibold underline">
-            View pending
+            Bekijk open
           </Link>
         </div>
       ) : null}
       <div className="admin-page-head">
         <div>
-          <h1 className="admin-h1 admin-m-0">Shop orders</h1>
+          <h1 className="admin-h1 admin-m-0">Bestellingen</h1>
           <p className="admin-muted admin-m-0 admin-mt-05">
-            {total} {total === 1 ? "order" : "orders"} from checkout; synced to Easy Sales after payment.
+            {total} {total === 1 ? "bestelling" : "bestellingen"}
+            {wcConfigured ? " · inclusief WooCommerce (WC-…)" : ""}.
           </p>
         </div>
-        <a href={exportHref()} className="admin-btn-secondary">
-          Export CSV
-        </a>
+        <div className="admin-tools-row">
+          <a href={exportHref()} className="admin-btn-secondary">
+            Export CSV
+          </a>
+        </div>
       </div>
+
+      {wcConfigured ? (
+        <div className="admin-panel admin-stack-tight">
+          <h2 className="admin-panel-title admin-m-0">WooCommerce sync</h2>
+          <p className="admin-muted admin-m-0">
+            Haal bestellingen op van bergasports.com. Orders krijgen nummer <code>WC-…</code>.
+          </p>
+          <AdminWooCommerceOrdersSyncButton />
+        </div>
+      ) : null}
 
       <div className="admin-pill-row">
         <span className="admin-pill-row-label">Status</span>
-        <Link href={filterHref("all", esync)} className={`admin-pill${status === "all" ? " active" : ""}`}>
-          All ({counts.all ?? 0})
+        <Link href={filterHref("all")} className={`admin-pill${status === "all" ? " active" : ""}`}>
+          Alles ({counts.all ?? 0})
         </Link>
         {ORDER_STATUSES.map((s) => (
-          <Link key={s} href={filterHref(s, esync)} className={`admin-pill${status === s ? " active" : ""}`}>
+          <Link key={s} href={filterHref(s)} className={`admin-pill${status === s ? " active" : ""}`}>
             {ORDER_STATUS_LABEL[s]} ({counts[s] ?? 0})
           </Link>
         ))}
       </div>
 
-      <div className="admin-pill-row">
-        <span className="admin-pill-row-label">Easy Sales</span>
-        <Link href={filterHref(status, "all")} className={`admin-pill${esync === "all" ? " active" : ""}`}>
-          All
-        </Link>
-        <Link href={filterHref(status, "synced")} className={`admin-pill${esync === "synced" ? " active" : ""}`}>
-          Synced
-        </Link>
-        <Link href={filterHref(status, "pending")} className={`admin-pill${esync === "pending" ? " active" : ""}`}>
-          Pending
-        </Link>
-        <Link href={filterHref(status, "failed")} className={`admin-pill${esync === "failed" ? " active" : ""}`}>
-          Failed
-        </Link>
-      </div>
-
       {orders.length === 0 ? (
         <div className="admin-panel">
           <p className="admin-muted admin-m-0">
-            No orders yet
-            {status !== "all" ? " with this status" : ""}
-            {esync !== "all" ? " and this Easy Sales filter" : ""}. Place a test order on the shop.
+            Nog geen bestellingen
+            {status !== "all" ? " met deze status" : ""}
+            {wcConfigured ? ". Gebruik Sync WC hierboven." : "."}
           </p>
         </div>
       ) : (
@@ -139,13 +118,13 @@ export default async function AdminOrdersPage({ searchParams }: PageProps) {
           <table className="admin-table">
             <thead>
               <tr>
-                <th>Number</th>
-                <th>Customer</th>
-                <th>City</th>
+                <th>Nummer</th>
+                <th>Klant</th>
+                <th>Plaats</th>
                 <th>Status</th>
-                <th>Easy Sales</th>
-                <th className="admin-td-right">Total</th>
-                <th>Date</th>
+                <th>Betaling</th>
+                <th className="admin-td-right">Totaal</th>
+                <th>Datum</th>
               </tr>
             </thead>
             <tbody>
@@ -166,14 +145,8 @@ export default async function AdminOrdersPage({ searchParams }: PageProps) {
                   <td>
                     <span className="admin-badge-src">{ORDER_STATUS_LABEL[order.status]}</span>
                   </td>
-                  <td>
-                    <span
-                      className={easySalesSyncBadgeClass(
-                        (order.easy_sales_sync_status as EasySalesSyncStatus) ?? null,
-                      )}
-                    >
-                      {easySalesSyncLabel((order.easy_sales_sync_status as EasySalesSyncStatus) ?? null)}
-                    </span>
+                  <td className="admin-muted" style={{ fontSize: "0.8rem" }}>
+                    {order.payment_method}
                   </td>
                   <td className="admin-td-right admin-td-mono">
                     {formatProductPrice(order.total, order.currency)}
@@ -191,21 +164,21 @@ export default async function AdminOrdersPage({ searchParams }: PageProps) {
       {totalPages > 1 ? (
         <div className="admin-pagination">
           {currentPage > 1 ? (
-            <Link href={filterHref(status, esync, currentPage - 1)} className="admin-pagination-link">
-              ← Previous
+            <Link href={filterHref(status, currentPage - 1)} className="admin-pagination-link">
+              ← Vorige
             </Link>
           ) : (
-            <span className="admin-pagination-link is-disabled">← Previous</span>
+            <span className="admin-pagination-link is-disabled">← Vorige</span>
           )}
           <span className="admin-pagination-meta">
-            Page <strong>{currentPage}</strong> / {totalPages}
+            Pagina <strong>{currentPage}</strong> / {totalPages}
           </span>
           {currentPage < totalPages ? (
-            <Link href={filterHref(status, esync, currentPage + 1)} className="admin-pagination-link">
-              Next →
+            <Link href={filterHref(status, currentPage + 1)} className="admin-pagination-link">
+              Volgende →
             </Link>
           ) : (
-            <span className="admin-pagination-link is-disabled">Next →</span>
+            <span className="admin-pagination-link is-disabled">Volgende →</span>
           )}
         </div>
       ) : null}

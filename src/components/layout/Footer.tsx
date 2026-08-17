@@ -29,8 +29,13 @@ export default function Footer() {
           </h4>
           <ul className="mt-3 space-y-2 text-sm">
             <li>
-              <Link href="/despre-noi" className={footerLink}>
+              <Link href="/over-ons" className={footerLink}>
                 Over ons
+              </Link>
+            </li>
+            <li>
+              <Link href="/onderhoud" className={footerLink}>
+                Onderhoud
               </Link>
             </li>
             <li>
@@ -39,14 +44,29 @@ export default function Footer() {
               </Link>
             </li>
             <li>
-              <Link href="/livrare-si-retur" className={footerLink}>
-                Verzending en retour
+              <Link href="/verzending" className={footerLink}>
+                Verzending
               </Link>
             </li>
             <li>
-              <Link href="/metode-de-plata" className={footerLink}>
-                Betaalmethoden
+              <Link href="/retouren" className={footerLink}>
+                Retouren
               </Link>
+            </li>
+            <li>
+              <Link href="/nieuws" className={footerLink}>
+                Nieuws
+              </Link>
+            </li>
+            <li>
+              <a
+                href="https://www.instagram.com/bergasports/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className={footerLink}
+              >
+                Instagram
+              </a>
             </li>
           </ul>
         </div>

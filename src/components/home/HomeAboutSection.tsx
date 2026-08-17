@@ -17,7 +17,7 @@ export default function HomeAboutSection() {
       <p className="mt-4 text-sm leading-relaxed text-[var(--foreground)]/85 md:text-base">{HOME_ABOUT.text}</p>
       <p className="mt-6">
         <Link
-          href="/despre-noi"
+          href="/over-ons"
           className="text-sm font-semibold text-[var(--brand-hover)] underline underline-offset-2"
         >
           {HOME_ABOUT.cta} →

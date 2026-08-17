@@ -4,22 +4,11 @@ import { usePathname } from "next/navigation";
 
 const PAGE_TITLES: Record<string, string> = {
   "/admin": "Dashboard",
-  "/admin/analytics": "Live analytics",
-  "/admin/performance": "Performance",
-  "/admin/reports": "Reports",
-  "/admin/settings": "Settings",
-  "/admin/users": "Users",
-  "/admin/easy-sales-orders": "Easy Sales",
-  "/admin/ai-images": "Generate",
-  "/admin/ai-images/templates": "Templates",
-  "/admin/ai-images/library": "Library",
-  "/admin/products": "Products",
-  "/admin/products/new": "New product",
-  "/admin/import": "Import",
-  "/admin/categories": "Category SEO",
-  "/admin/orders": "Shop orders",
-  "/admin/customers": "Customers",
-  "/admin/pages": "Pages",
+  "/admin/settings": "Instellingen",
+  "/admin/products": "Producten",
+  "/admin/products/new": "Nieuw product",
+  "/admin/orders": "Bestellingen",
+  "/admin/pages": "Pagina's",
 };
 
 function titleForPath(path: string): string {
@@ -27,16 +16,13 @@ function titleForPath(path: string): string {
     return PAGE_TITLES[path];
   }
   if (path.startsWith("/admin/products/")) {
-    return "Edit product";
+    return "Product bewerken";
   }
   if (path.startsWith("/admin/orders/")) {
-    return "Order detail";
-  }
-  if (path.startsWith("/admin/customers/")) {
-    return "Customer";
+    return "Bestelling";
   }
   if (path.startsWith("/admin/pages/")) {
-    return "Edit page";
+    return "Pagina bewerken";
   }
   return "Admin";
 }
@@ -60,7 +46,7 @@ export default function AdminTopbar({ menuOpen, onMenuToggle }: AdminTopbarProps
         aria-controls="admin-sidebar-nav"
       >
         <span className="admin-menu-toggle-icon" aria-hidden />
-        <span className="admin-sr-only">{menuOpen ? "Close menu" : "Open menu"}</span>
+        <span className="admin-sr-only">{menuOpen ? "Menu sluiten" : "Menu openen"}</span>
       </button>
       <h1 className="admin-topbar-heading">{title}</h1>
     </header>

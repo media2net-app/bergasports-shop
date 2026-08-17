@@ -30,7 +30,7 @@ function generateOrderNumber() {
   const r = Math.floor(Math.random() * 10000)
     .toString()
     .padStart(4, "0");
-  return `HLK-${y}${m}${day}-${r}`;
+  return `BS-${y}${m}${day}-${r}`;
 }
 
 function prismaOrderToRow(o: {
@@ -46,6 +46,7 @@ function prismaOrderToRow(o: {
   shippingPostalCode: string | null;
   notes: string | null;
   paymentMethod: string;
+  molliePaymentId?: string | null;
   currency: string;
   subtotal: Prisma.Decimal;
   discountTotal: Prisma.Decimal;
@@ -71,6 +72,7 @@ function prismaOrderToRow(o: {
     shipping_postal_code: o.shippingPostalCode,
     notes: o.notes,
     payment_method: o.paymentMethod,
+    mollie_payment_id: o.molliePaymentId ?? null,
     currency: o.currency,
     subtotal: decimalToNumber(o.subtotal) ?? 0,
     discount_total: decimalToNumber(o.discountTotal) ?? 0,
@@ -122,15 +124,20 @@ async function deliverCustomerStatusEmail(
   }
 }
 
-export async function createOrder(input: CreateOrderInput): Promise<{ id: number; orderNumber: string }> {
+export async function createOrder(
+  input: CreateOrderInput & { status?: OrderStatus },
+): Promise<{ id: number; orderNumber: string }> {
   const prisma = requirePrisma();
   const orderNumber = generateOrderNumber();
+  const paymentMethod = input.paymentMethod ?? "cash_on_delivery";
+  const initialStatus: OrderStatus =
+    input.status ?? (paymentMethod === "mollie" ? "awaiting_payment" : "pending");
 
   const order = await prisma.$transaction(async (tx) => {
     const created = await tx.order.create({
       data: {
         orderNumber,
-        status: "pending",
+        status: initialStatus,
         customerName: input.customerName.trim(),
         customerEmail: input.customerEmail?.trim() || null,
         customerPhone: input.customerPhone.trim(),
@@ -139,7 +146,7 @@ export async function createOrder(input: CreateOrderInput): Promise<{ id: number
         shippingCounty: input.shippingCounty?.trim() || null,
         shippingPostalCode: input.shippingPostalCode?.trim() || null,
         notes: input.notes?.trim() || null,
-        paymentMethod: input.paymentMethod ?? "cash_on_delivery",
+        paymentMethod,
         currency: input.currency,
         subtotal: input.subtotal,
         discountTotal: input.discountTotal,
@@ -169,16 +176,35 @@ export async function createOrder(input: CreateOrderInput): Promise<{ id: number
   const now = order.createdAt.toISOString();
 
   revalidatePath("/admin/orders");
-  revalidatePath("/admin/customers");
 
+  // Defer fulfillment side-effects until Mollie payment is confirmed.
+  if (initialStatus !== "awaiting_payment") {
+    void runOrderPaidSideEffects(orderId, {
+      ...input,
+      paymentMethod,
+      orderNumber: order.orderNumber,
+      createdAt: now,
+    });
+  }
+
+  return { id: orderId, orderNumber: order.orderNumber };
+}
+
+type OrderPaidSideEffectInput = CreateOrderInput & {
+  orderNumber: string;
+  createdAt: string;
+  paymentMethod: string;
+};
+
+async function runOrderPaidSideEffects(orderId: number, input: OrderPaidSideEffectInput): Promise<void> {
   void pushOrderToEasySalesAfterCreate(orderId, {
     ...input,
-    orderNumber: order.orderNumber,
-    createdAt: now,
+    orderNumber: input.orderNumber,
+    createdAt: input.createdAt,
   });
 
   void notifyAdminNewOrder({
-    orderNumber: order.orderNumber,
+    orderNumber: input.orderNumber,
     customerName: input.customerName,
     customerPhone: input.customerPhone,
     customerEmail: input.customerEmail,
@@ -191,7 +217,7 @@ export async function createOrder(input: CreateOrderInput): Promise<{ id: number
     shippingCounty: input.shippingCounty,
     shippingPostalCode: input.shippingPostalCode,
     notes: input.notes,
-    paymentMethod: input.paymentMethod ?? "cash_on_delivery",
+    paymentMethod: input.paymentMethod,
     items: input.items.map((item, index) => ({
       id: index + 1,
       order_id: orderId,
@@ -219,8 +245,126 @@ export async function createOrder(input: CreateOrderInput): Promise<{ id: number
       }
     });
   }
+}
 
-  return { id: orderId, orderNumber: order.orderNumber };
+export async function attachMolliePaymentId(orderId: number, molliePaymentId: string): Promise<void> {
+  const prisma = requirePrisma();
+  await prisma.order.update({
+    where: { id: BigInt(orderId) },
+    data: { molliePaymentId },
+  });
+}
+
+export async function getOrderByNumber(orderNumber: string): Promise<OrderWithItems | null> {
+  const prisma = requirePrisma();
+  const order = await prisma.order.findUnique({
+    where: { orderNumber },
+    include: { items: { orderBy: { id: "asc" } } },
+  });
+  if (!order) {
+    return null;
+  }
+  return {
+    ...prismaOrderToRow(order),
+    items: order.items.map((row) => ({
+      id: bigIntToNumber(row.id),
+      order_id: bigIntToNumber(row.orderId),
+      product_id: row.productId != null ? bigIntToNumber(row.productId) : null,
+      line_id: row.lineId,
+      name: row.name,
+      quantity: row.quantity,
+      unit_price: decimalToNumber(row.unitPrice) ?? 0,
+      line_total: decimalToNumber(row.lineTotal) ?? 0,
+      currency: row.currency,
+      image: row.image,
+      variation_label: row.variationLabel,
+      bundle_tier_id: row.bundleTierId,
+    })),
+  };
+}
+
+export async function getOrderByMolliePaymentId(paymentId: string): Promise<OrderWithItems | null> {
+  const prisma = requirePrisma();
+  const order = await prisma.order.findFirst({
+    where: { molliePaymentId: paymentId },
+    include: { items: { orderBy: { id: "asc" } } },
+  });
+  if (!order) {
+    return null;
+  }
+  return {
+    ...prismaOrderToRow(order),
+    items: order.items.map((row) => ({
+      id: bigIntToNumber(row.id),
+      order_id: bigIntToNumber(row.orderId),
+      product_id: row.productId != null ? bigIntToNumber(row.productId) : null,
+      line_id: row.lineId,
+      name: row.name,
+      quantity: row.quantity,
+      unit_price: decimalToNumber(row.unitPrice) ?? 0,
+      line_total: decimalToNumber(row.lineTotal) ?? 0,
+      currency: row.currency,
+      image: row.image,
+      variation_label: row.variationLabel,
+      bundle_tier_id: row.bundleTierId,
+    })),
+  };
+}
+
+/** Mark Mollie order as paid (pending) and run post-payment side effects once. */
+export async function markMollieOrderPaid(orderId: number): Promise<OrderWithItems | null> {
+  const prisma = requirePrisma();
+  const existing = await getOrderById(orderId);
+  if (!existing) {
+    return null;
+  }
+  if (existing.status !== "awaiting_payment") {
+    return existing;
+  }
+
+  await prisma.order.update({
+    where: { id: BigInt(orderId) },
+    data: { status: "pending" },
+  });
+  revalidatePath("/admin/orders");
+
+  const paid = await getOrderById(orderId);
+  if (!paid) {
+    return null;
+  }
+
+  void runOrderPaidSideEffects(orderId, {
+    customerName: paid.customer_name,
+    customerEmail: paid.customer_email ?? undefined,
+    marketingConsent: paid.marketing_consent,
+    customerPhone: paid.customer_phone,
+    shippingAddress: paid.shipping_address,
+    shippingCity: paid.shipping_city,
+    shippingCounty: paid.shipping_county ?? undefined,
+    shippingPostalCode: paid.shipping_postal_code ?? undefined,
+    notes: paid.notes ?? undefined,
+    paymentMethod: paid.payment_method,
+    currency: paid.currency,
+    subtotal: paid.subtotal,
+    discountTotal: paid.discount_total,
+    total: paid.total,
+    orderNumber: paid.order_number,
+    createdAt: paid.created_at,
+    items: paid.items.map((item) => ({
+      productId: item.product_id ?? 0,
+      lineId: item.line_id ?? String(item.id),
+      name: item.name,
+      quantity: item.quantity,
+      unitPrice: item.unit_price,
+      lineTotal: item.line_total,
+      currency: item.currency,
+      image: item.image ?? undefined,
+      variationLabel: item.variation_label ?? undefined,
+      bundleTierId: item.bundle_tier_id ?? undefined,
+    })),
+  });
+
+  return paid;
 }
 
 export type ListOrdersOptions = {

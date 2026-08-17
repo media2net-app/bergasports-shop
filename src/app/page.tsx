@@ -1,19 +1,21 @@
 import { Suspense } from "react";
 
 import HeroFromCms from "@/components/home/HeroFromCms";
-import HomeAboutSection from "@/components/home/HomeAboutSection";
-import HomeAppointmentSection from "@/components/home/HomeAppointmentSection";
+import HomeAboutTeaser from "@/components/home/HomeAboutTeaser";
+import HomeAdviceSection from "@/components/home/HomeAdviceSection";
+import HomeBrandsSection from "@/components/home/HomeBrandsSection";
 import HomeFeaturedSection from "@/components/home/HomeFeaturedSection";
 import HomeFeaturedSkeleton from "@/components/home/HomeFeaturedSkeleton";
 import HomeHeroFromCms from "@/components/home/HomeHeroFromCms";
-import HomeIntroSection from "@/components/home/HomeIntroSection";
-import HomeShopCategories from "@/components/home/HomeShopCategories";
-import UspSection from "@/components/home/UspSection";
+import HomeInstagramSection from "@/components/home/HomeInstagramSection";
+import HomeNewsSection from "@/components/home/HomeNewsSection";
+import HomePillarsSection from "@/components/home/HomePillarsSection";
+import HomeVisitSection from "@/components/home/HomeVisitSection";
 import Footer from "@/components/layout/Footer";
 import Header from "@/components/layout/Header";
 import TrustBar from "@/components/layout/TrustBar";
 
-export const revalidate = 300;
+export const dynamic = "force-dynamic";
 
 export default function Home() {
   return (
@@ -23,15 +25,21 @@ export default function Home() {
       <Suspense fallback={<HeroFromCms blocks={null} />}>
         <HomeHeroFromCms />
       </Suspense>
-      <div className="mx-auto w-full max-w-[1440px] space-y-12 px-4 py-10 md:space-y-14 md:py-12 lg:px-6">
-        <HomeIntroSection />
-        <HomeShopCategories />
+      <div className="mx-auto w-full max-w-[1440px] space-y-14 px-4 py-10 md:space-y-16 md:py-12 lg:px-6">
+        <HomePillarsSection />
         <Suspense fallback={<HomeFeaturedSkeleton />}>
           <HomeFeaturedSection />
         </Suspense>
-        <HomeAboutSection />
-        <HomeAppointmentSection />
-        <UspSection />
+        <HomeBrandsSection />
+        <HomeAdviceSection />
+        <HomeAboutTeaser />
+        <Suspense fallback={null}>
+          <HomeNewsSection />
+        </Suspense>
+        <Suspense fallback={null}>
+          <HomeInstagramSection />
+        </Suspense>
+        <HomeVisitSection />
       </div>
       <Footer />
     </main>

@@ -7,12 +7,37 @@ import { PrismaClient } from "@/generated/prisma/client";
 
 const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient };
 
+function normalizeDatabaseUrl(raw: string): string {
+  // Strip sslmode — newer `pg` treats require as verify-full and breaks on some hosts.
+  // SSL is configured explicitly on the Pool instead.
+  return raw
+    .replace(/([?&])sslmode=[^&]*/gi, "$1")
+    .replace(/[?&]$/, "")
+    .replace(/\?&/, "?")
+    .replace(/\?$/, "");
+}
+
 function createPrismaClient(): PrismaClient {
-  const connectionString = process.env.DATABASE_URL;
-  if (!connectionString) {
+  const raw = process.env.DATABASE_URL;
+  if (!raw) {
     throw new Error("DATABASE_URL ontbreekt.");
   }
-  const pool = new pg.Pool({ connectionString });
+  const connectionString = normalizeDatabaseUrl(raw);
+  const isLocal = /localhost|127\.0\.0\.1/i.test(connectionString);
+  // Serverless (Vercel): keep pool tiny. Supabase session pooler (5432) caps ~15 clients;
+  // prefer transaction pooler (:6543) in DATABASE_URL for production.
+  const pool = new pg.Pool(
+    isLocal
+      ? { connectionString, max: 5 }
+      : {
+          connectionString,
+          ssl: { rejectUnauthorized: false },
+          max: 1,
+          idleTimeoutMillis: 10_000,
+          connectionTimeoutMillis: 15_000,
+          allowExitOnIdle: true,
+        },
+  );
   const adapter = new PrismaPg(pool);
   return new PrismaClient({ adapter });
 }

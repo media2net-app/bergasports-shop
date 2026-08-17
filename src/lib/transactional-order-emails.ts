@@ -40,6 +40,9 @@ function paymentMethodLabel(method: string): string {
   if (m === "cash_on_delivery" || m === "ramburs" || m === "cod") {
     return "Rembours (bij aflevering)";
   }
+  if (m === "mollie" || m === "ideal" || m === "card" || m === "online") {
+    return "Online (Mollie)";
+  }
   return method;
 }
 

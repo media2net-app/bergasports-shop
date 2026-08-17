@@ -2,7 +2,7 @@ import "server-only";
 
 import type { Prisma } from "@/generated/prisma/client";
 import { cache } from "react";
-import { revalidatePath, unstable_cache } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 
 import { requirePrisma } from "@/lib/database";
 import type { HomepageBlocks, SitePageRow, SitePageUpdateInput } from "@/lib/site-pages";
@@ -57,16 +57,11 @@ async function fetchPublishedPageByPath(path: string): Promise<SitePageRow | nul
   return row ? rowToPage(row) : null;
 }
 
-const loadPageByPathCached = cache(async (path: string) =>
-  unstable_cache(() => fetchPublishedPageByPath(path), ["site-page", path], {
-    revalidate: 300,
-    tags: [`site-page:${path}`],
-  })(),
-);
+/** Per-request dedupe only — geen cross-request cache, zodat CMS-wijzigingen direct zichtbaar zijn. */
+export const getPublishedPageByPath = cache(async (path: string): Promise<SitePageRow | null> => {
+  return fetchPublishedPageByPath(path);
+});
 
-export async function getPublishedPageByPath(path: string): Promise<SitePageRow | null> {
-  return loadPageByPathCached(path);
-}
 
 export async function updateSitePage(id: number, input: SitePageUpdateInput): Promise<SitePageRow> {
   const prisma = requirePrisma();
@@ -98,6 +93,7 @@ export async function updateSitePage(id: number, input: SitePageUpdateInput): Pr
 
 function invalidatePageCache(path: string) {
   revalidatePath(path);
+  revalidateTag(`site-page:${path}`, "max");
   if (path !== "/") {
     revalidatePath("/");
   }

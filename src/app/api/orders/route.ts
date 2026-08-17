@@ -1,13 +1,21 @@
 import { NextResponse } from "next/server";
 
 import { readConsentFromCookieString, hasMarketingConsent } from "@/lib/cookie-consent";
-import { readTtclidFromCookieString } from "@/lib/tiktok-attribution";
-import { sendTikTokPurchaseEvents } from "@/lib/tiktok-events-api";
-import { createOrder } from "@/lib/orders-db";
+import {
+  attachMolliePaymentId,
+  createOrder,
+} from "@/lib/orders-db";
 import { applyRepeatDiscount, customerQualifiesForRepeatDiscount } from "@/lib/repeat-purchase-discount";
 import { loadProductById } from "@/lib/products-db";
 import { isProductInStock } from "@/lib/products";
 import { productAvailableStock } from "@/lib/stock";
+import {
+  createMolliePayment,
+  isMollieConfigured,
+  mollieCheckoutUrl,
+} from "@/lib/mollie";
+import { applyCouponCode } from "@/lib/coupons";
+import { getShippingQuote } from "@/lib/shipping";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -20,8 +28,14 @@ type CheckoutBody = {
   shippingCity?: string;
   shippingCounty?: string;
   shippingPostalCode?: string;
+  shippingCountry?: string;
+  shippingMethod?: string;
+  shippingCost?: number;
+  couponCode?: string;
+  mollieMethod?: string;
   notes?: string;
   marketingConsent?: boolean;
+  legalAccepted?: boolean;
   currency?: string;
   subtotal?: number;
   discountTotal?: number;
@@ -41,6 +55,15 @@ type CheckoutBody = {
   ttclid?: string;
 };
 
+function siteBaseUrl(request: Request): string {
+  const fromEnv = process.env.NEXT_PUBLIC_SITE_URL?.trim().replace(/\/$/, "");
+  if (fromEnv) return fromEnv;
+  const host = request.headers.get("x-forwarded-host") || request.headers.get("host");
+  const proto = request.headers.get("x-forwarded-proto") || "https";
+  if (host) return `${proto}://${host}`;
+  return "https://bergasports.vercel.app";
+}
+
 export async function POST(request: Request) {
   let body: CheckoutBody;
   try {
@@ -54,11 +77,30 @@ export async function POST(request: Request) {
   const shippingAddress = body.shippingAddress?.trim();
   const shippingCity = body.shippingCity?.trim();
   const items = body.items ?? [];
+  const paymentMethod = "mollie";
 
   if (!customerName || !customerPhone || !shippingAddress || !shippingCity) {
     return NextResponse.json(
       { error: "Vul naam, telefoon, adres en plaats in." },
       { status: 400 },
+    );
+  }
+  if (!body.customerEmail?.trim()) {
+    return NextResponse.json(
+      { error: "E-mail is verplicht voor online betalen." },
+      { status: 400 },
+    );
+  }
+  if (body.legalAccepted !== true) {
+    return NextResponse.json(
+      { error: "Accepteer de voorwaarden om door te gaan." },
+      { status: 400 },
+    );
+  }
+  if (!(await isMollieConfigured())) {
+    return NextResponse.json(
+      { error: "Online betalen is tijdelijk niet beschikbaar." },
+      { status: 503 },
     );
   }
   if (!items.length) {
@@ -73,11 +115,25 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Ongeldig totaal." }, { status: 400 });
   }
 
+  if (body.couponCode?.trim()) {
+    const coupon = await applyCouponCode(body.couponCode, subtotal);
+    if (coupon.ok) {
+      discountTotal = Math.max(discountTotal, coupon.discount);
+    }
+  }
+
   if (await customerQualifiesForRepeatDiscount(customerPhone)) {
     discountTotal = applyRepeatDiscount(subtotal, discountTotal).discountTotal;
   }
 
-  const total = Math.round((subtotal - discountTotal) * 100) / 100;
+  const country = (body.shippingCountry || "NL").toUpperCase();
+  const shipMethod = body.shippingMethod || "standard";
+  const shipQuote = getShippingQuote(country, shipMethod, subtotal - discountTotal);
+  const shippingCost = shipQuote?.price ?? Number(body.shippingCost ?? 0) ?? 0;
+
+  const total =
+    Math.round((subtotal - discountTotal + (Number.isFinite(shippingCost) ? shippingCost : 0)) * 100) /
+    100;
   if (!Number.isFinite(total) || total <= 0) {
     return NextResponse.json({ error: "Ongeldig totaal." }, { status: 400 });
   }
@@ -133,7 +189,14 @@ export async function POST(request: Request) {
       shippingCity,
       shippingCounty: body.shippingCounty,
       shippingPostalCode: body.shippingPostalCode,
-      notes: body.notes,
+      notes: [
+        body.notes?.trim(),
+        shipQuote ? `Verzending: ${shipQuote.label} (€ ${shippingCost.toFixed(2)})` : null,
+        body.couponCode?.trim() ? `Coupon: ${body.couponCode.trim().toUpperCase()}` : null,
+      ]
+        .filter(Boolean)
+        .join("\n") || undefined,
+      paymentMethod: body.mollieMethod?.trim() ? `mollie:${body.mollieMethod.trim()}` : paymentMethod,
       currency,
       subtotal,
       discountTotal: Number.isFinite(discountTotal) ? discountTotal : 0,
@@ -154,41 +217,33 @@ export async function POST(request: Request) {
     });
 
     const orderNumber = result.orderNumber;
-    const ttclid =
-      body.ttclid?.trim() || readTtclidFromCookieString(cookieHeader) || null;
-
-    if (hasMarketingConsent(consent)) {
-      void sendTikTokPurchaseEvents({
-      eventId: orderNumber,
-      orderNumber,
-      total,
+    const base = siteBaseUrl(request);
+    const payment = await createMolliePayment({
+      amount: total,
       currency,
-      items: items.map((item) => ({
-        productId: item.productId,
-        name: item.name,
-        quantity: item.quantity,
-        unitPrice: item.unitPrice,
-      })),
-      customerEmail: body.customerEmail,
-      customerPhone: customerPhone,
-      ttclid,
-      pageUrl: request.headers.get("referer") ?? undefined,
-      ip:
-        request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-        request.headers.get("x-real-ip") ||
-        null,
-      userAgent: request.headers.get("user-agent"),
-      }).then((r) => {
-        if (!r.ok) {
-          console.error("[tiktok-events-api]", orderNumber, r.errors.join("; "));
-        }
-      });
+      description: `Bergasports bestelling ${orderNumber}`,
+      redirectUrl: `${base}/checkout/return?order=${encodeURIComponent(orderNumber)}`,
+      webhookUrl: `${base}/api/mollie/webhook`,
+      metadata: {
+        orderId: String(result.id),
+        orderNumber,
+      },
+      method: body.mollieMethod?.trim() || undefined,
+    });
+    await attachMolliePaymentId(result.id, payment.id);
+    const checkoutUrl = mollieCheckoutUrl(payment);
+    if (!checkoutUrl) {
+      return NextResponse.json(
+        { error: "Mollie checkout-URL ontbreekt. Probeer opnieuw." },
+        { status: 502 },
+      );
     }
-
     return NextResponse.json({
       ok: true,
       orderId: result.id,
       orderNumber,
+      paymentMethod: "mollie",
+      checkoutUrl,
     });
   } catch (e) {
     const message = e instanceof Error ? e.message : "De bestelling kon niet worden geplaatst.";

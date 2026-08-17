@@ -4,6 +4,7 @@ import { CartProvider } from "@/components/cart/CartProvider";
 import CookieConsentBanner from "@/components/cookie/CookieConsentBanner";
 import { CookieConsentProvider } from "@/components/cookie/CookieConsentProvider";
 import ShopAnalyticsShell from "@/components/cookie/ShopAnalyticsShell";
+import AnalyticsScripts from "@/components/analytics/AnalyticsScripts";
 import CategoriesProviderRoot from "@/components/categories/CategoriesProviderRoot";
 import { ProductLookupProvider } from "@/components/cart/ProductLookupProvider";
 import {
@@ -13,6 +14,7 @@ import {
   SITE_TAGLINE,
 } from "@/lib/site-brand";
 import { SITE_META_DESCRIPTION } from "@/lib/site-content";
+import { getRuntimeSetting } from "@/lib/site-settings-db";
 import "./globals.css";
 
 const ubuntu = Ubuntu({
@@ -48,6 +50,11 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const [ga4, gtm] = await Promise.all([
+    getRuntimeSetting("NEXT_PUBLIC_GA4_ID"),
+    getRuntimeSetting("NEXT_PUBLIC_GTM_ID"),
+  ]);
+
   return (
     <html
       lang="nl"
@@ -55,6 +62,7 @@ export default async function RootLayout({
     >
       <head />
       <body className="min-h-full flex flex-col">
+        <AnalyticsScripts ga4={ga4} gtm={gtm} />
         <CookieConsentProvider>
           <CategoriesProviderRoot>
             <ProductLookupProvider>

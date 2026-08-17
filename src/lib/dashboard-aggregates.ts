@@ -27,6 +27,7 @@ export type DashboardSalesMetrics = {
 };
 
 const SHOP_CANCELLED = new Set(["cancelled", "canceled"]);
+const SHOP_UNPAID = new Set(["awaiting_payment"]);
 const ES_CANCELLED = new Set(["canceled", "cancelled", "return", "returned"]);
 
 function parseDate(value: string): Date | null {
@@ -65,7 +66,7 @@ export function aggregateShopOrders(orders: ShopDashboardOrder[], period: Dashbo
       customerKeys.add(customerKey);
     }
 
-    if (SHOP_CANCELLED.has(status.toLowerCase())) {
+    if (SHOP_CANCELLED.has(status.toLowerCase()) || SHOP_UNPAID.has(status.toLowerCase())) {
       continue;
     }
 

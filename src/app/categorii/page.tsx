@@ -6,6 +6,8 @@ import TrustBar from "@/components/layout/TrustBar";
 import RalexCategoryTree from "@/components/shop/RalexCategoryTree";
 import { loadRalexCategories } from "@/lib/categories-db";
 
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "Categorieën",
   description:

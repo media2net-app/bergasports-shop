@@ -1,4 +1,23 @@
 /** @type {import("next").NextConfig} */
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+function loadMigrationRedirects() {
+  try {
+    const raw = fs.readFileSync(
+      path.join(__dirname, "docs/migration/redirect-map.json"),
+      "utf8",
+    );
+    const data = JSON.parse(raw);
+    return Array.isArray(data.redirects) ? data.redirects : [];
+  } catch {
+    return [];
+  }
+}
+
 const nextConfig = {
   reactCompiler: true,
   images: {
@@ -9,6 +28,7 @@ const nextConfig = {
       { protocol: "https", hostname: "**.bergasports.com" },
       { protocol: "https", hostname: "www.bergasports.com" },
       { protocol: "https", hostname: "**.prisma.io" },
+      { protocol: "https", hostname: "placehold.co" },
     ],
   },
   async redirects() {
@@ -18,6 +38,7 @@ const nextConfig = {
         destination: "/shop",
         permanent: true,
       },
+      ...loadMigrationRedirects(),
     ];
   },
 };

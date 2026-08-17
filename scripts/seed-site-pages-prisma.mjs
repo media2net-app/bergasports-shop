@@ -44,15 +44,18 @@ const homepageBlocks = {
 const legalPages = [
   {
     slug: "about",
-    path: "/despre-noi",
-    title: "Over ons | Bergasports",
-    heading: "Over ons",
-    meta_title: "Over ons | Bergasports",
+    path: "/over-ons",
+    title: "Over Bergasports | Ingmar Berga",
+    heading: "Over Bergasports",
+    meta_title: "Over Bergasports | Ingmar Berga",
     meta_description:
-      "Bergasports — webshop voor racefietsen, wielrenschoenen, wielen en accessoires in Dedemsvaart.",
+      "Van topsport naar Bergasports. Persoonlijk advies, hoogwaardig materiaal en ervaring in Dedemsvaart.",
     sort_order: 10,
-    body_html:
-      "<p><strong>Bergasports</strong> is meer dan een winkel — je sportpartner in Dedemsvaart.</p>",
+    body_html: `<p><strong>Meer dan een winkel. Je sportpartner.</strong></p>
+<p>Mijn naam is Ingmar Berga. Van 2004 tot 2022 stond mijn leven in het teken van topsport. Als professioneel schaatser en skeeleraar heb ik ervaren hoe belangrijk materiaal, techniek en persoonlijke begeleiding zijn.</p>
+<p>Die ervaring vormt de basis van Bergasports. Bij het leveren van sportmateriaal draait het niet alleen om een product verkopen — het gaat om de vraag: <em>Wat heb jij nodig om beter te worden?</em></p>
+<p>Daarom kijken we naar jouw niveau, doelen, rijstijl, lichaam, huidige materiaal en hoe je het daadwerkelijk gebruikt.</p>
+<p><a href="/contact">Maak een afspraak in Dedemsvaart</a></p>`,
   },
   {
     slug: "contact",

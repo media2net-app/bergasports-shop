@@ -2,13 +2,21 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 import { adminSessionCookieName, verifyAdminSessionToken } from "@/lib/admin-auth";
+import { localeFromHost } from "@/lib/i18n/locale-shared";
 
 /** Next.js 16+: `middleware` heet `proxy` (zelfde gedrag). */
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const host = request.headers.get("x-forwarded-host") || request.headers.get("host");
+  const locale = localeFromHost(host);
+
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-bergasports-locale", locale);
 
   if (!pathname.startsWith("/admin") && !pathname.startsWith("/api/admin")) {
-    return NextResponse.next();
+    return NextResponse.next({
+      request: { headers: requestHeaders },
+    });
   }
 
   if (pathname === "/admin/login" || pathname.startsWith("/admin/login/")) {
@@ -16,11 +24,11 @@ export async function proxy(request: NextRequest) {
     if (token && (await verifyAdminSessionToken(token))) {
       return NextResponse.redirect(new URL("/admin", request.url));
     }
-    return NextResponse.next();
+    return NextResponse.next({ request: { headers: requestHeaders } });
   }
 
   if (pathname === "/api/admin/login") {
-    return NextResponse.next();
+    return NextResponse.next({ request: { headers: requestHeaders } });
   }
 
   const secret = process.env.ADMIN_JWT_SECRET;
@@ -41,7 +49,7 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL("/admin/login", request.url));
   }
 
-  return NextResponse.next();
+  return NextResponse.next({ request: { headers: requestHeaders } });
 }
 
 export const config = {

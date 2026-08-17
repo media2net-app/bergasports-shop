@@ -30,6 +30,18 @@ export function isBergasportsProductUrl(url: string | null | undefined): boolean
   return u.includes(BERGASPORTS_CATALOG_SOURCE_HOST);
 }
 
+/** Handmatige admin-producten + WC/sync met bergasports.com-URL. */
+export function belongsToBergasportsCatalog(product: {
+  url?: string | null;
+  catalogSource?: string | null;
+}): boolean {
+  if (isBergasportsProductUrl(product.url)) {
+    return true;
+  }
+  const source = product.catalogSource?.trim().toLowerCase() ?? "";
+  return source === "manual";
+}
+
 export function isLegacyHotelinkCategorySlug(slug: string): boolean {
   return LEGACY_HOTELINK_CATEGORY_SLUGS.has(slug.trim().toLowerCase());
 }

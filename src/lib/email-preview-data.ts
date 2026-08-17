@@ -103,6 +103,7 @@ function buildPreviewOrderFromProducts(products: Product[]): OrderWithItems {
     shipping_postal_code: "400000",
     notes: "Sună înainte de livrare, te rog.",
     payment_method: "cash_on_delivery",
+    mollie_payment_id: null,
     currency: items[0]?.currency ?? "RON",
     subtotal,
     discount_total: 0,

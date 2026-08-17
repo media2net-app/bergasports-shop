@@ -1,9 +1,11 @@
 /**
- * NL-copy en navigatie — overgenomen van https://www.bergasports.com/nl/
+ * NL-copy en navigatie — Bergasports 2.0 IA
  */
 
 export const SITE_ADDRESS = "Julianastraat 3A, 7701 GH Dedemsvaart, Nederland";
 export const SITE_KVK = "52087018";
+export const INSTAGRAM_URL = "https://www.instagram.com/bergasports/";
+export const INSTAGRAM_HANDLE = "@bergasports";
 
 export const TRUST_BAR_USPS = [
   "Persoonlijk advies en expertise",
@@ -13,35 +15,35 @@ export const TRUST_BAR_USPS = [
 
 export type ShopMenuLink = { href: string; label: string };
 
-/**
- * WooCommerce categorie-slugs (bergasports.com) → canonieke shop-paden `/{slug}`.
- * Zie `src/data/ralex-categories.json` na `npm run import:bergasports`.
- */
+/** Publieke NL category-paden (alias → WC via category-slugs). */
 export const BERGASPORTS_CATEGORY_PATHS = {
-  bikes: "/bikes",
-  speedSkates: "/speed-skates",
-  wheels: "/wheels",
+  bikes: "/fietsen",
+  roadBikes: "/racefietsen",
+  gravel: "/gravel",
+  mtb: "/mtb",
+  speedSkates: "/skeelers",
+  wheels: "/wielen",
   scopeOutlet: "/scope-outlet",
-  cyclingShoes: "/cycling-shoes",
-  lafugaWear: "/lafuga-wear",
-  glasses: "/glasses",
-  accessories: "/accessories",
-  cyclingHelmets: "/cycling-helmets",
-  usedBikes: "/used-bikes",
-  cleats: "/cleats",
-  groupSets: "/group-sets",
+  cyclingShoes: "/wielrenschoenen",
+  lafugaWear: "/lafuga",
+  glasses: "/brillen",
+  accessories: "/accessoires",
+  cyclingHelmets: "/helmen",
+  usedBikes: "/tweedehands",
+  cleats: "/schoenplaatjes",
+  groupSets: "/groepsets",
 } as const;
 
-/** Webshop-submenu (mobiel + homepage-categorieën). */
+/** Flat links for search / mobile quick list. */
 export const WEBSHOP_MENU_LINKS: ShopMenuLink[] = [
+  { href: BERGASPORTS_CATEGORY_PATHS.roadBikes, label: "Racefietsen" },
+  { href: BERGASPORTS_CATEGORY_PATHS.gravel, label: "Gravel" },
+  { href: BERGASPORTS_CATEGORY_PATHS.mtb, label: "MTB" },
+  { href: BERGASPORTS_CATEGORY_PATHS.wheels, label: "Fietswielen" },
   { href: BERGASPORTS_CATEGORY_PATHS.cyclingShoes, label: "Wielrenschoenen" },
-  { href: BERGASPORTS_CATEGORY_PATHS.wheels, label: "Fietwielen" },
-  { href: BERGASPORTS_CATEGORY_PATHS.bikes, label: "Racefietsen" },
-  { href: BERGASPORTS_CATEGORY_PATHS.speedSkates, label: "Skeelers" },
-  { href: BERGASPORTS_CATEGORY_PATHS.lafugaWear, label: "LaFuga kleding" },
+  { href: BERGASPORTS_CATEGORY_PATHS.lafugaWear, label: "LaFuga" },
   { href: BERGASPORTS_CATEGORY_PATHS.glasses, label: "Brillen" },
   { href: BERGASPORTS_CATEGORY_PATHS.accessories, label: "Accessoires" },
-  { href: BERGASPORTS_CATEGORY_PATHS.scopeOutlet, label: "Scope outlet" },
 ];
 
 export type ShopMegaMenuColumn = {
@@ -54,33 +56,35 @@ export const WEBSHOP_MEGA_MENU = {
     {
       title: "Fietsen",
       links: [
-        { href: BERGASPORTS_CATEGORY_PATHS.bikes, label: "Racefietsen" },
+        { href: BERGASPORTS_CATEGORY_PATHS.roadBikes, label: "Racefietsen" },
+        { href: BERGASPORTS_CATEGORY_PATHS.gravel, label: "Gravel" },
+        { href: BERGASPORTS_CATEGORY_PATHS.mtb, label: "MTB" },
         { href: BERGASPORTS_CATEGORY_PATHS.speedSkates, label: "Skeelers" },
-        { href: BERGASPORTS_CATEGORY_PATHS.usedBikes, label: "Tweedehands fietsen" },
+        { href: BERGASPORTS_CATEGORY_PATHS.usedBikes, label: "Tweedehands" },
       ],
     },
     {
       title: "Wielen",
       links: [
-        { href: BERGASPORTS_CATEGORY_PATHS.wheels, label: "Fietwielen" },
-        { href: BERGASPORTS_CATEGORY_PATHS.scopeOutlet, label: "Scope outlet" },
+        { href: BERGASPORTS_CATEGORY_PATHS.wheels, label: "Fietswielen" },
+        { href: BERGASPORTS_CATEGORY_PATHS.scopeOutlet, label: "Scope Outlet" },
       ],
     },
     {
       title: "Schoenen & kleding",
       links: [
         { href: BERGASPORTS_CATEGORY_PATHS.cyclingShoes, label: "Wielrenschoenen" },
-        { href: BERGASPORTS_CATEGORY_PATHS.lafugaWear, label: "LaFuga kleding" },
+        { href: BERGASPORTS_CATEGORY_PATHS.lafugaWear, label: "LaFuga" },
       ],
     },
     {
       title: "Accessoires",
       links: [
         { href: BERGASPORTS_CATEGORY_PATHS.glasses, label: "Brillen" },
-        { href: BERGASPORTS_CATEGORY_PATHS.accessories, label: "Alle accessoires" },
-        { href: BERGASPORTS_CATEGORY_PATHS.cyclingHelmets, label: "Fietshelmen" },
+        { href: BERGASPORTS_CATEGORY_PATHS.cyclingHelmets, label: "Helmen" },
         { href: BERGASPORTS_CATEGORY_PATHS.cleats, label: "Schoenplaatjes" },
-        { href: BERGASPORTS_CATEGORY_PATHS.groupSets, label: "Groepssets" },
+        { href: BERGASPORTS_CATEGORY_PATHS.groupSets, label: "Groepsets" },
+        { href: BERGASPORTS_CATEGORY_PATHS.accessories, label: "Overige accessoires" },
       ],
     },
   ] satisfies ShopMegaMenuColumn[],
@@ -119,55 +123,124 @@ export function isShopNavigationPath(pathname: string): boolean {
 
 export type HeaderNavItem =
   | { type: "link"; href: string; label: string; badge?: string }
-  | { type: "dropdown"; label: string; items: ShopMenuLink[] };
+  | { type: "dropdown"; label: string; items: ShopMenuLink[]; columns?: ShopMegaMenuColumn[] }
+  | { type: "mega"; label: string };
 
-/** Links van het logo (desktop). */
+/** Desktop: top-level shop groups + nieuws. */
 export const HEADER_NAV_LEFT: HeaderNavItem[] = [
-  { type: "dropdown", label: "Webshop", items: WEBSHOP_MENU_LINKS },
-  { type: "link", href: BERGASPORTS_CATEGORY_PATHS.lafugaWear, label: "LaFuga kleding", badge: "NEW" },
+  { type: "mega", label: "Webshop" },
+  { type: "link", href: "/nieuws", label: "Nieuws" },
+  { type: "link", href: BERGASPORTS_CATEGORY_PATHS.lafugaWear, label: "LaFuga", badge: "NEW" },
 ];
 
-/** Rechts van het logo, vóór de iconen (desktop). */
+/** Rechts van het logo. */
 export const HEADER_NAV_RIGHT: HeaderNavItem[] = [
-  { type: "link", href: "/despre-noi", label: "Over ons" },
-  { type: "link", href: "/contact", label: "Onderhoud" },
-  { type: "link", href: "/contact", label: "Contact" },
+  {
+    type: "dropdown",
+    label: "Bergasports",
+    items: [
+      { href: "/over-ons", label: "Over ons" },
+      { href: "/onderhoud", label: "Onderhoud & reparatie" },
+      { href: "/contact", label: "Contact" },
+    ],
+  },
 ];
 
-/** Volledige lijst (mobiel menu). */
+/** Mobiel: geneste boom. */
+export const MOBILE_NAV_TREE: {
+  label: string;
+  href?: string;
+  children?: ShopMenuLink[];
+}[] = [
+  { label: "Fietsen", children: WEBSHOP_MEGA_MENU.columns[0].links },
+  { label: "Wielen", children: WEBSHOP_MEGA_MENU.columns[1].links },
+  { label: "Schoenen & kleding", children: WEBSHOP_MEGA_MENU.columns[2].links },
+  { label: "Accessoires", children: WEBSHOP_MEGA_MENU.columns[3].links },
+  { label: "Nieuws", href: "/nieuws" },
+  { label: "LaFuga", href: BERGASPORTS_CATEGORY_PATHS.lafugaWear },
+  { label: "Over Bergasports", href: "/over-ons" },
+  { label: "Onderhoud & reparatie", href: "/onderhoud" },
+  { label: "Contact", href: "/contact" },
+];
+
+/** Volledige lijst (legacy flat). */
 export const HEADER_NAV_ITEMS: HeaderNavItem[] = [...HEADER_NAV_LEFT, ...HEADER_NAV_RIGHT];
 
-export const HOME_INTRO = {
-  title: "Exclusieve racefietsen & topservice voor de echte fietser",
-  lead:
-    "Bij Bergasports draait alles om prestaties, kwaliteit en persoonlijke service. Wij bieden een exclusieve selectie van topmerken zoals Colnago, Cipollini, Polygon, Titici en Orbea, gecombineerd met accessoires van hoge kwaliteit en deskundig advies. Of je nu op zoek bent naar de perfecte racefiets, eersteklas fietsonderdelen of professioneel advies op maat, bij ons ben je aan het juiste adres.",
-  cta: "Bekijk onze producten",
+export const HOME_HERO = {
+  titleLine1: "Meer dan een winkel.",
+  titleLine2: "Je sportpartner.",
+  lead: "Persoonlijk advies, hoogwaardige materialen en jarenlange ervaring in topsport.",
+  primaryCta: "Bekijk fietsen",
+  primaryHref: BERGASPORTS_CATEGORY_PATHS.roadBikes,
+  secondaryCta: "Plan een afspraak",
+  secondaryHref: "/contact",
 } as const;
 
-export const HOME_VALUE_PROPS = [
+export const HOME_PILLARS = [
   {
-    title: "Exclusieve selectie van topmerken",
-    text: "Zorgvuldig samengestelde collectie racefietsen van Colnago, Cipollini, Titici, Orbea en Sensa — hoge kwaliteit, geavanceerde technologie en ultiem comfort.",
+    title: "Racefietsen",
+    text: "Voor maximale snelheid en prestaties.",
+    href: BERGASPORTS_CATEGORY_PATHS.roadBikes,
   },
   {
-    title: "Hoogwaardige accessoires & onderdelen",
-    text: "Wielen van Scope, Ere en Campagnolo, Nimbl fietsschoenen en meer — ontworpen om je prestaties en rijervaring te verbeteren.",
+    title: "Wielen",
+    text: "De juiste wielset voor jouw fiets en rijstijl.",
+    href: BERGASPORTS_CATEGORY_PATHS.wheels,
   },
   {
-    title: "Deskundig en persoonlijk advies",
-    text: "Ons team helpt je de juiste fiets en accessoires te kiezen, afgestemd op jouw doelen — persoonlijk en klantgericht.",
+    title: "Schoenen & kleding",
+    text: "Performance materiaal voor training en wedstrijd.",
+    href: BERGASPORTS_CATEGORY_PATHS.cyclingShoes,
+  },
+  {
+    title: "Accessoires",
+    text: "De details die het verschil maken.",
+    href: BERGASPORTS_CATEGORY_PATHS.accessories,
   },
 ] as const;
 
-export const HOME_ABOUT = {
-  title: "Over mij",
-  text: "Van 2004 tot 2022 heb ik professioneel kunnen schaatsen en skeeleren. Een prachtige carrière en resultaten waar ik met trots op terugkijk. Als trainer begeleid ik momenteel de nieuwe generatie marathonschaatsers. Omdat ik als geen ander weet hoe belangrijk het is om met goed materiaal te werken, help ik met bergasports.com veel atleten bij het kiezen van hun ideale materiaal. Of het nu gaat om een complete racefiets, fietswielen, schoenen of een goede bril — bij mij ben je aan het juiste adres.",
-  cta: "Mijn verhaal",
+export const HOME_BRANDS =
+  "Colnago · Orbea · Basso · Cervélo · Cipollini · Titici · Sensa · Scope · Nimbl · LaFuga" as const;
+
+export const HOME_ADVICE = {
+  title: "De juiste keuze begint met goed advies.",
+  text: "Niet iedere fietser heeft dezelfde doelen. Daarom kijken we naar jouw rijstijl, niveau, wensen en materiaal.",
+  cta: "Plan een afspraak",
+  ctaHref: "/contact",
 } as const;
 
+export const HOME_ABOUT = {
+  title: "Van topsport naar Bergasports",
+  text: "Van 2004 tot 2022 actief als professioneel schaatser en skeeleraar. Die ervaring met materiaal, prestaties en sport vormt de basis van Bergasports.",
+  cta: "Lees mijn verhaal",
+  ctaHref: "/over-ons",
+} as const;
+
+export const HOME_INSTAGRAM = {
+  title: "Volg Bergasports",
+  text: "Blijf op de hoogte van nieuwe producten, fietsen, LaFuga, evenementen en het laatste Bergasports-nieuws.",
+  cta: "Volg ons op Instagram",
+} as const;
+
+export const HOME_VISIT = {
+  title: "Bezoek Bergasports in Dedemsvaart",
+  text: `${SITE_ADDRESS}`,
+  cta: "Contact & route",
+  ctaHref: "/contact",
+} as const;
+
+/** @deprecated kept for older imports */
+export const HOME_INTRO = {
+  title: HOME_HERO.titleLine1 + " " + HOME_HERO.titleLine2,
+  lead: HOME_HERO.lead,
+  cta: HOME_HERO.primaryCta,
+} as const;
+
+export const HOME_VALUE_PROPS = HOME_PILLARS.map((p) => ({ title: p.title, text: p.text }));
+
 export const HOME_APPOINTMENT = {
-  title: "Persoonlijk advies? Maak vrijblijvend een afspraak",
-  text: "Wil je advies over de beste racefiets, onderdelen of accessoires voor jouw rijstijl? Of heb je vragen over onderhoud en reparaties? Plan een persoonlijk adviesgesprek in bij Bergasports in Dedemsvaart!",
+  title: HOME_ADVICE.title,
+  text: HOME_ADVICE.text,
   phoneCta: "Bel ons als je vragen hebt!",
 } as const;
 

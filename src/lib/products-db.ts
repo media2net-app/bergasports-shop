@@ -14,9 +14,25 @@ import {
   uniqueProductSlug,
   withProductSlug,
 } from "@/lib/product-slug";
-import { isBergasportsCatalogSource, isBergasportsProductUrl } from "@/lib/bergasports-catalog";
+import {
+  belongsToBergasportsCatalog,
+  isBergasportsCatalogSource,
+} from "@/lib/bergasports-catalog";
 import { mirrorProductImagesIfNeeded } from "@/lib/product-image-storage";
 import { bigIntToNumber, decimalToNumber, productIdToBigInt } from "@/lib/prisma-mappers";
+
+function ensureShopProductUrl(product: TrendyolJsonProduct): TrendyolJsonProduct {
+  const slug = resolveProductSlug(product);
+  const existing = product.url?.trim() ?? "";
+  if (existing && belongsToBergasportsCatalog({ url: existing, catalogSource: product.catalogSource })) {
+    return { ...product, slug };
+  }
+  return {
+    ...product,
+    slug,
+    url: `https://www.bergasports.com/product/${slug}`,
+  };
+}
 
 async function assertBergasportsCatalogOrEmpty(): Promise<boolean> {
   const prisma = requirePrisma();
@@ -69,7 +85,10 @@ export async function fetchAllProductsRaw(): Promise<TrendyolJsonProduct[]> {
   while (true) {
     const batch = await prisma.product.findMany({
       where: {
-        url: { contains: "bergasports.com", mode: "insensitive" },
+        OR: [
+          { url: { contains: "bergasports.com", mode: "insensitive" } },
+          { catalogSource: "manual" },
+        ],
       },
       select: productSelect,
       orderBy: { id: "asc" },
@@ -81,7 +100,7 @@ export async function fetchAllProductsRaw(): Promise<TrendyolJsonProduct[]> {
     }
     for (const row of batch) {
       const product = rowToProduct(row);
-      if (isBergasportsProductUrl(product.url)) {
+      if (belongsToBergasportsCatalog(product)) {
         out.push(product);
       }
     }
@@ -156,7 +175,7 @@ function productToDbRow(product: TrendyolJsonProduct) {
 async function upsertRaw(product: TrendyolJsonProduct): Promise<void> {
   const prisma = requirePrisma();
   const all = await fetchAllProductsRaw();
-  const withSlug = withProductSlug(product, all);
+  const withSlug = ensureShopProductUrl(withProductSlug(product, all));
   const row = productToDbRow(withSlug);
   await prisma.product.upsert({
     where: { id: row.id },
@@ -242,7 +261,10 @@ export async function loadFeaturedProducts(limit = 8): Promise<Product[]> {
   const featuredIds = new Set(featured.map((p) => p.id));
   const fallbackRows = await prisma.product.findMany({
     where: {
-      url: { contains: "bergasports.com", mode: "insensitive" },
+      OR: [
+        { url: { contains: "bergasports.com", mode: "insensitive" } },
+        { catalogSource: "manual" },
+      ],
     },
     select: productSelect,
     orderBy: { updatedAt: "desc" },
@@ -251,7 +273,10 @@ export async function loadFeaturedProducts(limit = 8): Promise<Product[]> {
 
   const fallback = fallbackRows
     .map(rowToProduct)
-    .filter((p) => isProductVisibleOnShop(p) && !featuredIds.has(p.id))
+    .filter(
+      (p) =>
+        belongsToBergasportsCatalog(p) && isProductVisibleOnShop(p) && !featuredIds.has(p.id),
+    )
     .slice(0, need)
     .map(mapTrendyolJsonToProduct);
 

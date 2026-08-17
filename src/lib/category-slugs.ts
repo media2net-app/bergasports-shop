@@ -1,0 +1,112 @@
+/**
+ * Publieke NL/EN category-slugs ↔ WooCommerce canonieke slugs.
+ * DB/import blijft WC-slug; storefront-links gebruiken locale-publieke slugs.
+ */
+
+export type AppLocale = "nl" | "en";
+
+/** WC slug → NL public slug */
+export const WC_TO_NL_SLUG: Record<string, string> = {
+  bikes: "fietsen",
+  "road-bike": "racefietsen",
+  gravelbike: "gravel",
+  "gravel-bike": "gravel",
+  mtb: "mtb",
+  "speed-skates": "skeelers",
+  "used-bikes": "tweedehands",
+  wheels: "wielen",
+  "scope-outlet": "scope-outlet",
+  "cycling-shoes": "wielrenschoenen",
+  "lafuga-wear": "lafuga",
+  glasses: "brillen",
+  accessories: "accessoires",
+  "cycling-helmets": "helmen",
+  cleats: "schoenplaatjes",
+  "group-sets": "groepsets",
+};
+
+/** WC slug → EN public slug */
+export const WC_TO_EN_SLUG: Record<string, string> = {
+  bikes: "bikes",
+  "road-bike": "road-bikes",
+  gravelbike: "gravel",
+  "gravel-bike": "gravel",
+  mtb: "mtb",
+  "speed-skates": "speed-skates",
+  "used-bikes": "used-bikes",
+  wheels: "wheels",
+  "scope-outlet": "scope-outlet",
+  "cycling-shoes": "cycling-shoes",
+  "lafuga-wear": "lafuga",
+  glasses: "glasses",
+  accessories: "accessories",
+  "cycling-helmets": "cycling-helmets",
+  cleats: "cleats",
+  "group-sets": "group-sets",
+};
+
+/** NL public → preferred WC slug */
+export const NL_TO_WC_SLUG: Record<string, string> = {
+  fietsen: "bikes",
+  racefietsen: "road-bike",
+  gravel: "gravelbike",
+  mtb: "mtb",
+  skeelers: "speed-skates",
+  tweedehands: "used-bikes",
+  wielen: "wheels",
+  "scope-outlet": "scope-outlet",
+  wielrenschoenen: "cycling-shoes",
+  lafuga: "lafuga-wear",
+  brillen: "glasses",
+  accessoires: "accessories",
+  helmen: "cycling-helmets",
+  schoenplaatjes: "cleats",
+  groepsets: "group-sets",
+};
+
+/** EN public → preferred WC slug */
+export const EN_TO_WC_SLUG: Record<string, string> = {
+  bikes: "bikes",
+  "road-bikes": "road-bike",
+  gravel: "gravelbike",
+  mtb: "mtb",
+  "speed-skates": "speed-skates",
+  "used-bikes": "used-bikes",
+  wheels: "wheels",
+  "scope-outlet": "scope-outlet",
+  "cycling-shoes": "cycling-shoes",
+  lafuga: "lafuga-wear",
+  glasses: "glasses",
+  accessories: "accessories",
+  "cycling-helmets": "cycling-helmets",
+  cleats: "cleats",
+  "group-sets": "group-sets",
+};
+
+export function normalizeCategorySlug(slug: string): string {
+  return slug.trim().toLowerCase().replace(/^\/+|\/+$/g, "");
+}
+
+/** Resolve any public or WC slug to the canonieke WC slug used in DB. */
+export function toCanonicalWcSlug(slug: string, locale: AppLocale = "nl"): string {
+  const s = normalizeCategorySlug(slug);
+  if (!s) return s;
+  if (locale === "en") {
+    return EN_TO_WC_SLUG[s] ?? NL_TO_WC_SLUG[s] ?? s;
+  }
+  return NL_TO_WC_SLUG[s] ?? EN_TO_WC_SLUG[s] ?? s;
+}
+
+/** Public path slug for links. */
+export function toPublicCategorySlug(wcOrAnySlug: string, locale: AppLocale = "nl"): string {
+  const canonical = toCanonicalWcSlug(wcOrAnySlug, locale);
+  if (locale === "en") {
+    return WC_TO_EN_SLUG[canonical] ?? canonical;
+  }
+  return WC_TO_NL_SLUG[canonical] ?? canonical;
+}
+
+export function publicCategoryPath(wcOrAnySlug: string, locale: AppLocale = "nl"): string {
+  const pub = toPublicCategorySlug(wcOrAnySlug, locale);
+  return pub ? `/${pub}` : "/shop";
+}

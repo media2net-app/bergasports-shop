@@ -1,3 +1,4 @@
+import { publicCategoryPath, toCanonicalWcSlug } from "@/lib/category-slugs";
 import { decodeImportedProductTitle, formatProductCardPrice, type Product } from "@/lib/products";
 import {
   flattenRalexCategoryTree,
@@ -20,12 +21,13 @@ export function findRalexCategoryNodeBySlug(
   tree: RalexCategoryNode[],
   slug: string,
 ): RalexCategoryNode | null {
-  const target = slug.trim().toLowerCase();
-  if (!target || isExcludedShopCategorySlug(target)) {
+  const raw = slug.trim().toLowerCase();
+  if (!raw || isExcludedShopCategorySlug(raw)) {
     return null;
   }
+  const target = toCanonicalWcSlug(raw);
   for (const node of flattenRalexCategoryTree(tree)) {
-    if (node.slug.toLowerCase() === target) {
+    if (node.slug.toLowerCase() === target || node.slug.toLowerCase() === raw) {
       return node;
     }
   }
@@ -814,9 +816,9 @@ export type ShopListingQuery = {
   view?: string | null;
 };
 
-/** Canonical path for a shop category (SEO: `/halate-baie` not `/shop?cat=…`). */
+/** Canonical public path for a shop category (NL aliases by default). */
 export function shopCategoryPath(slug: string): string {
-  return `/${slug.trim().toLowerCase()}`;
+  return publicCategoryPath(slug, "nl");
 }
 
 export function buildShopListingUrl(query: ShopListingQuery): string {

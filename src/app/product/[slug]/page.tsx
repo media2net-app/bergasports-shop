@@ -25,6 +25,7 @@ import {
   isProductInStock,
 } from "@/lib/products";
 import { productBreadcrumbJsonLd, productJsonLd, productMetaDescription } from "@/lib/product-seo";
+import { resolveProductContentTier } from "@/lib/product-content-tier";
 
 export const dynamic = "force-dynamic";
 
@@ -152,6 +153,7 @@ export default async function ProductDetailPage({ params, searchParams }: Produc
     categoryPath: productCategory?.href,
   });
   const inStock = isProductInStock(product);
+  const contentTier = resolveProductContentTier(product);
 
   const catalogSpecsFallback = (
     <p className="mt-2 text-sm text-[var(--foreground)]/85">
@@ -265,21 +267,23 @@ export default async function ProductDetailPage({ params, searchParams }: Produc
             <div className="mt-6 rounded-xl border border-[#e5dcc8] bg-[#faf8f4] p-4">
               <p className="text-sm font-semibold text-[var(--foreground)]">Betaalmethoden</p>
               <ul className="mt-2 space-y-1 text-sm text-[var(--foreground)]/85">
-                <li>Rembours (contant of pinnen bij aflevering)</li>
-                <li>Geen online betaling op dit moment</li>
+                <li>iDEAL · Apple Pay · Google Pay · Visa / Mastercard · Bancontact</li>
+                <li>Veilig via Mollie</li>
               </ul>
             </div>
 
             <ShopDeliveryTrustPanel className="mt-4" freeCargo={product.freeCargo} currency={product.currency} />
 
-            <div className="mt-6 rounded-xl border border-[#e5dcc8] bg-white p-4">
-              <p className="text-sm font-semibold text-[var(--foreground)]">Belangrijkste kenmerken</p>
-              <ul className="mt-2 space-y-1 text-sm text-[var(--foreground)]/85">
-                {highlightedFeatures.map((feature) => (
-                  <li key={feature}>- {feature}</li>
-                ))}
-              </ul>
-            </div>
+            {contentTier !== "small" ? (
+              <div className="mt-6 rounded-xl border border-[#e5dcc8] bg-white p-4">
+                <p className="text-sm font-semibold text-[var(--foreground)]">Belangrijkste kenmerken</p>
+                <ul className="mt-2 space-y-1 text-sm text-[var(--foreground)]/85">
+                  {highlightedFeatures.map((feature) => (
+                    <li key={feature}>- {feature}</li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
 
             {product.landingPromo ? (
               <ProductLandingPromo product={product} />
@@ -289,10 +293,41 @@ export default async function ProductDetailPage({ params, searchParams }: Produc
                 initialVariationId={resolvedInitialVariationId}
               />
             )}
+
+            <div className="mt-6 rounded-xl border border-[#e5dcc8] bg-white p-4">
+              <p className="text-sm font-semibold text-[var(--foreground)]">Persoonlijk advies</p>
+              <p className="mt-2 text-sm text-[var(--foreground)]/80">
+                Twijfel je tussen modellen of maten? We helpen je graag in Dedemsvaart.
+              </p>
+              <Link
+                href="/contact"
+                className="mt-3 inline-flex min-h-11 items-center text-xs font-bold uppercase tracking-wider text-[#96741f] underline"
+              >
+                Plan een afspraak
+              </Link>
+            </div>
           </div>
         </div>
         </ProductVariationProvider>
 
+        {contentTier === "premium" ? (
+          <div className="mt-8 rounded-2xl border border-[#e5dcc8] bg-white p-4 md:p-6">
+            <h2 className="font-[family-name:var(--font-heading)] text-xl font-semibold md:text-2xl">
+              Waarom deze fiets?
+            </h2>
+            <ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-[var(--foreground)]/85">
+              <li>Geselecteerd op performance, pasvorm en rijstijl.</li>
+              <li>Persoonlijk advies over maat, groepset en wielkeuze.</li>
+              <li>Montage en afstelling mogelijk in onze werkplaats.</li>
+            </ul>
+            <h3 className="mt-6 text-lg font-semibold">Voor wie is dit geschikt?</h3>
+            <p className="mt-2 text-sm text-[var(--foreground)]/80">
+              Voor renners die kwaliteit zoeken en materiaal willen dat past bij training, wedstrijd of lange ritten.
+            </p>
+          </div>
+        ) : null}
+
+        {contentTier !== "small" ? (
         <div className="mt-10 rounded-2xl border border-[#e5dcc8] bg-white p-4 md:mt-12 md:p-6">
           <h2 className="font-[family-name:var(--font-heading)] text-xl font-semibold text-[var(--foreground)] md:text-2xl">
             Productdetails
@@ -314,16 +349,13 @@ export default async function ProductDetailPage({ params, searchParams }: Produc
             </div>
 
             <div>
-              <h3 className="text-lg font-semibold text-[var(--foreground)]">Extra informatie</h3>
+              <h3 className="text-lg font-semibold text-[var(--foreground)]">Specificaties</h3>
               <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-[var(--foreground)]/85">
                 <li>Product verkocht en geleverd door {product.brand || "Bergasports"}.</li>
                 <li>
                   Productcode: {product.wcSku ? `${product.wcSku} (ID ${product.id})` : product.id}
                 </li>
-                <li>
-                  URL: <span className="font-mono text-xs text-[var(--foreground)]/90">{product.slug}</span>
-                </li>
-                {product.wcProductType ? <li>Tip WooCommerce: {product.wcProductType}</li> : null}
+                {product.wcProductType ? <li>Type: {product.wcProductType}</li> : null}
                 {product.wcAverageRating ? (
                   <li>
                     Gemiddelde beoordeling: {product.wcAverageRating}
@@ -335,11 +367,20 @@ export default async function ProductDetailPage({ params, searchParams }: Produc
                     Categorieën: {product.wcCategories.map((c) => c.name).filter(Boolean).join(", ")}
                   </li>
                 ) : null}
-                <li>Aanbevolen maximum: 5 stuks per bestelling.</li>
               </ul>
             </div>
           </div>
         </div>
+        ) : hasWcDescription ? (
+          <div className="mt-8 rounded-2xl border border-[#e5dcc8] bg-white p-4 md:p-6">
+            {product.wcShortDescriptionHtml ? (
+              <WcHtmlBlock html={product.wcShortDescriptionHtml} />
+            ) : null}
+            {product.wcDescriptionHtml ? (
+              <WcHtmlBlock html={product.wcDescriptionHtml} className="mt-4" />
+            ) : null}
+          </div>
+        ) : null}
 
         {similarProducts.length > 0 ? (
           <div className="mt-10 md:mt-12">

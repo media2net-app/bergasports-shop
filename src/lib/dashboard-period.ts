@@ -3,11 +3,11 @@ export type DashboardPeriod = "today" | "7d" | "30d" | "year" | "all";
 export const DASHBOARD_PERIOD_STORAGE_KEY = "admin-dashboard-period";
 
 export const DASHBOARD_PERIOD_OPTIONS: { id: DashboardPeriod; label: string }[] = [
-  { id: "today", label: "Today" },
-  { id: "7d", label: "Last 7 days" },
-  { id: "30d", label: "Last 30 days" },
-  { id: "year", label: "This year" },
-  { id: "all", label: "All time" },
+  { id: "today", label: "Vandaag" },
+  { id: "7d", label: "Laatste 7 dagen" },
+  { id: "30d", label: "Laatste 30 dagen" },
+  { id: "year", label: "Dit jaar" },
+  { id: "all", label: "Alles" },
 ];
 
 export function parseStoredDashboardPeriod(raw: string | null): DashboardPeriod {
@@ -62,5 +62,5 @@ export function isDateInDashboardPeriod(date: Date, period: DashboardPeriod): bo
 }
 
 export function getDashboardPeriodLabel(period: DashboardPeriod): string {
-  return DASHBOARD_PERIOD_OPTIONS.find((o) => o.id === period)?.label ?? "All time";
+  return DASHBOARD_PERIOD_OPTIONS.find((o) => o.id === period)?.label ?? "Alles";
 }

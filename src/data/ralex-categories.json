@@ -1,8 +1,8 @@
 {
   "source": "https://www.bergasports.com/",
   "sourceApi": "https://www.bergasports.com/wp-json/wp/v2/product_cat",
-  "fetchedAt": "2026-05-29T09:41:53.894Z",
-  "totalCategories": 12,
+  "fetchedAt": "2026-08-12T05:48:42.935Z",
+  "totalCategories": 16,
   "categories": [
     {
       "id": 171,
@@ -29,6 +29,14 @@
       "link": "/cleats"
     },
     {
+      "id": 104,
+      "name": "Cycling clothing",
+      "slug": "lafuga-wear",
+      "parent": 0,
+      "count": 12,
+      "link": "/lafuga-wear"
+    },
+    {
       "id": 184,
       "name": "Cycling helmets",
       "slug": "cycling-helmets",
@@ -41,7 +49,7 @@
       "name": "Cycling shoes",
       "slug": "cycling-shoes",
       "parent": 0,
-      "count": 13,
+      "count": 15,
       "link": "/cycling-shoes"
     },
     {
@@ -53,6 +61,22 @@
       "link": "/glasses"
     },
     {
+      "id": 272,
+      "name": "Gravel bike",
+      "slug": "gravel-bike",
+      "parent": 72,
+      "count": 0,
+      "link": "/gravel-bike"
+    },
+    {
+      "id": 264,
+      "name": "Gravelbike",
+      "slug": "gravelbike",
+      "parent": 72,
+      "count": 14,
+      "link": "/gravelbike"
+    },
+    {
       "id": 178,
       "name": "Group sets",
       "slug": "group-sets",
@@ -61,19 +85,27 @@
       "link": "/group-sets"
     },
     {
-      "id": 104,
-      "name": "LaFuga wear",
-      "slug": "lafuga-wear",
-      "parent": 0,
-      "count": 9,
-      "link": "/lafuga-wear"
+      "id": 269,
+      "name": "Mtb",
+      "slug": "mtb",
+      "parent": 72,
+      "count": 7,
+      "link": "/mtb"
+    },
+    {
+      "id": 263,
+      "name": "Road bike",
+      "slug": "road-bike",
+      "parent": 72,
+      "count": 16,
+      "link": "/road-bike"
     },
     {
       "id": 216,
       "name": "Scope outlet",
       "slug": "scope-outlet",
       "parent": 0,
-      "count": 37,
+      "count": 29,
       "link": "/scope-outlet"
     },
     {
@@ -81,7 +113,7 @@
       "name": "Speed skates",
       "slug": "speed-skates",
       "parent": 0,
-      "count": 11,
+      "count": 12,
       "link": "/speed-skates"
     },
     {
@@ -97,7 +129,7 @@
       "name": "Wheels",
       "slug": "wheels",
       "parent": 0,
-      "count": 12,
+      "count": 11,
       "link": "/wheels"
     }
   ],
@@ -154,8 +186,64 @@
       "parent": 0,
       "count": 48,
       "link": "/bikes",
-      "seoIntro": null,
-      "seoFooterHtml": null,
+      "seoIntro": "High-end Road Bikes &amp; Gravel Bikes from Orbea, Colnago, Cervélo, and Basso At Bergasports, we understand that a bicycle is more than just a means of transport; it is an extension of your passion, performance, and style. Whether you are looking for the pure speed of the asphalt or the adventurous freedom of unpaved paths, our carefully selected collection of high-end road bikes and gravel bikes offers the very best the cycling world has to offer. With absolute top brands such as Orbea, Colnag",
+      "seoFooterHtml": "<h1>High-end Road Bikes &amp; Gravel Bikes from Orbea, Colnago, Cervélo, and Basso</h1>\nAt Bergasports, we understand that a bicycle is more than just a means of transport; it is an extension of your passion, performance, and style. Whether you are looking for the pure speed of the asphalt or the adventurous freedom of unpaved paths, our carefully selected collection of <strong>high-end road bikes</strong> and gravel bikes offers the very best the cycling world has to offer. With absolute top brands such as Orbea, Colnago, Cervélo, and Basso, you are guaranteed to bring home technological perfection and Italian or Basque craftsmanship.\n<h2>Orbea: Basque innovation and versatility</h2>\nThe Basque brand Orbea is known for its innovative designs and excellent price-quality ratio in the premium segment. For pure climbers and all-rounders, the <strong>Orbea Orca</strong> is the ultimate machine: feather-light, stiff, and extremely agile. Are you looking for pure speed and aerodynamic advantage on the flats? Then the <strong>Orbea Orca Aero</strong> is your perfect match. For adventurers who want to combine comfort and performance on unpaved roads, the <strong>Orbea Terra</strong> is the absolute benchmark among gravel bikes. And with the <strong>Orbea Avant</strong>, you choose a comfortable endurance road bike, ideal for long, challenging rides.\n<h2>Colnago: Italian passion and legendary heritage</h2>\nColnago is synonymous with cycling history, exclusivity, and unparalleled handling. Every Colnago is a work of art on wheels. The legendary <strong>Colnago V4Rs</strong> and the exclusive C68 represent the absolute pinnacle of carbon technology and design. For gravel riders who refuse to compromise on speed and style, the brand-new <strong>Colnago G4-X</strong> is the ultimate choice. With a Colnago, you do not just ride a bike; you ride a legend.\n<h2>Cervélo: Aerodynamic perfection and pure speed</h2>\nCervélo is the brand for the performance-oriented cyclist who wants to optimize every watt. The <strong>Cervélo Caledonia</strong> is the perfect &#8220;modern road&#8221; bike: fast, aerodynamic, and designed for the most challenging roads and cobblestone sections. Do you prefer heading into the woods at maximum speed? The <strong>Cervélo Áspero</strong> and Áspero-5 redefine what is possible on a gravel bike. These are purebred racing machines built to break records, both on the road and on gravel.\n<h2>Basso: Handmade Italian craftsmanship</h2>\nBasso Bikes embodies pure Italian cycling culture. Handmade in Italy, with an extreme focus on detail, integration, and handling. The <strong>Basso Palta</strong> has become an icon in the gravel world, loved for its unique geometry that perfectly combines comfort with aggressive performance. Whether you choose the versatile Astra or the uncompromising Diamante for the road, with a Basso, you choose exclusivity and unparalleled handling.\n<h2>Buying Advice: How to choose the perfect high-end bike?</h2>\nChoosing a premium road bike or gravel bike is a personal process. When making your choice, consider the following aspects:\n<ul>\n \t<li><strong>Intended Use:</strong> Do you focus purely on speed on the road (Orca Aero, Y1RS), are you looking for comfort for long rides (Avant, Caledonia), or do you want the flexibility of gravel (Terra, Palta III, G4-X)?</li>\n \t<li><strong>Geometry:</strong> A sporty, low riding position maximizes aerodynamics, while an endurance or gravel geometry ensures less strain on your back and neck during long rides.</li>\n \t<li><strong>Components:</strong> Choose the precision of electronic shifting (Shimano Di2 or SRAM AXS) and the reliability of hydraulic disc brakes for maximum control under all conditions.</li>\n</ul>\n<h2>Frequently asked questions about our premium bikes</h2>\n<h3>How do I choose the right wheelset for my new bike?</h3>\nThe wheels largely determine the riding character of your bike. For flat roads, we recommend aerodynamic, deep-section carbon rims (such as the Scope Artech series). For hilly terrain or gravel rides, a shallower, lighter, and wider rim is often more comfortable and wind-resistant. We are happy to advise you on the perfect wheelset upgrade when purchasing your bike.",
+      "children": [
+        {
+          "id": 272,
+          "name": "Gravel bike",
+          "slug": "gravel-bike",
+          "parent": 72,
+          "count": 0,
+          "link": "/gravel-bike",
+          "seoIntro": null,
+          "seoFooterHtml": null,
+          "children": []
+        },
+        {
+          "id": 264,
+          "name": "Gravelbike",
+          "slug": "gravelbike",
+          "parent": 72,
+          "count": 14,
+          "link": "/gravelbike",
+          "seoIntro": null,
+          "seoFooterHtml": null,
+          "children": []
+        },
+        {
+          "id": 269,
+          "name": "Mtb",
+          "slug": "mtb",
+          "parent": 72,
+          "count": 7,
+          "link": "/mtb",
+          "seoIntro": null,
+          "seoFooterHtml": null,
+          "children": []
+        },
+        {
+          "id": 263,
+          "name": "Road bike",
+          "slug": "road-bike",
+          "parent": 72,
+          "count": 16,
+          "link": "/road-bike",
+          "seoIntro": null,
+          "seoFooterHtml": null,
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": 104,
+      "name": "Cycling clothing",
+      "slug": "lafuga-wear",
+      "parent": 0,
+      "count": 12,
+      "link": "/lafuga-wear",
+      "seoIntro": "Premium Custom Cycling Apparel for Your Business by LaFuga &amp; Ingmar Berga Do you want your company, cycling club, or business network to make a professional impression on the bike? At Bergasports, we understand that corporate apparel is more than just a logo on a jersey. With LaFuga custom cycling apparel , you choose Italian designs, an aerodynamic fit, and the highest level of comfort. Personally designed and curated under the expert eye of former professional skater Ingmar Berga . Whether",
+      "seoFooterHtml": "<h4>Premium Custom Cycling Apparel for Your Business by LaFuga &amp; Ingmar Berga</h4>\r\nDo you want your company, cycling club, or business network to make a professional impression on the bike? At Bergasports, we understand that corporate apparel is more than just a logo on a jersey. With <strong>LaFuga custom cycling apparel</strong>, you choose Italian designs, an aerodynamic fit, and the highest level of comfort. Personally designed and curated under the expert eye of former professional skater <strong>Ingmar Berga</strong>.\r\n\r\nWhether it concerns an intensive business ride, a charity event, or weekly rides with colleagues: our custom cycling apparel ensures a professional appearance and strengthens team spirit.\r\n<div class=\"usp-block\" style=\"background-color: #f9f9f9;padding: 20px;border-radius: 8px;margin: 25px 0\">\r\n<h3>Why choose LaFuga from Bergasports?</h3>\r\n<ul>\r\n \t<li><strong>Designed by a specialist:</strong> Direct advice and design guidance by former professional Ingmar Berga.</li>\r\n \t<li><strong>Premium Italian quality:</strong> High-quality, breathable fabrics that feel like a second skin.</li>\r\n \t<li><strong>Superior chamois pads:</strong> No more saddle soreness thanks to our ergonomic, high-end chamois pads for men and women.</li>\r\n \t<li><strong>Complete design freedom:</strong> Your corporate identity, colors, and logos perfectly integrated into a sleek, modern design.</li>\r\n \t<li><strong>Flexible order quantities:</strong> Available for both small teams and large corporate events.</li>\r\n</ul>\r\n</div>\r\n<h2>Why the right custom cycling apparel makes the difference for your business</h2>\r\nInexpensive cycling wear often pinches, breathes poorly, and the chamois quickly loses its cushioning. That is not the experience you want to offer your employees or business partners. LaFuga custom cycling apparel is developed for and by cyclists who put in the miles. We use innovative materials that wick sweat away quickly, fit the body perfectly, and retain their shape and color even after dozens of washes.\r\n\r\nThanks to the expertise of Ingmar Berga, we select exactly the right materials and chamois pads that suit the level and goals of your team. From comfortable touring rides to performance-oriented sessions: we fully tailor the apparel to your requirements.\r\n<h2>The design process: From idea to premium cycling kit</h2>\r\nDesigning your own corporate apparel is a worry-free process at Bergasports. We handle the heavy lifting and guide you from start to finish:\r\n<ol>\r\n \t<li><strong>Personal advice:</strong> We discuss your requirements, the desired fits, and the size of the order.</li>\r\n \t<li><strong>Professional design:</strong> Our designers translate your corporate identity and logos into a sleek and recognizable LaFuga design.</li>\r\n \t<li><strong>On-site fitting session:</strong> To ensure everyone receives the perfect size, we provide fitting kits or organize a fitting session.</li>\r\n \t<li><strong>Production &amp; Delivery:</strong> Your apparel is produced with utmost precision in Europe and delivered promptly.</li>\r\n</ol>\r\n<h2>Strengthen your brand and team spirit on the road</h2>\r\nExercising together creates a bond. By dressing your employees and partners in high-quality LaFuga cycling apparel, you invest in their health, vitality, and mutual connection. Furthermore, a peloton in your corporate colors is the ultimate athletic marketing for your brand. Show what your company stands for: quality, dynamism, and teamwork.",
       "children": []
     },
     {
@@ -163,10 +251,10 @@
       "name": "Cycling shoes",
       "slug": "cycling-shoes",
       "parent": 0,
-      "count": 13,
+      "count": 15,
       "link": "/cycling-shoes",
-      "seoIntro": null,
-      "seoFooterHtml": null,
+      "seoIntro": "Nimbl Cycling Shoes: Handmade Italian Mastery In the pursuit of ultimate cycling performance, every gram and every watt you transfer to the pedals counts. For cyclists who refuse to compromise on weight, stiffness, and comfort, one brand stands head and shoulders above the rest: Nimbl . These handmade Italian cycling shoes represent the absolute pinnacle of the sport. At BERGASPORTS, we are proud to offer this exclusive brand to riders who settle for nothing but the best. The Story Behind Nimbl:",
+      "seoFooterHtml": "<h1>Nimbl Cycling Shoes: Handmade Italian Mastery</h1>\r\nIn the pursuit of ultimate cycling performance, every gram and every watt you transfer to the pedals counts. For cyclists who refuse to compromise on weight, stiffness, and comfort, one brand stands head and shoulders above the rest: <strong>Nimbl</strong>. These handmade Italian cycling shoes represent the absolute pinnacle of the sport. At BERGASPORTS, we are proud to offer this exclusive brand to riders who settle for nothing but the best.\r\n<h2>The Story Behind Nimbl: A Passion for Perfection</h2>\r\nNimbl was born from a deep-rooted passion for cycling and an obsession with technical perfection. While many brands have moved their production to low-wage countries, Nimbl remains resolutely committed to local, artisanal craftsmanship. Every Nimbl cycling shoe is entirely handmade in Italy. This not only ensures unparalleled finishing quality but also allows designers to apply the strictest quality controls.\r\n\r\nThe heart of every Nimbl shoe is the monocoque carbon chassis. This ultra-lightweight and extremely stiff platform ensures direct power transfer from your legs to the pedals. No lost energy, no flex, just pure speed. It is therefore no surprise that more and more WorldTour pros and demanding amateurs are making the switch to Nimbl cycling shoes.\r\n<h2>The Models: Nimbl Ultimate and Ultimate Stardust</h2>\r\nWithin the Nimbl range, several models immediately stand out for their groundbreaking performance and exclusive look. These flagship models are designed to perform under the toughest conditions.\r\n<ul>\r\n \t<li><strong>Nimbl Ultimate:</strong> This is the benchmark for lightweight performance shoes. Weighing well under 200 grams per shoe, the Ultimate feels like a second skin. The combination of a superior fit, a breathable premium microfiber upper, and the unprecedentedly stiff carbon sole makes this the ultimate climbing shoe and all-rounder.</li>\r\n \t<li><strong>Nimbl Ultimate Stardust:</strong> For those who want to make a statement on the bike as well as perform, there is the exclusive Ultimate Stardust edition. This model combines all the technological highlights of the Ultimate with a breathtaking, shimmering design that reacts to sunlight. With the Stardust, you get a true work of art that radiates pure class and speed.</li>\r\n</ul>\r\n<h2>Why Choose Nimbl Cycling Shoes?</h2>\r\nChoosing Nimbl is a choice for pure performance. But what truly makes these handmade cycling shoes unique compared to the established order?\r\n<ul>\r\n \t<li><strong>Unparalleled Lightweight:</strong> Nimbl is among the absolute lightest cycling shoes on the market. This reduces rotating mass with every pedal stroke, directly resulting in less fatigue during long, intensive rides.</li>\r\n \t<li><strong>Maximum Power Transfer:</strong> Thanks to the handmade carbon shell sole, not a single watt is lost. Every pedal stroke is direct.</li>\r\n \t<li><strong>Sublime Fit:</strong> The ergonomic design fits perfectly around the foot, eliminating pressure points and maintaining comfort, even after hours in the saddle.</li>\r\n \t<li><strong>Exclusivity:</strong> Because the shoes are handmade in limited editions, you ride with an exclusive product that exudes craftsmanship and style.</li>\r\n</ul>\r\n<h2>Find Your Perfect Nimbl Shoes at BERGASPORTS</h2>\r\nChoosing the right cycling shoe is a precise process. The fit must be perfect to prevent injuries and get the most out of your rides. At BERGASPORTS, we understand this better than anyone. As a specialist in high-end cycling products, we are ready to provide you with expert advice.\r\n\r\nDo you want to experience the handmade sensation of Nimbl for yourself? View our collection online or visit our physical store in Dedemsvaart for a professional fitting session. Our experts are happy to help you find the perfect size and the model that matches your cycling goals. Invest in your performance and experience the difference of Italian mastery.",
       "children": []
     },
     {
@@ -181,22 +269,11 @@
       "children": []
     },
     {
-      "id": 104,
-      "name": "LaFuga wear",
-      "slug": "lafuga-wear",
-      "parent": 0,
-      "count": 9,
-      "link": "/lafuga-wear",
-      "seoIntro": null,
-      "seoFooterHtml": null,
-      "children": []
-    },
-    {
       "id": 216,
       "name": "Scope outlet",
       "slug": "scope-outlet",
       "parent": 0,
-      "count": 37,
+      "count": 29,
       "link": "/scope-outlet",
       "seoIntro": null,
       "seoFooterHtml": null,
@@ -207,7 +284,7 @@
       "name": "Speed skates",
       "slug": "speed-skates",
       "parent": 0,
-      "count": 11,
+      "count": 12,
       "link": "/speed-skates",
       "seoIntro": null,
       "seoFooterHtml": null,
@@ -229,10 +306,10 @@
       "name": "Wheels",
       "slug": "wheels",
       "parent": 0,
-      "count": 12,
+      "count": 11,
       "link": "/wheels",
-      "seoIntro": null,
-      "seoFooterHtml": null,
+      "seoIntro": "Scope Wheels: Groundbreaking Innovation and Performance at Bergasports As a passionate road cyclist or gravel biker, you know that your wheels are the most important upgrade for your bike. They determine handling, acceleration, and aerodynamics. At Bergasports, we are always searching for the very best equipment to take your performance to the next level. That is why we are a proud dealer of Scope wheels . This Dutch brand, founded in the high-tech Eindhoven region, combines scientific innovatio",
+      "seoFooterHtml": "<h1>Scope Wheels: Groundbreaking Innovation and Performance at Bergasports</h1>\r\nAs a passionate road cyclist or gravel biker, you know that your wheels are the most important upgrade for your bike. They determine handling, acceleration, and aerodynamics. At Bergasports, we are always searching for the very best equipment to take your performance to the next level. That is why we are a proud dealer of <strong>Scope wheels</strong>. This Dutch brand, founded in the high-tech Eindhoven region, combines scientific innovation with an uncompromising passion for cycling. Whether you choose the proven R-series or the revolutionary, ultra-light Scope Artech wheelsets, with Scope you are guaranteed to ride with no excuses.\r\n<h2>The Story Behind Scope Cycling: No Excuse</h2>\r\nScope Cycling was founded with a clear goal: to develop the perfect carbon wheelset for any terrain. The &#8220;No Excuse&#8221; philosophy is at the core of everything they do. Instead of relying on standard molds and components, Scope develops every part in-house—from the carbon rim profiles and unique hub systems to the specific spoke patterns. Through this holistic approach, Scope&#8217;s engineers succeed in finding the perfect balance between aerodynamics, stiffness, weight, and durability. Furthermore, all Scope wheels are tubeless-ready as standard, allowing you to benefit immediately from lower rolling resistance and increased comfort.\r\n<h2>The Revolutionary Scope Artech Wheelsets: The New Standard</h2>\r\nWith the introduction of the <strong>Scope Artech</strong> series, the brand has turned the cycling world upside down. This is not just an upgrade; it is a technological revolution. The Artech wheelsets utilize groundbreaking technologies such as 3D-printed titanium hubs and a rim design inspired by nature (biomimicry). The rim features a unique &#8216;Aeroscales&#8217; structure, similar to the skin of a shark. This ensures that airflow is optimally guided along the rim, resulting in unprecedented aerodynamic performance and minimal crosswind sensitivity. Thanks to the ultra-light carbon lay-up and the feather-light, 3D-printed hubs, an Artech wheelset weighs extremely little without sacrificing the legendary stiffness for which Scope is known. The Scope Artech is the ultimate choice for the cyclist who settles for nothing but the best.\r\n<h2>The Scope Wheels Range at Bergasports</h2>\r\nAt Bergasports, you will find a carefully selected range of Scope wheels, tailored to your specific riding style and terrain:\r\n<ul>\r\n \t<li><strong>Scope Road (R-Series &amp; Artech Road):</strong> Designed for pure speed on the asphalt. Available in various rim heights (from climbing wheels to aerodynamic deep rims) so you can always find the perfect match for your favorite course.</li>\r\n \t<li><strong>Scope Gravel (G-Series &amp; Artech Gravel):</strong> Specially developed to conquer the roughest gravel paths. These wheels offer a wider internal rim width for optimal support of wider gravel tires, ensuring maximum grip and comfort.</li>\r\n \t<li><strong>Scope Off-Road (O2):</strong> The ultimate carbon wheelset for the mountain biker looking for explosive acceleration and maximum control on technical trails.</li>\r\n</ul>\r\n<h2>Why Buy Your Scope Wheels at Bergasports?</h2>\r\nChoosing the right wheelset is a bespoke process. At Bergasports, we understand this better than anyone. As specialists in high-end cycling, we provide you with personal and expert advice. We do not just look at the specifications of the wheels, but also at your weight, riding style, and the bike they will be mounted on. When you purchase your Scope wheels at Bergasports, you benefit from our professional assembly service. We ensure your new wheels are mounted perfectly straight, with the correct tires (tubeless or with inner tubes) and the appropriate cassette for your bike. Additionally, you can rely on us for excellent aftercare and maintenance, so you can continue to fly over the roads or gravel paths for years to come.\r\n\r\nReady for the ultimate upgrade? View our full range of Scope wheels and experience the difference of Dutch mastery for yourself. Do you have questions or would you like to admire the wheels in person? Visit our store or contact our experts for personalized advice!",
       "children": []
     }
   ]

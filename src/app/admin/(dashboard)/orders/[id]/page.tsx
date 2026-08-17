@@ -1,9 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import AdminOrderEasySalesSync from "@/components/admin/AdminOrderEasySalesSync";
 import AdminOrderStatusSelect from "@/components/admin/AdminOrderStatusSelect";
-import type { EasySalesSyncStatus } from "@/lib/easy-sales-sync-status";
 import { ORDER_STATUS_LABEL } from "@/lib/orders";
 import { getOrderById } from "@/lib/orders-db";
 import { formatProductPrice } from "@/lib/products";
@@ -15,7 +13,7 @@ type PageProps = {
 };
 
 function formatDate(iso: string) {
-  return new Date(iso).toLocaleString("en-US", {
+  return new Date(iso).toLocaleString("nl-NL", {
     dateStyle: "medium",
     timeStyle: "short",
   });
@@ -41,14 +39,14 @@ export default async function AdminOrderDetailPage({ params }: PageProps) {
   return (
     <div className="admin-stack">
       <Link href="/admin/orders" className="admin-breadcrumb">
-        ← Back to orders
+        ← Terug naar bestellingen
       </Link>
 
       <div className="admin-page-head">
         <div>
           <h1 className="admin-h1 admin-m-0">{order.order_number}</h1>
           <p className="admin-muted admin-m-0 admin-mt-05">
-            Placed {formatDate(order.created_at)} · {ORDER_STATUS_LABEL[order.status]}
+            Geplaatst {formatDate(order.created_at)} · {ORDER_STATUS_LABEL[order.status]}
           </p>
         </div>
       </div>
@@ -58,7 +56,7 @@ export default async function AdminOrderDetailPage({ params }: PageProps) {
         style={{ display: "grid", gap: "1rem", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))" }}
       >
         <div className="admin-panel admin-stack-tight">
-          <h2 className="admin-h2 admin-m-0">Customer &amp; shipping</h2>
+          <h2 className="admin-h2 admin-m-0">Klant &amp; verzending</h2>
           <p className="admin-m-0">
             <strong>{order.customer_name}</strong>
           </p>
@@ -73,54 +71,48 @@ export default async function AdminOrderDetailPage({ params }: PageProps) {
           </div>
           {order.notes ? (
             <div className="admin-mt-1">
-              <p className="admin-label admin-m-0">Customer notes</p>
+              <p className="admin-label admin-m-0">Opmerkingen</p>
               <p className="admin-m-0">{order.notes}</p>
             </div>
           ) : null}
         </div>
 
         <div className="admin-panel admin-stack-tight">
-          <h2 className="admin-h2 admin-m-0">Easy-Sales</h2>
-          <AdminOrderEasySalesSync
-            orderId={order.id}
-            status={(order.easy_sales_sync_status as EasySalesSyncStatus) ?? null}
-            error={order.easy_sales_sync_error}
-            syncedAt={order.easy_sales_synced_at}
-          />
-        </div>
-
-        <div className="admin-panel admin-stack-tight">
           <AdminOrderStatusSelect orderId={order.id} currentStatus={order.status} />
           <div className="admin-stat-inline admin-mt-1">
             <span>
-              Subtotal: <strong>{formatProductPrice(order.subtotal, order.currency)}</strong>
+              Subtotaal: <strong>{formatProductPrice(order.subtotal, order.currency)}</strong>
             </span>
             {order.discount_total > 0.005 ? (
               <span>
-                Discount: <strong>-{formatProductPrice(order.discount_total, order.currency)}</strong>
+                Korting: <strong>-{formatProductPrice(order.discount_total, order.currency)}</strong>
               </span>
             ) : null}
             <span>
-              Total: <strong>{formatProductPrice(order.total, order.currency)}</strong>
+              Totaal: <strong>{formatProductPrice(order.total, order.currency)}</strong>
             </span>
           </div>
           <p className="admin-muted admin-m-0" style={{ fontSize: "0.85rem" }}>
-            Payment:{" "}
-            {order.payment_method === "cash_on_delivery" ? "Cash on delivery" : order.payment_method}
+            Betaling:{" "}
+            {order.payment_method === "cash_on_delivery"
+              ? "Rembours"
+              : order.payment_method === "mollie"
+                ? "Online (Mollie)"
+                : order.payment_method}
           </p>
         </div>
       </div>
 
       <div className="admin-panel admin-stack-tight">
-        <h2 className="admin-h2 admin-m-0">Line items ({order.items.length})</h2>
+        <h2 className="admin-h2 admin-m-0">Regels ({order.items.length})</h2>
         <div className="admin-table-wrap">
           <table className="admin-table">
             <thead>
               <tr>
                 <th>Product</th>
-                <th className="admin-td-right">Qty</th>
-                <th className="admin-td-right">Unit price</th>
-                <th className="admin-td-right">Line total</th>
+                <th className="admin-td-right">Aantal</th>
+                <th className="admin-td-right">Prijs</th>
+                <th className="admin-td-right">Regel</th>
               </tr>
             </thead>
             <tbody>

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 
+import AdminImageUploadButton from "@/components/admin/AdminImageUploadButton";
 import { productPath, slugifyProductTitle } from "@/lib/product-slug";
 import {
   CATALOG_SOURCES,
@@ -14,6 +15,13 @@ import {
 } from "@/lib/products";
 import { PRODUCT_STATUSES, PRODUCT_STATUS_LABEL, normalizeProductStatus, type ProductStatus } from "@/lib/product-status";
 import { productAvailableStock } from "@/lib/stock";
+
+function isPreviewableImageUrl(value: string): boolean {
+  const t = value.trim();
+  if (!t) return false;
+  if (t.startsWith("/")) return true;
+  return /^https?:\/\//i.test(t);
+}
 
 function stringifyOptionalJson(value: unknown): string {
   if (value == null) {
@@ -54,7 +62,7 @@ function appendImageUrls(existingText: string, rawPaste: string): string {
     .map((s) => s.trim())
     .filter(Boolean);
   for (const p of parts) {
-    if (!/^https?:\/\//i.test(p)) {
+    if (!isPreviewableImageUrl(p)) {
       continue;
     }
     const k = p.toLowerCase();
@@ -167,10 +175,12 @@ export default function ProductEditorForm({ initial }: ProductEditorFormProps) {
         name: name.trim(),
         brand: brand.trim() || undefined,
         category: category.trim() || undefined,
-        url: url.trim(),
+        url:
+          url.trim() ||
+          `https://www.bergasports.com/product/${slugifyProductTitle(name.trim()) || `product-${id}`}`,
         image: image.trim(),
         images: images.length ? images : [image.trim()].filter(Boolean),
-        currency: currency.trim() || "Lei",
+        currency: currency.trim() || "EUR",
         priceCurrent: pc,
         priceCurrentText: String(pc),
         priceDiscounted: pd,
@@ -333,14 +343,14 @@ export default function ProductEditorForm({ initial }: ProductEditorFormProps) {
 
   const titlePreview = decodeImportedProductTitle(name.trim() || "—");
   const imageTrim = image.trim();
-  const imagePreviewOk = Boolean(imageTrim && /^https?:\/\//i.test(imageTrim));
+  const imagePreviewOk = isPreviewableImageUrl(imageTrim);
 
   const extraImageUrls = useMemo(() => {
     const mainKey = image.trim().toLowerCase();
     const seen = new Set<string>();
     return textToImages(imagesText).filter((u) => {
       const t = u.trim();
-      if (!t || !/^https?:\/\//i.test(t)) {
+      if (!t || !isPreviewableImageUrl(t)) {
         return false;
       }
       const k = t.toLowerCase();
@@ -672,11 +682,34 @@ export default function ProductEditorForm({ initial }: ProductEditorFormProps) {
                 <div className="admin-thumb-preview-wrap admin-thumb-preview-wrap--hero opacity-40" aria-hidden />
               )}
               <div className="admin-media-actions">
+                <AdminImageUploadButton
+                  label="Upload hoofdfoto"
+                  folder="products"
+                  onUploaded={(uploadedUrl) => {
+                    setError("");
+                    const prevMain = image.trim();
+                    setImage(uploadedUrl);
+                    if (prevMain && isPreviewableImageUrl(prevMain) && prevMain !== uploadedUrl) {
+                      setImagesText((prev) => appendImageUrls(prev, prevMain));
+                    }
+                  }}
+                  onError={(message) => setError(message)}
+                />
+                <AdminImageUploadButton
+                  label="Upload extra foto’s"
+                  folder="products"
+                  multiple
+                  onUploaded={(uploadedUrl) => {
+                    setError("");
+                    setImagesText((prev) => appendImageUrls(prev, uploadedUrl));
+                  }}
+                  onError={(message) => setError(message)}
+                />
                 <button type="button" className="admin-btn-secondary" onClick={handleChangeMainPhoto}>
-                  Change main photo
+                  Plak hoofdfoto-URL
                 </button>
                 <button type="button" className="admin-btn-secondary" onClick={handleAddImages}>
-                  Add images
+                  Plak extra URL’s
                 </button>
               </div>
               <div className="min-w-0 flex-1 admin-stack-tight">

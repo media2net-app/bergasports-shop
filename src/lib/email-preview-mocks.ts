@@ -15,6 +15,7 @@ export function mockOrderForEmailPreview(): OrderWithItems {
     shipping_postal_code: "400000",
     notes: "Sună înainte de livrare, te rog.",
     payment_method: "cash_on_delivery",
+    mollie_payment_id: null,
     currency: "RON",
     subtotal: 0,
     discount_total: 0,

@@ -1,5 +1,6 @@
 import "server-only";
 
+import { put } from "@vercel/blob";
 import { createHash } from "crypto";
 import { mkdir, writeFile } from "fs/promises";
 import path from "path";
@@ -28,7 +29,10 @@ export function isHostedProductImageUrl(url: string): boolean {
   }
   try {
     const parsed = new URL(trimmed, siteBaseUrl());
-    if (parsed.pathname.startsWith(`/${PUBLIC_SUBDIR}/`)) {
+    if (parsed.pathname.startsWith(`/${PUBLIC_SUBDIR}/`) || parsed.pathname.startsWith("/media/")) {
+      return true;
+    }
+    if (parsed.hostname.includes("blob.vercel-storage.com")) {
       return true;
     }
     if (parsed.hostname.endsWith("bergasports.com") && parsed.pathname.includes("/product-images/")) {
@@ -36,7 +40,7 @@ export function isHostedProductImageUrl(url: string): boolean {
     }
     return false;
   } catch {
-    return trimmed.startsWith(`/${PUBLIC_SUBDIR}/`);
+    return trimmed.startsWith(`/${PUBLIC_SUBDIR}/`) || trimmed.startsWith("/media/");
   }
 }
 
@@ -131,6 +135,23 @@ async function downloadImage(sourceUrl: string): Promise<{ buffer: Buffer; conte
 async function uploadMirror(sourceUrl: string, buffer: Buffer, contentType: string): Promise<MirrorResult> {
   const ext = extensionFromMime(contentType, sourceUrl);
   const storagePath = storagePathForUrl(sourceUrl, ext);
+
+  if (process.env.BLOB_READ_WRITE_TOKEN) {
+    const blob = await put(`${PUBLIC_SUBDIR}/${storagePath}`, buffer, {
+      access: "public",
+      contentType,
+      token: process.env.BLOB_READ_WRITE_TOKEN,
+      addRandomSuffix: false,
+      allowOverwrite: true,
+    });
+    return {
+      publicUrl: blob.url,
+      storagePath,
+      contentType,
+      byteSize: buffer.length,
+    };
+  }
+
   const filePath = path.join(process.cwd(), "public", PUBLIC_SUBDIR, storagePath);
   await mkdir(path.dirname(filePath), { recursive: true });
   await writeFile(filePath, buffer);

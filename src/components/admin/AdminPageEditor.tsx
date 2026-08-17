@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import AdminImageUploadButton from "@/components/admin/AdminImageUploadButton";
 import type { HomepageBlocks, SitePageRow } from "@/lib/site-pages";
 import { DEFAULT_HOMEPAGE_BLOCKS } from "@/lib/site-pages";
 
@@ -67,20 +68,20 @@ export default function AdminPageEditor({ page }: AdminPageEditorProps) {
   return (
     <div className="admin-stack">
       <Link href="/admin/pages" className="admin-breadcrumb">
-        ← All pages
+        ← Alle pagina’s
       </Link>
 
       <div className="admin-page-head">
         <div>
           <h1 className="admin-h1 admin-m-0">{title || page.title}</h1>
           <p className="admin-muted admin-m-0 admin-mt-05">
-            Path: <code>{page.path}</code> · Slug: <code>{page.slug}</code>
+            Pad: <code>{page.path}</code> · Slug: <code>{page.slug}</code>
             {page.path !== "/" ? (
               <>
                 {" "}
                 ·{" "}
                 <a href={page.path} target="_blank" rel="noopener noreferrer" className="admin-link-action">
-                  View on site
+                  Bekijk op site
                 </a>
               </>
             ) : (
@@ -88,37 +89,37 @@ export default function AdminPageEditor({ page }: AdminPageEditorProps) {
                 {" "}
                 ·{" "}
                 <a href="/" target="_blank" rel="noopener noreferrer" className="admin-link-action">
-                  View on site
+                  Bekijk op site
                 </a>
               </>
             )}
           </p>
         </div>
         <button type="button" onClick={save} disabled={saving} className="admin-btn-primary admin-w-fit">
-          {saving ? "Saving…" : "Save"}
+          {saving ? "Opslaan…" : "Opslaan"}
         </button>
       </div>
 
       {saveOk ? (
         <div className="admin-banner ok admin-m-0" role="status">
-          Page saved.
+          Pagina opgeslagen.
         </div>
       ) : null}
       {error ? <div className="admin-error-box">{error}</div> : null}
 
       <div className="admin-panel admin-stack-tight">
         <label className="admin-label" htmlFor="page-title">
-          Admin title
+          Titel (admin)
         </label>
         <input id="page-title" className={fieldClass} value={title} onChange={(e) => setTitle(e.target.value)} />
 
         <label className="admin-label admin-mt-1" htmlFor="page-heading">
-          Page heading (H1)
+          Kop (H1)
         </label>
         <input id="page-heading" className={fieldClass} value={heading} onChange={(e) => setHeading(e.target.value)} />
 
         <label className="admin-label admin-mt-1">
-          <input type="checkbox" checked={isPublished} onChange={(e) => setIsPublished(e.target.checked)} /> Published
+          <input type="checkbox" checked={isPublished} onChange={(e) => setIsPublished(e.target.checked)} /> Gepubliceerd
         </label>
       </div>
 
@@ -152,9 +153,22 @@ export default function AdminPageEditor({ page }: AdminPageEditorProps) {
         </div>
       ) : (
         <div className="admin-panel admin-stack-tight">
-          <h2 className="admin-h2 admin-m-0">Content (HTML)</h2>
+          <div className="admin-tools-row" style={{ justifyContent: "space-between" }}>
+            <h2 className="admin-h2 admin-m-0">Content (HTML)</h2>
+            <AdminImageUploadButton
+              label="Foto invoegen"
+              folder="pages"
+              onUploaded={(url) => {
+                setError("");
+                const block = `<p><img src="${url}" alt="" /></p>\n`;
+                setBodyHtml((prev) => `${prev.trimEnd()}\n${block}`);
+              }}
+              onError={(message) => setError(message)}
+            />
+          </div>
           <p className="admin-muted admin-m-0 admin-text-sm">
-            Simple HTML is allowed: &lt;p&gt;, &lt;ul&gt;, &lt;li&gt;, &lt;a href=&quot;...&quot;&gt;, &lt;strong&gt;.
+            Eenvoudige HTML: &lt;p&gt;, &lt;ul&gt;, &lt;li&gt;, &lt;a href=&quot;…&quot;&gt;, &lt;strong&gt;, &lt;img
+            src=&quot;…&quot;&gt;. Upload een foto om die onderaan de tekst te zetten.
           </p>
           <textarea
             className={`${fieldClass} admin-field--tall-xl admin-field--mono`}
@@ -166,7 +180,7 @@ export default function AdminPageEditor({ page }: AdminPageEditorProps) {
       )}
 
       <div className="admin-panel admin-stack-tight">
-        <h2 className="admin-h2 admin-m-0">SEO (optional)</h2>
+        <h2 className="admin-h2 admin-m-0">SEO (optioneel)</h2>
         <label className="admin-label" htmlFor="meta-title">
           Meta title
         </label>

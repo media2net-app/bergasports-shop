@@ -1,11 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { CartItem } from "@/components/cart/CartProvider";
 import TikTokCheckoutEvents from "@/components/analytics/TikTokCheckoutEvents";
+import ApplePayButton from "@/components/payments/ApplePayButton";
 import { getTtclidFromDocument } from "@/lib/tiktok-client";
 import { tikTokIdentify } from "@/lib/tiktok-pixel";
 import { formatProductPrice } from "@/lib/products";
+import { trackCommerceEvent } from "@/components/analytics/AnalyticsScripts";
+import Link from "next/link";
 
 type CartCheckoutFormProps = {
   items: CartItem[];
@@ -44,8 +47,49 @@ export default function CartCheckoutForm({
   const [shippingPostalCode, setShippingPostalCode] = useState("");
   const [notes, setNotes] = useState("");
   const [marketingConsent, setMarketingConsent] = useState(false);
+  const [legalAccepted, setLegalAccepted] = useState(false);
+  const [shippingCountry, setShippingCountry] = useState("NL");
+  const [shippingMethod, setShippingMethod] = useState("standard");
+  const [shippingCost, setShippingCost] = useState(0);
+  const [shippingRates, setShippingRates] = useState<
+    Array<{ method: string; label: string; price: number }>
+  >([]);
+  const [couponCode, setCouponCode] = useState("");
+  const [couponDiscount, setCouponDiscount] = useState(0);
+  const [mollieMethod, setMollieMethod] = useState("");
+  const [mollieMethods, setMollieMethods] = useState<Array<{ id: string; description: string }>>(
+    [],
+  );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  const payableSubtotal = Math.max(0, subtotal - discountTotal - couponDiscount);
+  const payableTotal = Math.round((payableSubtotal + shippingCost) * 100) / 100;
+
+  useEffect(() => {
+    void fetch(`/api/shipping/quote?country=${shippingCountry}&subtotal=${payableSubtotal}`)
+      .then((r) => r.json())
+      .then((data: { rates?: Array<{ method: string; label: string; price: number }> }) => {
+        const rates = data.rates ?? [];
+        setShippingRates(rates);
+        const current = rates.find((r) => r.method === shippingMethod) ?? rates[0];
+        if (current) {
+          setShippingMethod(current.method);
+          setShippingCost(current.price);
+        }
+      })
+      .catch(() => undefined);
+  }, [shippingCountry, payableSubtotal, shippingMethod]);
+
+  useEffect(() => {
+    if (payableTotal <= 0) return;
+    void fetch(`/api/mollie/methods?amount=${payableTotal}&currency=${encodeURIComponent(currency)}`)
+      .then((r) => r.json())
+      .then((data: { methods?: Array<{ id: string; description: string }> }) => {
+        setMollieMethods(data.methods ?? []);
+      })
+      .catch(() => undefined);
+  }, [payableTotal, currency]);
 
   const fieldClass =
     "mt-1 w-full rounded-lg border border-[#e5dcc8] px-3 py-2 text-sm text-[var(--foreground)] outline-none focus:border-[#B38F27]";
@@ -55,15 +99,40 @@ export default function CartCheckoutForm({
       setError("Vul naam, telefoon, adres en plaats in.");
       return false;
     }
+    if (!customerEmail.trim()) {
+      setError("E-mail is verplicht voor online betalen.");
+      return false;
+    }
+    if (!legalAccepted) {
+      setError("Accepteer de algemene voorwaarden en het privacybeleid.");
+      return false;
+    }
     setError("");
     return true;
   }
 
-  async function handleSubmit() {
+  async function applyCoupon() {
+    setError("");
+    const res = await fetch("/api/coupons/validate", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ code: couponCode, subtotal }),
+    });
+    const data = (await res.json()) as { discount?: number; error?: string };
+    if (!res.ok) {
+      setCouponDiscount(0);
+      setError(data.error || "Ongeldige code");
+      return;
+    }
+    setCouponDiscount(data.discount ?? 0);
+  }
+
+  async function handleSubmit(forcedMethod?: string) {
     if (!validateDetails()) return;
 
     setError("");
     setLoading(true);
+    trackCommerceEvent("begin_checkout", { value: payableTotal, currency });
     try {
       await tikTokIdentify({
         email: customerEmail || undefined,
@@ -78,15 +147,22 @@ export default function CartCheckoutForm({
           customerPhone,
           customerEmail: customerEmail || undefined,
           marketingConsent,
+          legalAccepted: true,
+          paymentMethod: "mollie",
+          mollieMethod: forcedMethod || mollieMethod || undefined,
           shippingAddress,
           shippingCity,
           shippingCounty: shippingCounty || undefined,
           shippingPostalCode: shippingPostalCode || undefined,
+          shippingCountry,
+          shippingMethod,
+          shippingCost,
+          couponCode: couponCode || undefined,
           notes: notes || undefined,
           currency,
           subtotal,
-          discountTotal,
-          total,
+          discountTotal: discountTotal + couponDiscount,
+          total: payableTotal,
           items: items.map((item) => ({
             productId: item.productId,
             lineId: item.lineId,
@@ -102,12 +178,23 @@ export default function CartCheckoutForm({
           ttclid: getTtclidFromDocument() ?? undefined,
         }),
       });
-      const data = (await res.json()) as { error?: string; orderNumber?: string };
+      const data = (await res.json()) as {
+        error?: string;
+        orderNumber?: string;
+        checkoutUrl?: string;
+        paymentMethod?: string;
+      };
       if (!res.ok || !data.orderNumber) {
         setError(data.error ?? "De bestelling kon niet worden geplaatst.");
         setLoading(false);
         return;
       }
+
+      if (data.checkoutUrl) {
+        window.location.href = data.checkoutUrl;
+        return;
+      }
+
       await tikTokIdentify({ externalId: data.orderNumber });
       onSuccess(data.orderNumber);
     } catch {
@@ -135,10 +222,73 @@ export default function CartCheckoutForm({
           }}
         >
           <p className="text-sm font-semibold text-[var(--foreground)]">Bezorggegevens</p>
+
           <div className="rounded-lg border border-[#e5dcc8] bg-[#faf8f4] px-3 py-2 text-xs text-[var(--foreground)]/85">
-            <p className="font-semibold text-[var(--foreground)]">Rembours (betaling bij aflevering)</p>
-            <p className="mt-1">Je betaalt contant of met pin bij ontvangst van het pakket.</p>
+            <p className="font-semibold text-[var(--foreground)]">Online betalen via Mollie</p>
+            <p className="mt-1">iDEAL, Apple Pay, kaarten, Bancontact — veilig afrekenen.</p>
           </div>
+
+          <div>
+            <label htmlFor="co-country" className="text-xs font-medium text-[var(--foreground)]">
+              Land *
+            </label>
+            <select
+              id="co-country"
+              className={fieldClass}
+              value={shippingCountry}
+              onChange={(e) => setShippingCountry(e.target.value)}
+            >
+              <option value="NL">Nederland</option>
+              <option value="BE">België</option>
+              <option value="DE">Duitsland</option>
+              <option value="EU">Overig EU</option>
+            </select>
+          </div>
+
+          {shippingRates.length > 0 ? (
+            <fieldset className="space-y-2">
+              <legend className="text-xs font-medium text-[var(--foreground)]">Verzending</legend>
+              {shippingRates.map((rate) => (
+                <label
+                  key={rate.method}
+                  className="flex cursor-pointer items-center justify-between gap-2 rounded-lg border border-[#e5dcc8] px-3 py-2 text-xs"
+                >
+                  <span className="inline-flex items-center gap-2">
+                    <input
+                      type="radio"
+                      name="shipping"
+                      checked={shippingMethod === rate.method}
+                      onChange={() => {
+                        setShippingMethod(rate.method);
+                        setShippingCost(rate.price);
+                      }}
+                    />
+                    {rate.label}
+                  </span>
+                  <span>{formatProductPrice(rate.price, currency)}</span>
+                </label>
+              ))}
+            </fieldset>
+          ) : null}
+
+          <div className="flex gap-2">
+            <input
+              placeholder="Kortingscode"
+              className={fieldClass}
+              value={couponCode}
+              onChange={(e) => setCouponCode(e.target.value)}
+            />
+            <button
+              type="button"
+              className="mt-1 shrink-0 rounded-lg border border-[#e5dcc8] px-3 text-xs font-semibold"
+              onClick={() => void applyCoupon()}
+            >
+              Toepassen
+            </button>
+          </div>
+          {couponDiscount > 0 ? (
+            <p className="text-xs text-emerald-800">Korting: {formatProductPrice(couponDiscount, currency)}</p>
+          ) : null}
 
           <div>
             <label htmlFor="co-name" className="text-xs font-medium text-[var(--foreground)]">
@@ -171,13 +321,14 @@ export default function CartCheckoutForm({
           </div>
           <div>
             <label htmlFor="co-email" className="text-xs font-medium text-[var(--foreground)]">
-              E-mail
+              E-mail *
             </label>
             <input
               id="co-email"
               name="email"
               type="email"
               autoComplete="email"
+              required
               className={fieldClass}
               value={customerEmail}
               onChange={(e) => setCustomerEmail(e.target.value)}
@@ -192,6 +343,30 @@ export default function CartCheckoutForm({
             />
             <span>
               Ik wil aanbiedingen en nieuws per e-mail ontvangen (optioneel). Je kunt je altijd uitschrijven.
+            </span>
+          </label>
+          <label className="flex cursor-pointer items-start gap-2 rounded-lg border border-[#e5dcc8] bg-white px-3 py-2.5 text-xs text-[var(--foreground)]/85">
+            <input
+              type="checkbox"
+              className="mt-0.5"
+              checked={legalAccepted}
+              onChange={(e) => setLegalAccepted(e.target.checked)}
+              required
+            />
+            <span>
+              Ik ga akkoord met de{" "}
+              <Link href="/termeni-si-conditii" className="underline">
+                algemene voorwaarden
+              </Link>
+              , het{" "}
+              <Link href="/politica-de-confidentialitate" className="underline">
+                privacybeleid
+              </Link>{" "}
+              en het{" "}
+              <Link href="/retouren" className="underline">
+                retourbeleid
+              </Link>
+              .
             </span>
           </label>
           <div>
@@ -284,12 +459,10 @@ export default function CartCheckoutForm({
               <dt className="text-xs text-[var(--foreground)]/65">Telefoon</dt>
               <dd className="font-medium">{customerPhone}</dd>
             </div>
-            {customerEmail ? (
-              <div>
-                <dt className="text-xs text-[var(--foreground)]/65">E-mail</dt>
-                <dd className="font-medium">{customerEmail}</dd>
-              </div>
-            ) : null}
+            <div>
+              <dt className="text-xs text-[var(--foreground)]/65">E-mail</dt>
+              <dd className="font-medium">{customerEmail}</dd>
+            </div>
             <div>
               <dt className="text-xs text-[var(--foreground)]/65">Adres</dt>
               <dd className="font-medium">
@@ -297,6 +470,17 @@ export default function CartCheckoutForm({
                 {shippingCounty ? `, ${shippingCounty}` : ""}
                 {shippingPostalCode ? ` ${shippingPostalCode}` : ""}
               </dd>
+            </div>
+            <div>
+              <dt className="text-xs text-[var(--foreground)]/65">Verzending</dt>
+              <dd className="font-medium">
+                {shippingRates.find((r) => r.method === shippingMethod)?.label ?? shippingMethod} —{" "}
+                {formatProductPrice(shippingCost, currency)}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-xs text-[var(--foreground)]/65">Betaling</dt>
+              <dd className="font-medium">Online (Mollie)</dd>
             </div>
             {notes ? (
               <div>
@@ -306,20 +490,42 @@ export default function CartCheckoutForm({
             ) : null}
           </dl>
 
+          {mollieMethods.length > 0 ? (
+            <div>
+              <label className="text-xs font-medium" htmlFor="mollie-method">
+                Betaalmethode
+              </label>
+              <select
+                id="mollie-method"
+                className={fieldClass}
+                value={mollieMethod}
+                onChange={(e) => setMollieMethod(e.target.value)}
+              >
+                <option value="">Kies in Mollie checkout</option>
+                {mollieMethods.map((m) => (
+                  <option key={m.id} value={m.id}>
+                    {m.description}
+                  </option>
+                ))}
+              </select>
+            </div>
+          ) : null}
+
           <p className="text-base font-bold text-[var(--foreground)]">
-            Totaal bij aflevering: {formatProductPrice(total, currency)}
+            Totaal: {formatProductPrice(payableTotal, currency)}
           </p>
 
           {error ? <p className="text-xs font-medium text-red-600">{error}</p> : null}
 
           <div className="flex flex-col gap-2">
+            <ApplePayButton disabled={loading} onClick={() => void handleSubmit("applepay")} />
             <button
               type="button"
               disabled={loading}
               className="w-full rounded-xl bg-[#B38F27] px-4 py-3 text-sm font-bold text-white transition hover:bg-[#96741f] disabled:opacity-60"
               onClick={() => void handleSubmit()}
             >
-              {loading ? "Bezig met verzenden…" : "Bestelling plaatsen"}
+              {loading ? "Bezig…" : "Doorgaan naar betalen"}
             </button>
             <button
               type="button"

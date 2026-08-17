@@ -7,7 +7,7 @@ import { loadFeaturedProducts } from "@/lib/products-db";
 export default async function HomeFeaturedSection() {
   let products: Awaited<ReturnType<typeof loadFeaturedProducts>> = [];
   try {
-    products = await loadFeaturedProducts(4);
+    products = await loadFeaturedProducts(6);
   } catch {
     products = [];
   }

@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8" />
+  <title>Media2Net → Bergasports — Migratie-audit Bergasports 2.0</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@300;400;500;700&family=Cormorant+Garamond:wght@500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --ink: #1a1a1a;
+      --cream: #faf8f4;
+      --cream-deep: #f0ead8;
+      --gold: #b38518;
+      --gold-mid: #d4af38;
+      --gold-dark: #6b5218;
+      --muted: #6b6356;
+      --border: #e5dcc8;
+      --ok: #1f6b3a;
+      --warn: #8a5a00;
+      --miss: #8b1e1e;
+    }
+    * { box-sizing: border-box; }
+    @page { size: A4; margin: 0; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: #ddd;
+      color: var(--ink);
+      font-family: Ubuntu, system-ui, sans-serif;
+      font-size: 10.5pt;
+      line-height: 1.45;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+    .page {
+      width: 210mm;
+      height: 297mm;
+      margin: 0 auto 8mm;
+      background: var(--cream);
+      position: relative;
+      overflow: hidden;
+      page-break-after: always;
+    }
+    .page:last-child { page-break-after: auto; margin-bottom: 0; }
+    .bar {
+      height: 8mm;
+      background: linear-gradient(90deg, var(--ink) 0%, #2a2a2a 70%, var(--gold) 100%);
+    }
+    .footer-bar {
+      position: absolute;
+      left: 0; right: 0; bottom: 0;
+      height: 12mm;
+      background: var(--ink);
+      color: rgba(245,244,242,.72);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 18mm;
+      font-size: 8pt;
+      letter-spacing: .04em;
+    }
+    .footer-bar strong { color: var(--gold-mid); font-weight: 500; }
+    .content {
+      padding: 12mm 18mm 20mm;
+    }
+    h1, h2, h3 {
+      font-family: "Cormorant Garamond", Georgia, serif;
+      font-weight: 600;
+      margin: 0;
+      color: var(--ink);
+    }
+    h1 { font-size: 28pt; line-height: 1.15; }
+    h2 { font-size: 16pt; margin: 0 0 4mm; border-bottom: 1px solid var(--border); padding-bottom: 2mm; }
+    h3 { font-size: 12pt; margin: 4mm 0 2mm; color: var(--gold-dark); }
+    .eyebrow {
+      font-size: 8.5pt;
+      font-weight: 700;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 3mm;
+    }
+    .lead { font-size: 11.5pt; color: var(--muted); max-width: 150mm; margin: 4mm 0 8mm; }
+    .meta-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 3mm 8mm;
+      background: #fff;
+      border: 1px solid var(--border);
+      padding: 5mm 6mm;
+      margin: 6mm 0 8mm;
+    }
+    .meta-grid dt { font-size: 7.5pt; text-transform: uppercase; letter-spacing: .12em; color: var(--muted); }
+    .meta-grid dd { margin: 0 0 2mm; font-weight: 500; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 9pt;
+      background: #fff;
+    }
+    th, td {
+      border: 1px solid var(--border);
+      padding: 2.2mm 2.5mm;
+      text-align: left;
+      vertical-align: top;
+    }
+    th {
+      background: var(--ink);
+      color: #f5f4f2;
+      font-weight: 500;
+      font-size: 8pt;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+    }
+    tr:nth-child(even) td { background: #fcfaf6; }
+    .badge {
+      display: inline-block;
+      font-size: 7.5pt;
+      font-weight: 700;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      padding: 0.8mm 2mm;
+      border-radius: 2px;
+    }
+    .badge-ok { background: #e5f3ea; color: var(--ok); }
+    .badge-partial { background: #fff3d6; color: var(--warn); }
+    .badge-todo { background: #f8e6e6; color: var(--miss); }
+    .score-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 4mm;
+      margin: 6mm 0;
+    }
+    .score {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-top: 3px solid var(--gold);
+      padding: 4mm;
+      text-align: center;
+    }
+    .score .n {
+      font-family: "Cormorant Garamond", Georgia, serif;
+      font-size: 28pt;
+      line-height: 1;
+      color: var(--ink);
+    }
+    .score .l {
+      margin-top: 2mm;
+      font-size: 8pt;
+      text-transform: uppercase;
+      letter-spacing: .12em;
+      color: var(--muted);
+    }
+    ul.tight { margin: 2mm 0 4mm; padding-left: 4.5mm; }
+    ul.tight li { margin-bottom: 1.2mm; }
+    .cover-brand {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14mm;
+    }
+    .cover-brand img { height: 14mm; }
+    .from-to {
+      font-size: 9pt;
+      color: var(--muted);
+      letter-spacing: .04em;
+    }
+    .from-to strong { color: var(--ink); }
+    .gold-line {
+      height: 1px;
+      background: linear-gradient(90deg, var(--gold), transparent);
+      margin: 6mm 0;
+    }
+    .note {
+      font-size: 8.5pt;
+      color: var(--muted);
+      border-left: 2px solid var(--gold-mid);
+      padding-left: 3mm;
+      margin: 4mm 0;
+    }
+    .cover-hero {
+      margin-top: 18mm;
+    }
+    .cover-hero h1 span { color: var(--gold); }
+  </style>
+</head>
+<body>
+
+  <!-- PAGE 1 COVER -->
+  <section class="page">
+    <div class="bar"></div>
+    <div class="content">
+      <div class="cover-brand">
+        <div>
+          <div class="from-to"><strong>Media2Net</strong> → <strong>Bergasports</strong></div>
+          <div class="eyebrow" style="margin-top:3mm">Migratie-audit · Bergasports 2.0</div>
+        </div>
+        <img src="file:///Users/chiel/Desktop/bergasports/public/brand/bergasports-logo.png" alt="Bergasports" />
+      </div>
+
+      <div class="cover-hero">
+        <h1>Live verificatie<br /><span>Vercel-shop</span></h1>
+        <p class="lead">
+          Onafhankelijke test van de Bergasports 2.0-migratie op productie:
+          structuur, content, commerce, SEO-redirects en open punten —
+          namens Media2Net aan Bergasports.
+        </p>
+      </div>
+
+      <dl class="meta-grid">
+        <div>
+          <dt>Datum</dt>
+          <dd>12 augustus 2026</dd>
+          <dt>Omgeving</dt>
+          <dd>bergasports.vercel.app</dd>
+        </div>
+        <div>
+          <dt>Opgesteld door</dt>
+          <dd>Media2Net</dd>
+          <dt>Gericht aan</dt>
+          <dd>Bergasports / Ingmar Berga</dd>
+        </div>
+      </dl>
+
+      <div class="score-row">
+        <div class="score">
+          <div class="n">29/29</div>
+          <div class="l">Routes HTTP 200</div>
+        </div>
+        <div class="score">
+          <div class="n">13/13</div>
+          <div class="l">Homepage-checks</div>
+        </div>
+        <div class="score">
+          <div class="n">40</div>
+          <div class="l">Nieuwsartikelen live</div>
+        </div>
+      </div>
+
+      <p class="note">
+        Conclusie voorpagina: de migratie-architectuur staat live en is functioneel getest.
+        Resterend werk zit vooral in Mollie-methodes/Apple Pay-configuratie, Instagram API-token
+        en DNS-koppeling van bergasports.nl / .com.
+      </p>
+    </div>
+    <div class="footer-bar">
+      <span><strong>MEDIA2NET</strong> · Vertrouwelijk</span>
+      <span>Bergasports 2.0 · Audit 01/04</span>
+    </div>
+  </section>
+
+  <!-- PAGE 2 ROUTES -->
+  <section class="page">
+    <div class="bar"></div>
+    <div class="content">
+      <div class="eyebrow">01 · Storefront</div>
+      <h2>Routes &amp; navigatiestructuur</h2>
+      <p>Alle kern-URL’s van het 2.0-plan zijn bereikbaar op productie (HTTP 200).</p>
+
+      <h3>Categorieën (NL-slugs)</h3>
+      <table>
+        <thead>
+          <tr><th>URL</th><th>Status</th><th>Opmerking</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>/racefietsen</td><td><span class="badge badge-ok">OK</span></td><td>Mapped → WC road-bike</td></tr>
+          <tr><td>/gravel · /mtb · /skeelers · /tweedehands</td><td><span class="badge badge-ok">OK</span></td><td>Fietsen-tak</td></tr>
+          <tr><td>/wielen · /scope-outlet</td><td><span class="badge badge-ok">OK</span></td><td>Wielen-tak</td></tr>
+          <tr><td>/wielrenschoenen · /lafuga</td><td><span class="badge badge-ok">OK</span></td><td>Schoenen &amp; kleding</td></tr>
+          <tr><td>/brillen · /helmen · /accessoires · /schoenplaatjes · /groepsets</td><td><span class="badge badge-ok">OK</span></td><td>Accessoires</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Content &amp; service</h3>
+      <table>
+        <thead>
+          <tr><th>URL</th><th>Status</th><th>Opmerking</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>/ · homepage</td><td><span class="badge badge-ok">OK</span></td><td>Nieuwe sectievolgorde aanwezig</td></tr>
+          <tr><td>/nieuws (+ artikelen)</td><td><span class="badge badge-ok">OK</span></td><td>40 artikellinks zichtbaar</td></tr>
+          <tr><td>/over-ons · /onderhoud</td><td><span class="badge badge-ok">OK</span></td><td>Nieuwe merkp-/servicepagina’s</td></tr>
+          <tr><td>/verzending · /retouren · /contact</td><td><span class="badge badge-ok">OK</span></td><td>Customer service</td></tr>
+          <tr><td>/account · /shop · /admin/login</td><td><span class="badge badge-ok">OK</span></td><td>Account optioneel; guest checkout blijft</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Homepage-inhoud (DOM-check)</h3>
+      <table>
+        <thead><tr><th>Element</th><th>Resultaat</th></tr></thead>
+        <tbody>
+          <tr><td>4 pillars (Racefietsen / Wielen / Schoenen / Accessoires)</td><td><span class="badge badge-ok">OK</span></td></tr>
+          <tr><td>Merken · Advies · About-teaser · Nieuws · Instagram · Dedemsvaart</td><td><span class="badge badge-ok">OK</span></td></tr>
+          <tr><td>Navigatie: /nieuws · /over-ons · /onderhoud</td><td><span class="badge badge-ok">OK</span></td></tr>
+          <tr><td>Language switch NL | EN</td><td><span class="badge badge-ok">OK</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="footer-bar">
+      <span><strong>MEDIA2NET</strong> · Vertrouwelijk</span>
+      <span>Bergasports 2.0 · Audit 02/04</span>
+    </div>
+  </section>
+
+  <!-- PAGE 3 SEO + COMMERCE -->
+  <section class="page">
+    <div class="bar"></div>
+    <div class="content">
+      <div class="eyebrow">02 · SEO &amp; commerce</div>
+      <h2>Redirects, API’s en betalingen</h2>
+
+      <h3>301/308 redirects (zonder follow)</h3>
+      <table>
+        <thead><tr><th>Oude pad</th><th>Location</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td>/bikes</td><td>/fietsen</td><td><span class="badge badge-ok">308</span></td></tr>
+          <tr><td>/road-bike</td><td>/racefietsen</td><td><span class="badge badge-ok">308</span></td></tr>
+          <tr><td>/wheels</td><td>/wielen</td><td><span class="badge badge-ok">308</span></td></tr>
+          <tr><td>/lafuga-wear</td><td>/lafuga</td><td><span class="badge badge-ok">308</span></td></tr>
+          <tr><td>/despre-noi</td><td>/over-ons</td><td><span class="badge badge-ok">308</span></td></tr>
+          <tr><td>/livrare-si-retur</td><td>/verzending</td><td><span class="badge badge-ok">308</span></td></tr>
+        </tbody>
+      </table>
+
+      <h3>Commerce API’s</h3>
+      <table>
+        <thead><tr><th>Endpoint</th><th>Resultaat</th><th>Detail</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>/api/shipping/quote?country=NL&amp;subtotal=200</td>
+            <td><span class="badge badge-ok">OK</span></td>
+            <td>Afhalen €0 · NL verzending gratis vanaf drempel</td>
+          </tr>
+          <tr>
+            <td>POST /api/coupons/validate WELCOME5</td>
+            <td><span class="badge badge-ok">OK</span></td>
+            <td>5% korting toegepast</td>
+          </tr>
+          <tr>
+            <td>/api/shop-search?q=colnago</td>
+            <td><span class="badge badge-ok">OK</span></td>
+            <td>Producthits (o.a. Colnago V4 / Y1RS)</td>
+          </tr>
+          <tr>
+            <td>/api/mollie/methods</td>
+            <td><span class="badge badge-partial">Deels</span></td>
+            <td>Lege lijst — methodes activeren in Mollie Dashboard / key-config</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>Wat code-matig wél klaarstaat</h3>
+      <ul class="tight">
+        <li>Mollie create payment + webhook + return-pagina</li>
+        <li>Checkout: land, verzendopties, coupon, legal checkbox, Apple Pay-knop</li>
+        <li>Producttemplates: small / medium / premium</li>
+        <li>Host-based locale + NL|EN switch (domeinen .nl/.com nog te koppelen)</li>
+      </ul>
+
+      <div class="gold-line"></div>
+      <p class="note">
+        Mollie Payment API is aanwezig; de methodes-lijst hangt af van Dashboard-activatie
+        (iDEAL, Apple Pay, cards, Bancontact) en correcte live key/profile op Vercel.
+      </p>
+    </div>
+    <div class="footer-bar">
+      <span><strong>MEDIA2NET</strong> · Vertrouwelijk</span>
+      <span>Bergasports 2.0 · Audit 03/04</span>
+    </div>
+  </section>
+
+  <!-- PAGE 4 OPEN + NEXT -->
+  <section class="page">
+    <div class="bar"></div>
+    <div class="content">
+      <div class="eyebrow">03 · Open &amp; vervolg</div>
+      <h2>Gap-analyse &amp; aanbevolen next steps</h2>
+
+      <table>
+        <thead><tr><th>Onderdeel</th><th>Status</th><th>Actie Bergasports / Media2Net</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>Structuur, NL-URL’s, homepage, servicepagina’s</td>
+            <td><span class="badge badge-ok">Live</span></td>
+            <td>Content finetunen (SEO-teksten per categorie)</td>
+          </tr>
+          <tr>
+            <td>Nieuws (WP → Prisma)</td>
+            <td><span class="badge badge-ok">Live</span></td>
+            <td>Selectie herschrijven / categoriseren</td>
+          </tr>
+          <tr>
+            <td>Instagram-feed</td>
+            <td><span class="badge badge-partial">Placeholder</span></td>
+            <td>INSTAGRAM_ACCESS_TOKEN + USER_ID zetten</td>
+          </tr>
+          <tr>
+            <td>Mollie methodes + Apple Pay</td>
+            <td><span class="badge badge-partial">Infra klaar</span></td>
+            <td>Dashboard activeren · domain verify · iOS-test</td>
+          </tr>
+          <tr>
+            <td>bergasports.nl + .com DNS</td>
+            <td><span class="badge badge-todo">Open</span></td>
+            <td>Beide domeinen naar Vercel; hreflang dan volledig</td>
+          </tr>
+          <tr>
+            <td>Volledige WP SEO-cutover</td>
+            <td><span class="badge badge-partial">Skeleton</span></td>
+            <td>Rest-URL-mapping + Search Console</td>
+          </tr>
+          <tr>
+            <td>GA4 / GTM</td>
+            <td><span class="badge badge-partial">Hooks klaar</span></td>
+            <td>NEXT_PUBLIC_GA4_ID / GTM_ID invullen</td>
+          </tr>
+          <tr>
+            <td>Mobile testmatrix sign-off</td>
+            <td><span class="badge badge-todo">Open</span></td>
+            <td>Checklist in docs/migration/mobile-testmatrix.md</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>Eindoordeel Media2Net</h3>
+      <p>
+        De Vercel-app is <strong>niet</strong> meer een dunne demo: navigatie, NL-slugs,
+        homepage, nieuws, servicepagina’s, redirects, verzending/coupons en accountbasis
+        zijn live geverifieerd. De volgende waarde zit in afronden van betalingen (Mollie),
+        domeinen en marketing-integraties — niet in opnieuw opbouwen van de structuur.
+      </p>
+
+      <div class="meta-grid" style="margin-top:8mm">
+        <div>
+          <dt>Productie-URL</dt>
+          <dd>https://bergasports.vercel.app</dd>
+          <dt>Alias</dt>
+          <dd>https://nieuw.bergasports.com</dd>
+        </div>
+        <div>
+          <dt>Documentatie</dt>
+          <dd>docs/migration/</dd>
+          <dt>Contact Media2Net</dt>
+          <dd>chiel@media2net.nl</dd>
+        </div>
+      </div>
+
+      <p class="note">
+        Dit document is opgesteld door Media2Net voor Bergasports op basis van live HTTP/API-tests
+        op 12 augustus 2026. Geen geheimen of API-keys opgenomen.
+      </p>
+    </div>
+    <div class="footer-bar">
+      <span><strong>MEDIA2NET</strong> · Vertrouwelijk</span>
+      <span>Bergasports 2.0 · Audit 04/04</span>
+    </div>
+  </section>
+
+</body>
+</html>

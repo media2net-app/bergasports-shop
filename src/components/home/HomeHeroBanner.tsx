@@ -49,7 +49,7 @@ export default function HomeHeroBanner({ blocks }: Props) {
               {hero.ctaShop ?? "Naar de shop"}
             </Link>
             <Link
-              href="/despre-noi"
+              href="/over-ons"
               className="inline-flex items-center justify-center rounded-full border border-white/50 bg-white/10 px-7 py-3 text-sm font-semibold text-white backdrop-blur-sm transition hover:border-white hover:bg-white/15"
             >
               {hero.ctaOffers ?? "Mijn verhaal"}

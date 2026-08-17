@@ -15,9 +15,9 @@ export default async function AdminPagesListPage() {
     <div className="admin-stack">
       <div className="admin-page-head">
         <div>
-          <h1 className="admin-h1 admin-m-0">Pages</h1>
+          <h1 className="admin-h1 admin-m-0">Pagina&apos;s</h1>
           <p className="admin-muted admin-m-0 admin-mt-05">
-            Edit homepage, contact, terms, and other static content shown on the shop.
+            Bewerk homepage, contact en andere vaste content op de shop.
           </p>
         </div>
       </div>

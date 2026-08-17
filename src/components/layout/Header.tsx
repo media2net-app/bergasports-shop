@@ -10,11 +10,14 @@ import HeaderIconButton, { HeaderIconLink } from "@/components/layout/HeaderIcon
 import {
   HEADER_NAV_LEFT,
   HEADER_NAV_RIGHT,
-  WEBSHOP_MENU_LINKS,
   type HeaderNavItem,
 } from "@/components/layout/header-nav";
 import HeaderSearchSlot from "@/components/layout/HeaderSearchSlot";
 import HeaderShopMegaMenu from "@/components/layout/HeaderShopMegaMenu";
+import HeaderSimpleDropdown from "@/components/layout/HeaderSimpleDropdown";
+import MobileNavDrillDown from "@/components/layout/MobileNavDrillDown";
+import LanguageSwitcher from "@/components/locale/LanguageSwitcher";
+import { INSTAGRAM_URL } from "@/lib/site-content";
 
 const navLinkClass =
   "text-[11px] font-bold uppercase tracking-[0.14em] text-white/85 transition hover:text-white md:text-xs";
@@ -43,8 +46,11 @@ function HeaderNavLink({
 }
 
 function renderNavItem(item: HeaderNavItem, pathname: string) {
+  if (item.type === "mega") {
+    return <HeaderShopMegaMenu key={item.label} label="Shop" />;
+  }
   if (item.type === "dropdown") {
-    return <HeaderShopMegaMenu key={item.label} label={item.label} />;
+    return <HeaderSimpleDropdown key={item.label} label={item.label} items={item.items} />;
   }
   const active =
     item.href === "/"
@@ -75,17 +81,6 @@ function IconUser() {
     <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75">
       <circle cx="12" cy="8" r="4" />
       <path d="M5 20c0-4 3.5-6 7-6s7 2 7 6" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function IconHeart() {
-  return (
-    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75">
-      <path
-        d="M12 20s-7-4.5-7-9.5a4.5 4.5 0 0 1 8-2.5 4.5 4.5 0 0 1 8 2.5C21 15.5 12 20 12 20z"
-        strokeLinejoin="round"
-      />
     </svg>
   );
 }
@@ -178,6 +173,7 @@ export default function Header() {
                 {HEADER_NAV_RIGHT.map((item) => renderNavItem(item, pathname))}
               </nav>
               <div className="ml-auto flex shrink-0 items-center gap-0.5 pl-2 sm:gap-1 sm:pl-3">
+              <LanguageSwitcher className="mr-1 hidden lg:inline-flex" />
               <HeaderIconButton
                 label={searchOpen ? "Zoeken sluiten" : "Zoeken"}
                 onClick={() => setSearchOpen((v) => !v)}
@@ -185,12 +181,22 @@ export default function Header() {
               >
                 <IconSearch />
               </HeaderIconButton>
-              <HeaderIconLink href="/contact" label="Contact" className="hidden sm:inline-flex">
+              <HeaderIconLink href="/account" label="Account" className="hidden sm:inline-flex">
                 <IconUser />
               </HeaderIconLink>
-              <HeaderIconLink href="/shop" label="Favorieten" className="hidden md:inline-flex">
-                <IconHeart />
-              </HeaderIconLink>
+              <a
+                href={INSTAGRAM_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hidden h-10 w-10 items-center justify-center rounded-full text-white/90 transition hover:bg-white/10 md:inline-flex"
+                aria-label="Instagram"
+              >
+                <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75">
+                  <rect x="3" y="3" width="18" height="18" rx="5" />
+                  <circle cx="12" cy="12" r="4" />
+                  <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none" />
+                </svg>
+              </a>
               <HeaderIconButton label="Winkelwagen" onClick={openCart} badge={totalItems}>
                 <IconBag />
               </HeaderIconButton>
@@ -238,64 +244,8 @@ export default function Header() {
               Sluiten
             </button>
           </div>
-          <nav className="flex-1 overflow-y-auto px-5 py-4" aria-label="Mobiel menu">
-            <ul className="space-y-1">
-              <li>
-                <Link
-                  href="/shop"
-                  className={`block rounded-lg px-3 py-2.5 text-sm font-bold uppercase tracking-wider ${
-                    isActive("/shop") ? "bg-white/10 text-white" : "text-white/80 hover:bg-white/5"
-                  }`}
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  Webshop
-                </Link>
-              </li>
-              {WEBSHOP_MENU_LINKS.map((sub) => (
-                <li key={sub.href} className="pl-3">
-                  <Link
-                    href={sub.href}
-                    className="block rounded-lg px-3 py-2 text-sm text-white/75 hover:bg-white/5"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    {sub.label}
-                  </Link>
-                </li>
-              ))}
-              {HEADER_NAV_LEFT.filter((i) => i.type === "link").map((item) => (
-                <li key={`${item.href}-${item.label}`}>
-                  <Link
-                    href={item.href}
-                    className={`flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-bold uppercase tracking-wider ${
-                      isActive(item.href) ? "bg-white/10 text-white" : "text-white/80 hover:bg-white/5"
-                    }`}
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    {item.label}
-                    {item.badge ? (
-                      <span className="rounded bg-[var(--brand-mid)] px-1.5 py-0.5 text-[9px] text-[#1a1a1a]">
-                        {item.badge}
-                      </span>
-                    ) : null}
-                  </Link>
-                </li>
-              ))}
-              {HEADER_NAV_RIGHT.map((item) =>
-                item.type === "link" ? (
-                  <li key={`${item.href}-${item.label}`}>
-                    <Link
-                      href={item.href}
-                      className={`flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-bold uppercase tracking-wider ${
-                        isActive(item.href) ? "bg-white/10 text-white" : "text-white/80 hover:bg-white/5"
-                      }`}
-                      onClick={() => setIsMenuOpen(false)}
-                    >
-                      {item.label}
-                    </Link>
-                  </li>
-                ) : null,
-              )}
-            </ul>
+          <nav className="flex min-h-0 flex-1 flex-col" aria-label="Mobiel menu">
+            <MobileNavDrillDown onNavigate={() => setIsMenuOpen(false)} isActive={isActive} />
           </nav>
         </aside>
       </div>
