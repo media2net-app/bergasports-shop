@@ -9,6 +9,7 @@ import {
 } from "@/lib/site-contact";
 import { parseOpeningHoursJson } from "@/lib/opening-hours";
 import { SHOP_OPENING_HOURS, SHOP_OPENING_HOURS_SHORT } from "@/lib/site-content";
+import { parseFreeShippingThreshold } from "@/lib/shop-delivery-trust";
 import { getRuntimeSetting } from "@/lib/site-settings-db";
 import { LOW_STOCK_THRESHOLD } from "@/lib/stock";
 
@@ -75,7 +76,6 @@ export async function getLowStockThresholdSetting(): Promise<number> {
 }
 
 export async function getFreeShippingThresholdSetting(): Promise<number> {
-  const raw = (await getRuntimeSetting("NEXT_PUBLIC_FREE_SHIPPING_THRESHOLD_EUR")).trim();
-  const n = Number.parseFloat(raw);
-  return Number.isFinite(n) && n > 0 ? n : 50;
+  const raw = await getRuntimeSetting("NEXT_PUBLIC_FREE_SHIPPING_THRESHOLD_EUR");
+  return parseFreeShippingThreshold(raw);
 }

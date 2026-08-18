@@ -2,6 +2,8 @@
 
 import { useMemo, useState } from "react";
 
+import DateTimePicker from "@/components/ui/DateTimePicker";
+import { isoToLocalDateValue } from "@/lib/datetime-picker";
 import { formatProductPrice } from "@/lib/products";
 
 type AdminCoupon = {
@@ -195,13 +197,15 @@ export default function AdminCouponsPanel({ initialCoupons }: { initialCoupons: 
             <label className="admin-settings-field-label" htmlFor="coupon-ends">
               Geldig tot
             </label>
-            <input
-              id="coupon-ends"
-              className="admin-field admin-field--flush"
-              type="date"
-              value={endsAt}
-              onChange={(e) => setEndsAt(e.target.value)}
-            />
+              <DateTimePicker
+                id="coupon-ends"
+                variant="admin"
+                mode="date"
+                value={endsAt}
+                onChange={setEndsAt}
+                min={isoToLocalDateValue(new Date())}
+                placeholder="Kies een einddatum"
+              />
           </div>
         </div>
         <footer className="admin-settings-form-foot">

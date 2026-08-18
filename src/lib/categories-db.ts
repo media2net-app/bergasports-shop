@@ -12,6 +12,7 @@ import {
   filterShopCategoryRecords,
   formatRalexCategoryName,
   isExcludedShopCategorySlug,
+  withPublicCategoryLabel,
 } from "@/lib/ralex-categories";
 import { buildCategoryTreeFromRecords } from "@/lib/ralex-categories-file";
 
@@ -33,7 +34,7 @@ type CategoryRow = {
 function rowToRecord(row: CategoryRow): RalexCategoryRecord {
   const rec: RalexCategoryRecord = {
     id: row.id,
-    name: row.name,
+    name: formatRalexCategoryName(row.name, row.slug),
     slug: row.slug,
     parent: row.parent_id,
     count: row.product_count,
@@ -165,7 +166,7 @@ function loadRalexCategoriesFromJson(): RalexCategoriesFile {
       tree: [],
     };
   }
-  const categories = filterShopCategoryRecords(raw.categories ?? []);
+  const categories = filterShopCategoryRecords(raw.categories ?? []).map(withPublicCategoryLabel);
   return {
     source,
     sourceApi: raw.sourceApi ?? "Bergasports catalog (JSON fallback)",
@@ -203,7 +204,7 @@ export async function listShopCategoryOptions(): Promise<{ slug: string; name: s
         continue;
       }
       seen.add(slug);
-      const name = formatRalexCategoryName(node.name);
+      const name = formatRalexCategoryName(node.name, node.slug);
       out.push({ slug, name, group: parentName });
       walk(node.children ?? [], name);
     }

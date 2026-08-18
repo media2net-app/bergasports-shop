@@ -7,6 +7,9 @@
     "build": "prisma generate && node scripts/run-next.mjs build",
     "start": "next start -p 3060",
     "lint": "eslint",
+    "import:wordpress": "npx tsx scripts/import-wordpress.ts",
+    "import:wordpress:dry-run": "npx tsx scripts/import-wordpress.ts --dry-run",
+    "export:seo-redirects": "npx tsx scripts/export-seo-redirects.ts",
     "import:bergasports": "node scripts/import-bergasports-catalog.mjs",
     "import:bergasports:dry-run": "node scripts/import-bergasports-catalog.mjs --dry-run",
     "catalog:purge-legacy": "node scripts/purge-non-bergasports-catalog.mjs",
@@ -26,6 +29,7 @@
     "seed:site-pages": "npx tsx scripts/seed-site-pages.ts",
     "admin:user": "npx tsx scripts/create-admin-user.ts",
     "stock:init": "npx tsx scripts/set-initial-stock.ts",
+    "cat:assign": "npx tsx scripts/recategorize-products.ts",
     "migrate:prisma": "node scripts/run-prisma-migration.mjs",
     "mirror:all-images": "BASE_URL=http://localhost:3060 node scripts/mirror-all-product-images.mjs"
   },

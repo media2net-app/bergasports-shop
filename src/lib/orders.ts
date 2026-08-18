@@ -1,3 +1,5 @@
+import { mollieMethodLabel } from "@/lib/mollie-methods";
+
 export const ORDER_STATUSES = [
   "awaiting_payment",
   "pending",
@@ -19,6 +21,98 @@ export const ORDER_STATUS_LABEL: Record<OrderStatus, string> = {
   delivered: "Afgeleverd",
   cancelled: "Geannuleerd",
 };
+
+export const PAYMENT_STATUS_LABEL: Record<string, string> = {
+  open: "Open",
+  pending: "In behandeling",
+  authorized: "Geautoriseerd",
+  paid: "Betaald",
+  canceled: "Geannuleerd",
+  cancelled: "Geannuleerd",
+  expired: "Verlopen",
+  failed: "Mislukt",
+  refunded: "Terugbetaald",
+  partially_refunded: "Deels terugbetaald",
+};
+
+export function paymentStatusLabel(status: string | null | undefined): string {
+  if (!status?.trim()) return "Onbekend";
+  return PAYMENT_STATUS_LABEL[status] ?? status;
+}
+
+export function paymentMethodLabel(method: string): string {
+  if (method === "cash_on_delivery") return "Rembours";
+  if (method === "mollie") return "Online (Mollie)";
+  if (method.startsWith("mollie:")) return mollieMethodLabel(method.slice("mollie:".length));
+  return mollieMethodLabel(method);
+}
+
+export function orderStatusTone(status: OrderStatus): string {
+  switch (status) {
+    case "awaiting_payment":
+      return "wait";
+    case "pending":
+      return "warn";
+    case "confirmed":
+    case "processing":
+      return "brand";
+    case "shipped":
+    case "delivered":
+      return "ok";
+    case "cancelled":
+      return "mute";
+    default:
+      return "mute";
+  }
+}
+
+export function paymentStatusTone(status: string | null | undefined): string {
+  switch ((status ?? "").toLowerCase()) {
+    case "paid":
+    case "authorized":
+      return "ok";
+    case "open":
+    case "pending":
+      return "wait";
+    case "failed":
+    case "expired":
+    case "canceled":
+    case "cancelled":
+      return "err";
+    case "refunded":
+    case "partially_refunded":
+      return "warn";
+    default:
+      return "mute";
+  }
+}
+
+export function parseOrderCheckoutNotes(notes: string | null | undefined): {
+  shippingLabel: string | null;
+  couponCode: string | null;
+  customerNote: string | null;
+} {
+  const lines = (notes ?? "")
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
+  const shippingLine = lines.find((line) => /^Verzending:/i.test(line));
+  const couponLine = lines.find((line) => /^Coupon:/i.test(line));
+  const customerNote = lines
+    .filter((line) => !/^Verzending:/i.test(line) && !/^Coupon:/i.test(line))
+    .join("\n")
+    .trim();
+  return {
+    shippingLabel: shippingLine?.replace(/^Verzending:\s*/i, "").trim() || null,
+    couponCode: couponLine?.replace(/^Coupon:\s*/i, "").trim() || null,
+    customerNote: customerNote || null,
+  };
+}
+
+export function orderShippingTotal(order: Pick<OrderRow, "subtotal" | "discount_total" | "total">): number {
+  const value = Math.round((order.total - order.subtotal + order.discount_total) * 100) / 100;
+  return value > 0.004 ? value : 0;
+}
 
 export type OrderItemInput = {
   productId: number;

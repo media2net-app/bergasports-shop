@@ -44,6 +44,15 @@ export type WcVariationJson = {
   image?: string;
 };
 
+export type WcProductAttributeJson = {
+  id: number;
+  name: string;
+  slug?: string;
+  visible: boolean;
+  variation: boolean;
+  options: string[];
+};
+
 export type TrendyolJsonProduct = {
   id: number;
   name: string;
@@ -97,6 +106,7 @@ export type TrendyolJsonProduct = {
   wcReviewCount?: number;
   wcPriceHtml?: string;
   wcCategories?: { id: number; name: string; slug: string }[];
+  wcAttributes?: WcProductAttributeJson[];
   wcVariations?: WcVariationJson[];
   priceRangeMax?: number;
   /** Extra specificaties (Label: waarde, één per regel). */
@@ -177,6 +187,7 @@ export type Product = {
   wcReviewCount?: number;
   wcPriceHtml?: string;
   wcCategories?: { id: number; name: string; slug: string }[];
+  wcAttributes?: WcProductAttributeJson[];
   wcVariations?: WcVariationJson[];
   priceRangeMax?: number;
   specsText?: string;
@@ -219,6 +230,9 @@ function wcLayerFromRaw(p: TrendyolJsonProduct): Partial<Product> {
   }
   if (p.wcCategories?.length) {
     out.wcCategories = p.wcCategories;
+  }
+  if (p.wcAttributes?.length) {
+    out.wcAttributes = p.wcAttributes;
   }
   if (p.wcVariations?.length) {
     out.wcVariations = p.wcVariations;
@@ -315,6 +329,23 @@ export function resolveBundleTierForAdd(
 
 export function getBundleTierById(product: Product, tierId: string): CartBundleTier | null {
   return product.cartBundlePromos?.tiers.find((t) => t.id === tierId) ?? null;
+}
+
+/** Catalogusverkoopprijs: saleprijs als die gezet is, anders de huidige prijs. */
+export function catalogSalePrice(
+  product: Pick<TrendyolJsonProduct, "priceDiscounted" | "priceCurrent">,
+): number {
+  const discounted = typeof product.priceDiscounted === "number" ? product.priceDiscounted : undefined;
+  const current = typeof product.priceCurrent === "number" ? product.priceCurrent : 0;
+  const value = discounted ?? current;
+  return Number.isFinite(value) ? Math.round(value * 100) / 100 : 0;
+}
+
+export function catalogSku(
+  product: Pick<TrendyolJsonProduct, "wcSku" | "easySalesSku">,
+): string | null {
+  const sku = product.wcSku?.trim() || product.easySalesSku?.trim() || "";
+  return sku || null;
 }
 
 export const formatProductPrice = (value: number, currency: string) => {

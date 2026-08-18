@@ -2,7 +2,7 @@ import "server-only";
 
 import { normalizeCategoryShopLink } from "@/lib/category-shop-link";
 import type { RalexCategoriesFile, RalexCategoryNode, RalexCategoryRecord } from "@/lib/ralex-categories";
-import { filterShopCategoryRecords } from "@/lib/ralex-categories";
+import { filterShopCategoryRecords, formatRalexCategoryName } from "@/lib/ralex-categories";
 import {
   clearRalexCategoryImportMarkerInDb,
   markRalexCategoryFullyImportedInDb,
@@ -104,7 +104,7 @@ export async function fetchRalexCategoriesFromRemote(): Promise<RalexCategoriesF
   const categories: RalexCategoryRecord[] = filterShopCategoryRecords(
     all.map((c) => ({
       id: c.id,
-      name: c.name,
+      name: formatRalexCategoryName(c.name, c.slug),
       slug: c.slug,
       parent: c.parent,
       count: c.count,

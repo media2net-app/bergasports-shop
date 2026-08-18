@@ -4,6 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 
 import BrandWordmark from "@/components/layout/BrandWordmark";
+import { SITE_BRAND_NAME } from "@/lib/site-brand";
 
 /** Alleen voor lokale demo — productie-login blijft leeg. */
 const DEMO_ADMIN_EMAIL = "demo@bergasports.com";
@@ -51,16 +52,19 @@ export default function AdminLoginForm() {
     <div className="admin-login-center">
       <div className="admin-login-card">
         <div className="admin-login-brand">
-          <BrandWordmark compact />
+          <BrandWordmark className="admin-login-logo" />
         </div>
-        <h1 className="admin-login-title">Admin</h1>
-        <p className="admin-login-subtitle">Log in om de webshop te beheren.</p>
+        <header className="admin-login-header">
+          <p className="admin-login-kicker">{SITE_BRAND_NAME}</p>
+          <h1 className="admin-login-title">Inloggen</h1>
+          <p className="admin-login-subtitle">Admin</p>
+        </header>
         {errParam === "config" ? (
           <p className="admin-banner warn admin-m-0 admin-mt-1">
             Zet <code>ADMIN_JWT_SECRET</code> en <code>DATABASE_URL</code> in <code>.env.local</code>.
           </p>
         ) : null}
-        <form className="admin-stack-tight admin-mt-1" onSubmit={handleSubmit}>
+        <form className="admin-stack-tight admin-login-form" onSubmit={handleSubmit}>
           <div>
             <label htmlFor="email" className="admin-label">
               E-mailadres
@@ -69,9 +73,13 @@ export default function AdminLoginForm() {
               id="email"
               type="email"
               autoComplete="username"
+              autoCapitalize="none"
+              spellCheck={false}
               className="admin-field admin-field--flush"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              aria-invalid={error ? true : undefined}
+              aria-describedby={error ? "admin-login-error" : undefined}
               required
             />
           </div>
@@ -86,10 +94,16 @@ export default function AdminLoginForm() {
               className="admin-field admin-field--flush"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              aria-invalid={error ? true : undefined}
+              aria-describedby={error ? "admin-login-error" : undefined}
               required
             />
           </div>
-          {error ? <p className="admin-error-box admin-m-0">{error}</p> : null}
+          {error ? (
+            <p id="admin-login-error" role="alert" className="admin-error-box admin-m-0">
+              {error}
+            </p>
+          ) : null}
           <button type="submit" disabled={loading} className="admin-btn-primary admin-btn-full">
             {loading ? "Bezig met inloggen…" : "Inloggen"}
           </button>

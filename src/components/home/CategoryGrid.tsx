@@ -41,7 +41,7 @@ export default function CategoryGrid() {
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:gap-4 lg:grid-cols-3">
         {tree.map((root) => {
           const imageSrc = categoryImageSrc(root.slug);
-          const title = formatRalexCategoryName(root.name);
+          const title = formatRalexCategoryName(root.name, root.slug);
           const hasImage = Boolean(imageSrc);
 
           return (
@@ -100,7 +100,7 @@ export default function CategoryGrid() {
                           }
                           onClick={(e) => e.stopPropagation()}
                         >
-                          {formatRalexCategoryName(ch.name)}
+                          {formatRalexCategoryName(ch.name, ch.slug)}
                         </span>
                       </li>
                     ))}

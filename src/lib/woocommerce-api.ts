@@ -2,6 +2,12 @@ import "server-only";
 
 import { getRuntimeSetting } from "@/lib/site-settings-db";
 import { getWcStoreBaseUrl } from "@/lib/wc-store-config";
+import type { WooCommerceOrder } from "@/lib/wordpress-import-shared";
+
+export type {
+  WooCommerceOrder,
+  WooCommerceOrderLineItem,
+} from "@/lib/wordpress-import-shared";
 
 export async function isWooCommerceApiConfigured(): Promise<boolean> {
   const [key, secret] = await Promise.all([
@@ -11,61 +17,31 @@ export async function isWooCommerceApiConfigured(): Promise<boolean> {
   return Boolean(key && secret);
 }
 
-async function getCredentials(): Promise<{ key: string; secret: string }> {
-  const [key, secret] = await Promise.all([
+export async function getWooCommerceCredentials(): Promise<{
+  baseUrl: string;
+  key: string;
+  secret: string;
+} | null> {
+  const [key, secret, base] = await Promise.all([
     getRuntimeSetting("WC_CONSUMER_KEY"),
     getRuntimeSetting("WC_CONSUMER_SECRET"),
+    getRuntimeSetting("WC_STORE_BASE_URL"),
   ]);
-  if (!key || !secret) {
-    throw new Error("WC_CONSUMER_KEY / WC_CONSUMER_SECRET ontbreken.");
-  }
-  return { key, secret };
+  if (!key || !secret) return null;
+  return {
+    key,
+    secret,
+    baseUrl: (base || getWcStoreBaseUrl()).replace(/\/$/, ""),
+  };
 }
 
-export type WooCommerceOrderLineItem = {
-  id: number;
-  name: string;
-  product_id: number;
-  variation_id?: number;
-  quantity: number;
-  total: string;
-  price?: number;
-  sku?: string;
-};
-
-export type WooCommerceOrder = {
-  id: number;
-  number: string;
-  status: string;
-  currency: string;
-  total: string;
-  discount_total: string;
-  payment_method: string;
-  payment_method_title: string;
-  customer_note: string;
-  date_created: string;
-  date_created_gmt?: string;
-  date_modified?: string;
-  billing: {
-    first_name?: string;
-    last_name?: string;
-    email?: string;
-    phone?: string;
-    address_1?: string;
-    city?: string;
-    state?: string;
-    postcode?: string;
-  };
-  shipping: {
-    first_name?: string;
-    last_name?: string;
-    address_1?: string;
-    city?: string;
-    state?: string;
-    postcode?: string;
-  };
-  line_items: WooCommerceOrderLineItem[];
-};
+async function getCredentials(): Promise<{ key: string; secret: string }> {
+  const creds = await getWooCommerceCredentials();
+  if (!creds) {
+    throw new Error("WC_CONSUMER_KEY / WC_CONSUMER_SECRET ontbreken.");
+  }
+  return { key: creds.key, secret: creds.secret };
+}
 
 export type FetchWcOrdersResult = {
   orders: WooCommerceOrder[];

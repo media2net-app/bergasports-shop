@@ -4,6 +4,7 @@ import CookiePreferencesLink from "@/components/cookie/CookiePreferencesLink";
 import { SITE_BRAND_NAME, SITE_BRAND_SHORT, SITE_EMAIL, SITE_SLOGAN, SITE_TAGLINE } from "@/lib/site-brand";
 import { SHOP_PHONE_LABEL, SITE_ADDRESS, SITE_KVK, shopPhoneTelHref } from "@/lib/site-contact";
 import { INSTAGRAM_URL, LEGAL_PAGE_PATHS, SHOP_OPENING_HOURS } from "@/lib/site-content";
+import { getInstagramPublicUrl } from "@/lib/instagram";
 import { getShopOpeningHours, getShopPublicContact } from "@/lib/shop-runtime";
 
 const CONSUWIJZER_URL = "https://www.consuwijzer.nl/";
@@ -16,7 +17,7 @@ const footerHeading =
   "text-sm font-semibold uppercase tracking-wide text-[var(--topbar-foreground)] after:mt-2 after:block after:h-[2px] after:w-8 after:rounded-full after:bg-gradient-to-r after:from-[var(--brand)] after:to-[var(--brand-mid)]";
 
 export default async function Footer() {
-  const [contact, hours] = await Promise.all([
+  const [contact, hours, instagramUrl] = await Promise.all([
     getShopPublicContact().catch(() => ({
       phone: SHOP_PHONE_LABEL,
       email: SITE_EMAIL,
@@ -28,6 +29,7 @@ export default async function Footer() {
       whatsappHref: null as string | null,
     })),
     getShopOpeningHours().catch(() => SHOP_OPENING_HOURS),
+    getInstagramPublicUrl().catch(() => INSTAGRAM_URL),
   ]);
 
   return (
@@ -93,7 +95,7 @@ export default async function Footer() {
             </li>
             <li>
               <a
-                href={INSTAGRAM_URL}
+                href={instagramUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className={footerLink}

@@ -3,8 +3,9 @@
 import Link from "next/link";
 import { useState } from "react";
 
-import { INSTAGRAM_URL, MOBILE_NAV_TREE } from "@/lib/site-content";
 import LanguageSwitcher from "@/components/locale/LanguageSwitcher";
+import { useInstagramProfileUrl } from "@/components/layout/InstagramProfileProvider";
+import { MOBILE_NAV_TREE } from "@/lib/site-content";
 
 type Props = {
   onNavigate: () => void;
@@ -13,6 +14,7 @@ type Props = {
 
 export default function MobileNavDrillDown({ onNavigate, isActive }: Props) {
   const [openGroup, setOpenGroup] = useState<string | null>(null);
+  const instagramUrl = useInstagramProfileUrl();
 
   return (
     <div className="flex h-full flex-col">
@@ -74,7 +76,7 @@ export default function MobileNavDrillDown({ onNavigate, isActive }: Props) {
       <div className="space-y-3 border-t border-white/10 px-5 py-4">
         <LanguageSwitcher />
         <a
-          href={INSTAGRAM_URL}
+          href={instagramUrl}
           target="_blank"
           rel="noopener noreferrer"
           className="block text-sm text-white/70 hover:text-white"
@@ -82,7 +84,7 @@ export default function MobileNavDrillDown({ onNavigate, isActive }: Props) {
           Instagram
         </a>
         <Link
-          href="/contact"
+          href="/afspraak#formulier"
           onClick={onNavigate}
           className="flex min-h-11 items-center justify-center rounded-md bg-[var(--brand-mid)] px-4 text-sm font-bold uppercase tracking-wide text-[#1a1a1a]"
         >

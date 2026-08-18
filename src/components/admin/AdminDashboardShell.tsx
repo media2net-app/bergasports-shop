@@ -13,6 +13,7 @@ import {
   IconInventory,
   IconLeads,
   IconLogout,
+  IconMail,
   IconMedia,
   IconNews,
   IconOrders,
@@ -106,6 +107,7 @@ export default function AdminDashboardShell({
   const newsActive = path.startsWith("/admin/news");
   const mediaActive = path.startsWith("/admin/media");
   const leadsActive = path.startsWith("/admin/leads");
+  const emailActive = path.startsWith("/admin/email");
   const ordersActive = path.startsWith("/admin/orders");
   const couponsActive = path.startsWith("/admin/coupons");
   const customersActive = path.startsWith("/admin/customers");
@@ -206,6 +208,9 @@ export default function AdminDashboardShell({
             </AdminNavLink>
             <AdminNavLink href="/admin/leads" active={leadsActive} onNavigate={closeMenu} icon={<IconLeads />}>
               Contact &amp; afspraken
+            </AdminNavLink>
+            <AdminNavLink href="/admin/email" active={emailActive} onNavigate={closeMenu} icon={<IconMail />}>
+              E-mails
             </AdminNavLink>
           </div>
           <div className="admin-sidebar-group">

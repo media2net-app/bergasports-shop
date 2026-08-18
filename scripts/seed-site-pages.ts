@@ -60,6 +60,8 @@ type SeedPage = {
   blocks?: unknown;
   meta_title?: string | null;
   meta_description?: string | null;
+  social_image?: string | null;
+  image_alt?: string | null;
   sort_order?: number;
 };
 
@@ -67,8 +69,8 @@ async function upsertPage(client: pg.Client, page: SeedPage) {
   await client.query(
     `INSERT INTO site_pages (
       slug, path, title, heading, body_html, blocks, meta_title, meta_description,
-      is_published, sort_order, updated_at
-    ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,true,$9,NOW())
+      social_image, image_alt, is_published, sort_order, updated_at
+    ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,true,$11,NOW())
     ON CONFLICT (slug) DO UPDATE SET
       path = EXCLUDED.path,
       title = EXCLUDED.title,
@@ -77,6 +79,8 @@ async function upsertPage(client: pg.Client, page: SeedPage) {
       blocks = EXCLUDED.blocks,
       meta_title = EXCLUDED.meta_title,
       meta_description = EXCLUDED.meta_description,
+      social_image = EXCLUDED.social_image,
+      image_alt = EXCLUDED.image_alt,
       is_published = EXCLUDED.is_published,
       sort_order = EXCLUDED.sort_order,
       updated_at = NOW()`,
@@ -89,6 +93,8 @@ async function upsertPage(client: pg.Client, page: SeedPage) {
       page.blocks ? JSON.stringify(page.blocks) : null,
       page.meta_title ?? null,
       page.meta_description ?? null,
+      page.social_image ?? null,
+      page.image_alt ?? null,
       page.sort_order ?? 0,
     ],
   );

@@ -26,6 +26,7 @@ import { loadCategorySeoOverrides, loadRalexCategories } from "@/lib/categories-
 import { loadCatalogProducts } from "@/lib/products-db";
 import { applyShopMerchView, parseShopMerchView, shopMerchViewLabel } from "@/lib/shop-merchandising-views";
 import { applyShopSort, parseShopSortParam } from "@/lib/shop-sort";
+import { formatRalexCategoryName } from "@/lib/ralex-categories";
 
 export const dynamic = "force-dynamic";
 
@@ -217,7 +218,7 @@ export default async function ShopListingPage({ pathCategorySlug, searchParams }
                       })}
                       className="font-semibold text-[#96741f] underline"
                     >
-                      {root.name}
+                      {formatRalexCategoryName(root.name, root.slug)}
                     </Link>
                   </span>
                 ))}

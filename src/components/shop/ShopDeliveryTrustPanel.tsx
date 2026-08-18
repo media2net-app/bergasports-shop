@@ -7,6 +7,7 @@ import {
   formatEstimatedDeliveryRange,
   formatFreeShippingThreshold,
   freeShippingThresholdAmount,
+  meetsFreeShippingThreshold,
 } from "@/lib/shop-delivery-trust";
 import { formatProductPrice } from "@/lib/products";
 
@@ -31,7 +32,7 @@ export default function ShopDeliveryTrustPanel({
   const threshold = freeShippingThreshold ?? freeShippingThresholdAmount();
   const thresholdLabel = formatFreeShippingThreshold(currency, threshold);
   const qualifiesFree =
-    freeCargo || (subtotalAmount != null && subtotalAmount >= threshold - 0.005);
+    freeCargo || (subtotalAmount != null && meetsFreeShippingThreshold(subtotalAmount, threshold));
   const remaining =
     subtotalAmount != null && !qualifiesFree ? Math.max(0, threshold - subtotalAmount) : null;
 
@@ -49,16 +50,16 @@ export default function ShopDeliveryTrustPanel({
 
       <p className="mt-3 font-semibold text-[var(--foreground)]">Verzendkosten</p>
       {qualifiesFree ? (
-        <p className="mt-1 font-semibold text-[#16a34a]">Gratis verzending voor deze bestelling.</p>
+        <p className="mt-1 font-semibold text-[#16a34a]">Gratis verzending naar Nederland voor deze bestelling.</p>
       ) : remaining != null && remaining > 0.005 ? (
         <p className="mt-1">
           Voeg nog{" "}
           <span className="font-semibold">{formatProductPrice(remaining, currency)}</span> toe voor gratis
-          verzending (vanaf {thresholdLabel}).
+          verzending naar Nederland (vanaf {thresholdLabel}).
         </p>
       ) : (
         <p className="mt-1">
-          Gratis verzending vanaf <span className="font-semibold">{thresholdLabel}</span>. Onder dit bedrag
+          Gratis verzending naar Nederland vanaf <span className="font-semibold">{thresholdLabel}</span>. Onder dit bedrag
           berekenen we de verzendkosten bij bevestiging.
         </p>
       )}

@@ -4,6 +4,7 @@
  * de bezoeker en Google zien. Admin-overrides in de database gaan hier vóór.
  */
 
+import { toCanonicalWcSlug, toPublicCategorySlug } from "@/lib/category-slugs";
 import { SITE_BRAND_NAME } from "@/lib/site-brand";
 
 export type CategoryMeta = {
@@ -28,17 +29,17 @@ export const CATEGORY_META: Record<string, CategoryMeta> = {
     seoDescription: `Ontdek onze racefietsen bij ${SITE_BRAND_NAME}. Professioneel advies, hoogwaardige fietsen en persoonlijke service vanuit Dedemsvaart.`,
   },
   gravelbike: {
-    name: "Gravelbikes",
+    name: "Gravel",
     seoTitle: `Gravelbikes kopen | ${SITE_BRAND_NAME}`,
     seoDescription: `Gravelbikes voor asfalt, grind en bospaden. ${ADVICE_TAIL}`,
   },
   "gravel-bike": {
-    name: "Gravelbikes",
+    name: "Gravel",
     seoTitle: `Gravelbikes kopen | ${SITE_BRAND_NAME}`,
     seoDescription: `Gravelbikes voor asfalt, grind en bospaden. ${ADVICE_TAIL}`,
   },
   mtb: {
-    name: "Mountainbikes",
+    name: "MTB",
     seoTitle: `Mountainbikes (MTB) kopen | ${SITE_BRAND_NAME}`,
     seoDescription: `Mountainbikes voor trail en cross-country, met de juiste maat en afstelling. ${ADVICE_TAIL}`,
   },
@@ -68,7 +69,7 @@ export const CATEGORY_META: Record<string, CategoryMeta> = {
     seoDescription: `Wielrenschoenen van Nimbl en andere topmerken, met aandacht voor pasvorm en voetstand. ${ADVICE_TAIL}`,
   },
   "lafuga-wear": {
-    name: "LaFuga fietskleding",
+    name: "LaFuga",
     seoTitle: `LaFuga fietskleding kopen | ${SITE_BRAND_NAME}`,
     seoDescription: `LaFuga fietskleding: shirts, broeken en jassen voor elk seizoen. ${ADVICE_TAIL}`,
   },
@@ -99,12 +100,126 @@ export const CATEGORY_META: Record<string, CategoryMeta> = {
   },
 };
 
+/** Woo/EN namen (en gangbare varianten) → NL shop-label. */
+const IMPORTED_NAME_TO_NL: Record<string, string> = {
+  accessories: "Accessoires",
+  accessoires: "Accessoires",
+  bikes: "Fietsen",
+  fietsen: "Fietsen",
+  cleats: "Schoenplaatjes",
+  schoenplaatjes: "Schoenplaatjes",
+  clothing: "LaFuga",
+  "cycling clothing": "LaFuga",
+  "cycling helmets": "Helmen",
+  helmets: "Helmen",
+  helmen: "Helmen",
+  "cycling shoes": "Wielrenschoenen",
+  wielrenschoenen: "Wielrenschoenen",
+  glasses: "Brillen",
+  brillen: "Brillen",
+  gravel: "Gravel",
+  "gravel bike": "Gravel",
+  gravelbike: "Gravel",
+  gravelbikes: "Gravel",
+  "group sets": "Groepsets",
+  groupsets: "Groepsets",
+  groepsets: "Groepsets",
+  mtb: "MTB",
+  mountainbikes: "MTB",
+  "road bike": "Racefietsen",
+  "road bikes": "Racefietsen",
+  racefietsen: "Racefietsen",
+  "scope outlet": "Scope Outlet",
+  "speed skates": "Skeelers",
+  skeelers: "Skeelers",
+  "used bikes": "Tweedehands fietsen",
+  tweedehands: "Tweedehands fietsen",
+  "tweedehands fietsen": "Tweedehands fietsen",
+  wheels: "Wielen",
+  wielen: "Wielen",
+  "lafuga wear": "LaFuga",
+  "lafuga fietskleding": "LaFuga",
+  lafuga: "LaFuga",
+};
+
+/** Originele Woo-namen per canonieke slug — nodig om filters te matchen. */
+const WC_IMPORTED_NAMES: Record<string, string[]> = {
+  bikes: ["Bikes", "Fietsen"],
+  "road-bike": ["Road bike", "Racefietsen"],
+  gravelbike: ["Gravelbike", "Gravel"],
+  "gravel-bike": ["Gravel bike", "Gravel"],
+  mtb: ["Mtb", "MTB"],
+  "speed-skates": ["Speed skates", "Skeelers"],
+  "used-bikes": ["Used bikes", "Tweedehands fietsen"],
+  wheels: ["Wheels", "Wielen"],
+  "scope-outlet": ["Scope outlet", "Scope Outlet"],
+  "cycling-shoes": ["Cycling shoes", "Wielrenschoenen"],
+  "lafuga-wear": ["Cycling clothing", "LaFuga", "LaFuga fietskleding"],
+  glasses: ["Glasses", "Brillen"],
+  accessories: ["Accessories", "Accessoires"],
+  "cycling-helmets": ["Cycling helmets", "Helmen", "Helmets"],
+  cleats: ["Cleats", "Schoenplaatjes"],
+  "group-sets": ["Group sets", "Groepsets"],
+};
+
+export function stripCategoryNamePrefix(name: string): string {
+  return name.replace(/^\*\s*/, "").trim();
+}
+
+function normalizeLabelKey(name: string): string {
+  return stripCategoryNamePrefix(name).toLowerCase().replace(/\s+/g, " ");
+}
+
+function metaForSlug(slug: string | null | undefined): CategoryMeta | undefined {
+  if (!slug) return undefined;
+  const raw = slug.trim().toLowerCase();
+  if (!raw) return undefined;
+  return CATEGORY_META[raw] ?? CATEGORY_META[toCanonicalWcSlug(raw)];
+}
+
 /** Nederlandse categorienaam, met de geïmporteerde naam als terugval. */
-export function categoryDisplayName(slug: string | null | undefined, fallback: string): string {
-  const meta = slug ? CATEGORY_META[slug.toLowerCase()] : undefined;
-  return meta?.name ?? fallback;
+export function categoryDisplayName(slug: string | null | undefined, fallback = ""): string {
+  const cleaned = stripCategoryNamePrefix(fallback);
+  const meta = metaForSlug(slug);
+  if (meta) return meta.name;
+  return dutchLabelFromImportedName(cleaned);
+}
+
+/** Map een product- of Woo-categorienaam (vaak Engels) naar het NL-label. */
+export function dutchLabelFromImportedName(name: string): string {
+  const cleaned = stripCategoryNamePrefix(name);
+  if (!cleaned) return cleaned;
+  return IMPORTED_NAME_TO_NL[normalizeLabelKey(cleaned)] ?? cleaned;
+}
+
+/**
+ * Alle namen waarmee een productcategorie mag matchen (EN import + NL UI + slugs).
+ * Zo blijven filters werken als `product.category` nog "Bikes" is.
+ */
+export function categoryMatchLabels(slug: string | null | undefined, storedName: string): string[] {
+  const labels = new Set<string>();
+  const cleaned = stripCategoryNamePrefix(storedName);
+  if (storedName.trim()) labels.add(storedName.trim());
+  if (cleaned) labels.add(cleaned);
+  labels.add(categoryDisplayName(slug, cleaned));
+  labels.add(dutchLabelFromImportedName(cleaned));
+  if (slug) {
+    const raw = slug.trim().toLowerCase();
+    const canonical = toCanonicalWcSlug(raw);
+    labels.add(raw);
+    labels.add(canonical);
+    labels.add(toPublicCategorySlug(canonical, "nl"));
+    const meta = metaForSlug(canonical);
+    if (meta) labels.add(meta.name);
+    for (const alias of WC_IMPORTED_NAMES[canonical] ?? []) {
+      labels.add(alias);
+    }
+  }
+  const mapped = IMPORTED_NAME_TO_NL[normalizeLabelKey(cleaned)];
+  if (mapped) labels.add(mapped);
+  return [...labels].filter(Boolean);
 }
 
 export function categorySeoDefaults(slug: string | null | undefined): CategoryMeta | undefined {
-  return slug ? CATEGORY_META[slug.toLowerCase()] : undefined;
+  return metaForSlug(slug);
 }

@@ -1,32 +1,44 @@
-import Link from "next/link";
+import HomeProductCollections from "@/components/home/HomeProductCollections";
+import ShopProductCard from "@/components/shop/ShopProductCard";
+import { isHomeBikeProduct, isHomeNimblProduct, sortHomeCollection } from "@/lib/home-collections";
+import { isProductInStock } from "@/lib/products";
+import { loadCatalogProducts } from "@/lib/products-db";
+import { BERGASPORTS_CATEGORY_PATHS } from "@/lib/site-content";
 
-import ProductGrid from "@/components/home/ProductGrid";
-import { loadFeaturedProducts } from "@/lib/products-db";
-
-/** Loaded inside Suspense so hero HTML can paint before featured products query (mobile LCP). */
-export default async function HomeFeaturedSection() {
-  let products: Awaited<ReturnType<typeof loadFeaturedProducts>> = [];
-  try {
-    products = await loadFeaturedProducts(6);
-  } catch {
-    products = [];
+function CollectionGrid({ products }: { products: Awaited<ReturnType<typeof loadCatalogProducts>> }) {
+  if (products.length === 0) {
+    return <p className="text-sm text-[var(--foreground)]/70">Nog geen producten in deze collectie.</p>;
   }
   return (
-    <>
-      <ProductGrid products={products} compactImages />
-      {products.length > 0 ? (
-        <p className="text-center">
-          <Link
-            href="/shop"
-            className="group inline-flex min-h-12 items-center gap-2 rounded-full border border-[var(--brand)]/40 bg-white px-7 text-sm font-semibold text-[#96741f] transition duration-300 hover:border-[var(--brand)] hover:bg-[var(--brand-surface-alt)]"
-          >
-            Bekijk alle producten in de webshop
-            <span aria-hidden className="transition-transform duration-300 group-hover:translate-x-1">
-              →
-            </span>
-          </Link>
-        </p>
-      ) : null}
-    </>
+    <div className="grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-4">
+      {products.map((product) => (
+        <ShopProductCard key={product.id} product={product} priority={false} imageVariant="homeCard" />
+      ))}
+    </div>
+  );
+}
+
+export default async function HomeFeaturedSection() {
+  let catalog: Awaited<ReturnType<typeof loadCatalogProducts>> = [];
+  try {
+    catalog = (await loadCatalogProducts()).filter((p) => isProductInStock(p));
+  } catch {
+    catalog = [];
+  }
+
+  const fietsen = sortHomeCollection(catalog.filter(isHomeBikeProduct)).slice(0, 4);
+  const nimbl = sortHomeCollection(catalog.filter(isHomeNimblProduct)).slice(0, 4);
+
+  if (fietsen.length === 0 && nimbl.length === 0) {
+    return null;
+  }
+
+  return (
+    <HomeProductCollections
+      fietsenHref={BERGASPORTS_CATEGORY_PATHS.bikes}
+      nimblHref={BERGASPORTS_CATEGORY_PATHS.cyclingShoes}
+      fietsenGrid={<CollectionGrid products={fietsen} />}
+      nimblGrid={<CollectionGrid products={nimbl} />}
+    />
   );
 }

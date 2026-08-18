@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 
 import Footer from "@/components/layout/Footer";
 import Header from "@/components/layout/Header";
@@ -19,6 +19,7 @@ import {
   shopCategoryPath,
 } from "@/lib/shop-category-filter";
 import { getPublishedPageByPath } from "@/lib/site-pages-db";
+import { followSeoRedirect } from "@/lib/seo-redirects";
 
 export const dynamic = "force-dynamic";
 
@@ -54,7 +55,11 @@ type PageProps = {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
-  if (!slug || RESERVED.has(slug)) {
+  if (!slug) {
+    return {};
+  }
+  if (RESERVED.has(slug)) {
+    await followSeoRedirect(`/${slug}`);
     return {};
   }
 
@@ -64,6 +69,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     const defaults = categorySeoDefaults(category.slug);
     const name = categoryDisplayName(category.slug, formatRalexCategoryName(category.name));
     const canonical = shopCategoryPath(category.slug);
+    if (canonical !== `/${slug}`) {
+      permanentRedirect(canonical);
+    }
+
     const [catalog, overrides] = await Promise.all([
       loadCatalogProducts(),
       loadCategorySeoOverrides(category.slug),
@@ -107,12 +116,17 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     });
   }
 
+  await followSeoRedirect(`/${slug}`);
   return {};
 }
 
 export default async function SlugPage({ params, searchParams }: PageProps) {
   const { slug } = await params;
-  if (!slug || RESERVED.has(slug)) {
+  if (!slug) {
+    notFound();
+  }
+  if (RESERVED.has(slug)) {
+    await followSeoRedirect(`/${slug}`);
     notFound();
   }
 
@@ -121,17 +135,22 @@ export default async function SlugPage({ params, searchParams }: PageProps) {
   const category = findRalexCategoryNodeBySlug(categoriesFile.tree, slug);
 
   if (category) {
+    const canonical = shopCategoryPath(category.slug);
+    if (canonical !== `/${slug}`) {
+      permanentRedirect(canonical);
+    }
     return <ShopListingPage pathCategorySlug={category.slug} searchParams={sp} />;
   }
 
   const path = `/${slug}`;
   const page = await getPublishedPageByPath(path);
   if (!page) {
+    await followSeoRedirect(path);
     notFound();
   }
 
   return (
-    <main className="min-h-screen bg-[#faf8f5]">
+    <main className="min-h-screen bg-[#faf8f5]/40">
       <TrustBar />
       <Header />
       <CmsPageView page={page} />

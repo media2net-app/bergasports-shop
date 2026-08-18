@@ -30,8 +30,8 @@ const VARIANT: Record<
     aspect: "aspect-square",
   },
   cartThumb: {
-    sizes: "64px",
-    quality: 75,
+    sizes: "80px",
+    quality: 78,
     aspect: "aspect-square",
   },
   searchThumb: {

@@ -2,6 +2,8 @@
 
 import { useMemo, useState } from "react";
 
+import { formatPreferredDateTime } from "@/lib/datetime-picker";
+
 export type ContactLeadClient = {
   id: string;
   name: string;
@@ -90,7 +92,7 @@ export default function AdminLeadsPanel({ initialLeads }: { initialLeads: Contac
                     </div>
                     {lead.preferredDate ? (
                       <div className="admin-muted" style={{ fontSize: "0.8rem" }}>
-                        Voorkeur: {lead.preferredDate}
+                        Voorkeur: {formatPreferredDateTime(lead.preferredDate)}
                       </div>
                     ) : null}
                   </td>

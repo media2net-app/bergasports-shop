@@ -23,6 +23,7 @@ export type RalexCategoriesFile = {
 };
 
 import { LEGACY_HOTELINK_CATEGORY_SLUGS } from "@/lib/bergasports-catalog";
+import { categoryDisplayName, stripCategoryNamePrefix } from "@/lib/category-meta";
 
 /** Not shown in the shop (legacy Hotelink / lege WooCommerce-categorieën). */
 export const EXCLUDED_SHOP_CATEGORY_SLUGS = new Set([
@@ -41,9 +42,14 @@ export function filterShopCategoryRecords(categories: RalexCategoryRecord[]): Ra
   return categories.filter((c) => !isExcludedShopCategory(c));
 }
 
-/** Ralex marcheaza unele categorii cu prefix "* ". */
-export function formatRalexCategoryName(name: string) {
-  return name.replace(/^\*\s*/, "").trim();
+/** Strip legacy "* " prefix; map Woo/EN namen naar NL shop-labels. */
+export function formatRalexCategoryName(name: string, slug?: string) {
+  return categoryDisplayName(slug, stripCategoryNamePrefix(name));
+}
+
+/** Publieke NL-naam op een DB/JSON-record (slug blijft Woo/canoniek). */
+export function withPublicCategoryLabel<T extends { slug: string; name: string }>(record: T): T {
+  return { ...record, name: formatRalexCategoryName(record.name, record.slug) };
 }
 
 export function isRalexCategoryImportComplete(node: RalexCategoryRecord): boolean {

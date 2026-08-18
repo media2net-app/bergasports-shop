@@ -428,3 +428,33 @@ model ContactLead {
   @@index([status])
   @@map("contact_leads")
 }
+
+model EmailTemplate {
+  key         String   @id
+  category    String
+  name        String
+  description String?
+  subject     String
+  title       String
+  bodyHtml    String   @map("body_html")
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([category])
+  @@map("email_templates")
+}
+
+/** 301-mapping oude WP/Woo-paden → nieuwe shop-URL's. */
+model SeoRedirect {
+  id               BigInt   @id @default(autoincrement())
+  sourcePath       String   @unique @map("source_path")
+  destinationPath  String   @map("destination_path")
+  statusCode       Int      @default(301) @map("status_code") @db.SmallInt
+  kind             String   @default("static")
+  enabled          Boolean  @default(true)
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([kind])
+  @@map("seo_redirects")
+}

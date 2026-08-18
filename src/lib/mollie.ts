@@ -1,6 +1,11 @@
 /** Mollie Payments API (v2) — thin fetch wrapper. */
 import "server-only";
 
+import {
+  filterShopMollieMethods,
+  mollieLocaleForCountry,
+  type MollieMethodPublic,
+} from "@/lib/mollie-methods";
 import { getRuntimeSetting } from "@/lib/site-settings-db";
 
 const MOLLIE_API = "https://api.mollie.com/v2";
@@ -40,8 +45,10 @@ export function formatMollieAmount(total: number, currency: string): MollieAmoun
 
 async function mollieFetch<T>(path: string, init?: RequestInit): Promise<T> {
   const apiKey = await getApiKey();
+  const timeoutMs = path.startsWith("/methods") ? 8000 : 20000;
   const res = await fetch(`${MOLLIE_API}${path}`, {
     ...init,
+    signal: init?.signal ?? AbortSignal.timeout(timeoutMs),
     headers: {
       Authorization: `Bearer ${apiKey}`,
       "Content-Type": "application/json",
@@ -70,6 +77,7 @@ export async function createMolliePayment(input: {
   webhookUrl: string;
   metadata: Record<string, string>;
   method?: string | string[];
+  locale?: string;
 }): Promise<MolliePayment> {
   const profileId = await getRuntimeSetting("MOLLIE_PROFILE_ID");
   const payload: Record<string, unknown> = {
@@ -78,6 +86,7 @@ export async function createMolliePayment(input: {
     redirectUrl: input.redirectUrl,
     webhookUrl: input.webhookUrl,
     metadata: input.metadata,
+    locale: input.locale || "nl_NL",
   };
   if (profileId) {
     payload.profileId = profileId;
@@ -91,26 +100,77 @@ export async function createMolliePayment(input: {
   });
 }
 
-export type MollieMethod = {
-  id: string;
-  description: string;
-  image?: { size1x?: string; size2x?: string };
+export type MollieMethod = MollieMethodPublic;
+
+type MollieMethodsListResponse = {
+  count?: number;
+  data?: Array<MollieMethodPublic & { status?: string }>;
+  _embedded?: { methods?: Array<MollieMethodPublic & { status?: string }> };
 };
 
-/** Available Mollie methods for amount/locale (Dashboard-configured). */
+function parseMollieMethodsList(body: MollieMethodsListResponse): MollieMethodPublic[] {
+  const raw = body._embedded?.methods ?? body.data ?? [];
+  return raw
+    .filter((m) => Boolean(m?.id) && (!m.status || m.status === "activated"))
+    .map((m) => ({
+      id: m.id,
+      description: m.description || m.id,
+      image: m.image,
+    }));
+}
+
+const methodsCache = new Map<string, { expires: number; methods: MollieMethodPublic[] }>();
+const METHODS_CACHE_MS = 60_000;
+
+/** Available Mollie methods for amount/locale/country (Dashboard-enabled only). */
 export async function listMollieMethods(input: {
   amount: number;
   currency: string;
   locale?: string;
-}): Promise<MollieMethod[]> {
+  billingCountry?: string;
+}): Promise<MollieMethodPublic[]> {
+  const amount = formatMollieAmount(input.amount, input.currency);
+  const locale = input.locale || mollieLocaleForCountry(input.billingCountry || "NL");
+  const billingCountry = input.billingCountry?.toUpperCase() || "";
+  const cacheKey = `${amount.currency}:${amount.value}:${locale}:${billingCountry}`;
+  const cached = methodsCache.get(cacheKey);
+  if (cached && cached.expires > Date.now()) {
+    return cached.methods;
+  }
+
   const qs = new URLSearchParams({
-    "amount[currency]": input.currency.toUpperCase(),
-    "amount[value]": formatMollieAmount(input.amount, input.currency).value,
+    "amount[currency]": amount.currency,
+    "amount[value]": amount.value,
     resource: "payments",
+    includeWallets: "applepay",
+    sequenceType: "oneoff",
+    locale,
   });
-  if (input.locale) qs.set("locale", input.locale);
-  const data = await mollieFetch<{ data: MollieMethod[] }>(`/methods?${qs.toString()}`);
-  return data.data ?? [];
+  if (billingCountry) qs.set("billingCountry", billingCountry);
+
+  let methods: MollieMethodPublic[] = [];
+  try {
+    methods = filterShopMollieMethods(
+      parseMollieMethodsList(await mollieFetch<MollieMethodsListResponse>(`/methods?${qs.toString()}`)),
+    );
+  } catch {
+    methods = [];
+  }
+  if (methods.length === 0) {
+    const qsAll = new URLSearchParams({
+      resource: "payments",
+      includeWallets: "applepay",
+      sequenceType: "oneoff",
+      locale,
+    });
+    methods = filterShopMollieMethods(
+      parseMollieMethodsList(await mollieFetch<MollieMethodsListResponse>(`/methods?${qsAll.toString()}`)),
+    );
+  }
+  if (methods.length > 0) {
+    methodsCache.set(cacheKey, { expires: Date.now() + METHODS_CACHE_MS, methods });
+  }
+  return methods;
 }
 
 export async function getMolliePayment(paymentId: string): Promise<MolliePayment> {
@@ -124,6 +184,19 @@ export async function refundMolliePayment(
   return mollieFetch(`/payments/${encodeURIComponent(paymentId)}/refunds`, {
     method: "POST",
     body: JSON.stringify({ amount }),
+  });
+}
+
+const CANCELLABLE_MOLLIE = new Set(["open", "pending", "authorized"]);
+
+export function isMolliePaymentCancellable(status: string): boolean {
+  return CANCELLABLE_MOLLIE.has(status);
+}
+
+/** Cancel an unpaid Mollie payment (open / pending / authorized). */
+export async function cancelMolliePayment(paymentId: string): Promise<MolliePayment> {
+  return mollieFetch<MolliePayment>(`/payments/${encodeURIComponent(paymentId)}`, {
+    method: "DELETE",
   });
 }
 

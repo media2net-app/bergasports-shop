@@ -23,7 +23,7 @@ export default function HomeCategorySidebar() {
           aria-label="Productcategorieën"
         >
           {tree.map((root) => {
-            const label = formatRalexCategoryName(root.name);
+            const label = formatRalexCategoryName(root.name, root.slug);
             if (root.children?.length) {
               return (
                 <details key={root.id} className="home-cat-details group border-b border-[var(--brand-border-soft)] last:border-b-0">
@@ -46,7 +46,7 @@ export default function HomeCategorySidebar() {
                         href={categoryHref(ch.slug)}
                         className="block border-t border-[#f0ead8] px-4 py-2 text-sm text-[var(--foreground)] hover:bg-white"
                       >
-                        {formatRalexCategoryName(ch.name)}
+                        {formatRalexCategoryName(ch.name, ch.slug)}
                       </Link>
                     ))}
                   </div>

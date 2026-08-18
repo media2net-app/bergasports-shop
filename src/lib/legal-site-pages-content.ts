@@ -2,6 +2,7 @@
  * Standaard NL juridische/CMS-teksten voor site_pages seeding.
  */
 
+import { CONTENT_PHOTOS, contentFigure } from "@/lib/content-photos";
 import { SITE_BRAND_NAME, SITE_EMAIL } from "@/lib/site-brand";
 import { SHOP_PHONE_LABEL, shopPhoneTelHref } from "@/lib/site-contact";
 import {
@@ -16,22 +17,65 @@ export const LEGAL_PAGES_UPDATED_LABEL = "mei 2026";
 
 const p = (blocks: string[]) => blocks.map((html) => `<p>${html}</p>`).join("\n");
 
-export const legalSitePagesSeed = [
+const ctaRow = (items: { href: string; label: string; primary?: boolean }[]) =>
+  `<p class="cms-cta-row">${items
+    .map(
+      (item) =>
+        `<a class="cms-cta${item.primary ? " cms-cta-primary" : ""}" href="${item.href}">${item.label}</a>`,
+    )
+    .join("")}</p>`;
+
+export type SitePageSeed = {
+  slug: string;
+  path: string;
+  title: string;
+  heading: string;
+  meta_title: string;
+  meta_description: string;
+  sort_order: number;
+  body_html: string;
+  social_image?: string | null;
+  image_alt?: string | null;
+};
+
+export const legalSitePagesSeed: SitePageSeed[] = [
   {
     slug: "about",
     path: "/over-ons",
     title: `Mijn verhaal | Ingmar Berga`,
     heading: "Mijn verhaal",
     meta_title: `Mijn verhaal | Ingmar Berga — ${SITE_BRAND_NAME} Dedemsvaart`,
-    meta_description: `Van topsport naar ${SITE_BRAND_NAME}. Het verhaal van Ingmar Berga: persoonlijk advies, hoogwaardig materiaal en jarenlange ervaring in Dedemsvaart.`,
+    meta_description: `Van topsport naar ${SITE_BRAND_NAME}. Het verhaal van Ingmar Berga: persoonlijk advies, pasvorm en een werkplaats voor race, gravel en MTB in Dedemsvaart.`,
     sort_order: 10,
-    body_html: p([
-      "<strong>Meer dan een winkel. Je sportpartner.</strong>",
-      "Mijn naam is Ingmar Berga. Van 2004 tot 2022 stond mijn leven in het teken van topsport. Als professioneel schaatser en skeeleraar heb ik ervaren hoe belangrijk materiaal, techniek en persoonlijke begeleiding zijn.",
-      `Die ervaring vormt de basis van ${SITE_BRAND_NAME}. Bij het leveren van sportmateriaal draait het niet alleen om een product verkopen — het gaat om de vraag: <em>Wat heb jij nodig om beter te worden?</em>`,
-      "Daarom kijken we naar jouw niveau, doelen, rijstijl, lichaam, huidige materiaal en hoe je het daadwerkelijk gebruikt.",
-      'Plan vrijblijvend een afspraak via onze <a href="/contact">contactpagina</a>.',
-    ]),
+    social_image: CONTENT_PHOTOS.ingmarPodium.src,
+    image_alt: CONTENT_PHOTOS.ingmarPodium.alt,
+    body_html: [
+      p([
+        "<strong>Meer dan een winkel. Je sportpartner.</strong> Bij Bergasports in Dedemsvaart draait alles om prestaties, kwaliteit en persoonlijke service — of je nu fanatiek traint of gewoon zorgeloos wilt rijden.",
+        "Mijn naam is Ingmar Berga. Van 2004 tot 2022 stond mijn leven in het teken van topsport. Als marathonschaatser en skeeleraar leerde ik hoe hard materiaal, techniek en begeleiding het verschil maken. Die jaren vormen de basis van Bergasports.",
+      ]),
+      "<h2>Palmares</h2>",
+      "<ul><li>Nederlands kampioen marathonschaatsen op kunstijs — 2007 en 2013</li><li>Open Nederlands kampioen op natuurijs</li><li>Winnaar algemeen klassement KNSB Marathon Cup</li><li>Europees kampioen inline-skaten, marathon — San Benedetto 2010</li><li>Nederlands kampioen skeeleren, marathon — 2019 (plus NK-medailles in 2011, 2015 en 2016)</li></ul>",
+      p([
+        "Als trainer help ik nog steeds de nieuwe generatie marathonschaatsers. En omdat ik beter dan wie ook weet wat goed materiaal doet, help ik sporters hier in de winkel bij het kiezen van hun uitrusting: een complete racefiets, wielen, Nimbl-schoenen, LaFuga-kleding of een bril die écht past.",
+      ]),
+      contentFigure("ingmarPodium", "Ingmar Berga op het podium — dezelfde standaard als in de winkel: geen compromis op materiaal."),
+      "<h2>Wat heb jij nodig om beter te worden?</h2>",
+      p([
+        "We verkopen geen standaardpakket. We kijken naar jouw niveau, doelen, rijstijl, lichaam, huidige materiaal en hoe je het daadwerkelijk gebruikt. Race, gravel of mountainbike: het gesprek gaat over jouw ritten, niet over een poster aan de muur.",
+        "In Dedemsvaart vind je een selectie merken die we zelf rijden en vertrouwen — onder meer Colnago, Cipollini, Orbea, Titici, Basso, Cervélo, Nimbl, LaFuga, Scope, KASK en Double FF. Daarnaast een werkplaats voor onderhoud, afstelling en upgrades.",
+      ]),
+      contentFigure("showroom", "Showroom aan de Julianastraat: fietsen, kleding en ruimte om te overleggen."),
+      "<h2>Kom langs of plan een afspraak</h2>",
+      p([
+        "Twijfel je over een frame, schoenmaat of onderhoudsbeurt? Plan vrijblijvend een afspraak. We drinken koffie, kijken naar je fiets en zoeken samen wat werkt.",
+      ]),
+      ctaRow([
+        { href: "/afspraak#formulier", label: "Plan afspraak", primary: true },
+        { href: "/shop", label: "Naar de shop" },
+        { href: "/onderhoud", label: "Onderhoud" },
+      ]),
+    ].join("\n"),
   },
   {
     slug: "contact",
@@ -41,7 +85,11 @@ export const legalSitePagesSeed = [
     meta_title: PAGE_SEO.contact.title,
     meta_description: PAGE_SEO.contact.description,
     sort_order: 20,
+    social_image: CONTENT_PHOTOS.storefront.src,
+    image_alt: CONTENT_PHOTOS.storefront.alt,
     body_html: `
+<p>Bij Bergasports ben je welkom voor persoonlijk advies, een vakkundige check van je racefiets of gewoon een goede kop koffie. Nieuwe fiets, onderhoud, Nimbl passen of een snelle vraag — bel, app of kom langs tijdens openingstijden.</p>
+${contentFigure("showroom", "Julianastraat 3A, Dedemsvaart — bel aan of plan een afspraak.")}
 <h2>Contactgegevens</h2>
 <ul>
   <li><strong>Adres:</strong> ${SITE_ADDRESS}</li>
@@ -55,8 +103,11 @@ export const legalSitePagesSeed = [
 ${SHOP_OPENING_HOURS.map((row) => `  <tr><td>${row.day}</td><td>${row.hours}</td></tr>`).join("\n")}
 </tbody>
 </table>
-<p>Kom langs voor persoonlijk advies, een vakkundige check van je racefiets of gewoon een goede kop koffie.</p>
 <p>We reageren op berichten in volgorde van ontvangst, meestal dezelfde werkdag. Vermeld bij vragen over je bestelling het <strong>ordernummer</strong> uit de bevestigingsmail.</p>
+${ctaRow([
+  { href: "/afspraak#formulier", label: "Plan afspraak", primary: true },
+  { href: "/shop", label: "Naar de shop" },
+])}
 `.trim(),
   },
   {
@@ -227,14 +278,36 @@ ${p([
     title: `Onderhoud & reparatie | ${SITE_BRAND_NAME}`,
     heading: "Onderhoud & reparatie",
     meta_title: `Onderhoud & reparatie racefiets | ${SITE_BRAND_NAME}`,
-    meta_description: `Onderhoud, afstelling en reparatie van racefietsen, gravel en MTB in Dedemsvaart.`,
+    meta_description: `Onderhoud, afstelling en reparatie van racefietsen, gravel en MTB in de werkplaats van ${SITE_BRAND_NAME} in Dedemsvaart.`,
     sort_order: 22,
-    body_html: p([
-      "<strong>Goed materiaal begint met goed onderhoud.</strong>",
-      "Wij helpen met onderhoud, afstelling en reparaties aan racefietsen en andere fietsen.",
-    ]) +
-      `<ul><li>Onderhoudsbeurt</li><li>Versnellingen afstellen</li><li>Remmen</li><li>Banden / tubeless</li><li>Wielmontage</li><li>Onderdelen vervangen</li></ul>` +
-      p(['Wil je weten wat jouw fiets nodig heeft? <a href="/afspraak">Maak een afspraak</a>.']),
+    social_image: CONTENT_PHOTOS.workshopIngmar.src,
+    image_alt: CONTENT_PHOTOS.workshopIngmar.alt,
+    body_html: [
+      p([
+        "Een goed onderhouden fiets gaat langer mee, schakelt strakker en is veiliger. In onze werkplaats in Dedemsvaart doen we onderhoud, afstelling en reparaties aan racefietsen, gravel en mountainbikes — met onderdelen van merken die we zelf vertrouwen.",
+        "Of je een basischeck nodig hebt, tubeless wilt laten zetten of een specifieke storing hebt: we kijken eerst naar de fiets en geven daarna een helder advies. Geen verrassingen, wel vakwerk.",
+      ]),
+      "<h2>Regulier onderhoud</h2>",
+      p([
+        "Van een korte controle tot een uitgebreide beurt. Denk aan versnellingen en remmen, ketting en aandrijving, banden en tubeless sealant, spaken en wieluitlijning, lagers en alle bouten nalopen. Na afloop is je fiets schoon, afgesteld en klaar voor de volgende blokken.",
+      ]),
+      "<ul><li>Kleine of grote onderhoudsbeurt</li><li>Versnellingen en remmen afstellen</li><li>Aandrijving ontvetten en smeren</li><li>Banden en tubeless</li><li>Wielen, cassette en montage</li><li>Hydraulische remmen spoelen</li></ul>",
+      contentFigure("workshopStand", "Hoogwaardige racefietsen horen op een echte montagestandaard — niet tegen de muur."),
+      "<h2>Reparatie en upgrades</h2>",
+      p([
+        "Kabelbreuk, slecht schakelen, een beschadigd onderdeel of een wiel dat niet meer rond loopt: we lossen het op. Wil je tegelijk upgraden — wielen, groepset, cockpit of zadel — dan denken we mee over wat past bij jouw rijstijl en budget.",
+        "Prijzen zijn afhankelijk van de fiets en het werk. Onderdelen en meerwerk rekenen we apart. Bij je afspraak hoor je vooraf wat we gaan doen.",
+      ]),
+      "<h2>Breng je fiets langs</h2>",
+      p([
+        "Plan een afspraak zodat we tijd voor je vrijhouden. Liever even overleggen? Bel of WhatsApp. We laten je weten wanneer de fiets klaarstaat.",
+      ]),
+      ctaRow([
+        { href: "/afspraak#formulier", label: "Plan onderhoud", primary: true },
+        { href: "/contact", label: "Contact" },
+        { href: "/shop", label: "Onderdelen in de shop" },
+      ]),
+    ].join("\n"),
   },
   {
     slug: "afspraak",
@@ -242,25 +315,63 @@ ${p([
     title: `Maak een afspraak | ${SITE_BRAND_NAME}`,
     heading: "Maak een afspraak",
     meta_title: `Afspraak in de winkel | ${SITE_BRAND_NAME} Dedemsvaart`,
-    meta_description: `Plan een afspraak bij ${SITE_BRAND_NAME} in Dedemsvaart voor advies, pasvorm of onderhoud.`,
+    meta_description: `Plan een afspraak bij ${SITE_BRAND_NAME} in Dedemsvaart voor advies, Nimbl of LaFuga passen, of onderhoud.`,
     sort_order: 23,
-    body_html: p([
-      "Kom langs voor persoonlijk advies, een pasafspraak of onderhoud. Vul het formulier in of bel ons.",
-      "We reageren meestal dezelfde werkdag.",
-    ]),
+    social_image: CONTENT_PHOTOS.storefront.src,
+    image_alt: CONTENT_PHOTOS.storefront.alt,
+    body_html: [
+      p([
+        "Persoonlijk advies werkt het best als we tijd voor je hebben. Plan een afspraak voor een nieuwe fiets, Nimbl-schoenen of LaFuga-kleding passen, een onderhoudsbeurt of een upgrade. We reageren meestal dezelfde werkdag.",
+        "Kom je voor een fietsadvies? Neem je huidige fiets of schoenen mee als je die hebt. Zo zien we meteen wat je nu rijdt en wat er beter kan.",
+      ]),
+      "<h2>Waarvoor kun je terecht?</h2>",
+      "<ul><li>Advies over race, gravel of mountainbike</li><li>Nimbl wielrenschoenen passen</li><li>LaFuga kleding en pasvorm</li><li>Onderhoud en reparatie inplannen</li><li>Wielen, onderdelen en upgrades</li></ul>",
+      p([
+        "Liever spontaan langskomen tijdens openingstijden? Dat kan, maar een afspraak geeft zekerheid dat Ingmar er is.",
+      ]),
+      ctaRow([
+        { href: "/shop", label: "Eerst de shop bekijken" },
+        { href: "/contact", label: "Contact & route" },
+      ]),
+    ].join("\n"),
   },
   {
     slug: "merken",
     path: "/merken",
     title: `Merken | ${SITE_BRAND_NAME}`,
     heading: "Onze merken",
-    meta_title: `Merken: Colnago, Cipollini, Orbea, Nimbl, LaFuga | ${SITE_BRAND_NAME}`,
-    meta_description: `Ontdek de merken bij ${SITE_BRAND_NAME}: racefietsen, kleding en schoenen van topmerken.`,
+    meta_title: `Merken: Colnago, Nimbl, KASK, Double FF | ${SITE_BRAND_NAME}`,
+    meta_description: `Ontdek de merken bij ${SITE_BRAND_NAME}: racefietsen, Nimbl-schoenen, KASK-helmen, Double FF skeelers en LaFuga-kleding.`,
     sort_order: 24,
-    body_html: p([
-      `Bij ${SITE_BRAND_NAME} kies je uit merken die we zelf rijden en vertrouwen.`,
-      '<a href="/shop">Bekijk de shop</a> of lees meer over <a href="/lafuga">LaFuga</a> en <a href="/nimbl">Nimbl</a>.',
-    ]),
+    social_image: CONTENT_PHOTOS.ingmarNimbl.src,
+    image_alt: CONTENT_PHOTOS.ingmarNimbl.alt,
+    body_html: [
+      p([
+        `Bij ${SITE_BRAND_NAME} kies je uit merken die we zelf rijden en in de werkplaats onderhouden. Geen eindeloze muur met alles — wel een scherpe selectie voor race, gravel en mountainbike, plus schoenen en kleding die je hier kunt passen.`,
+      ]),
+      "<h2>Fietsen en frames</h2>",
+      p([
+        "Colnago, Cipollini, Orbea, Titici, Basso, Cervélo en Sensa. Van een aerodynamische racer tot een gravelbike waarmee je het weekend in gaat: we helpen je het frame kiezen dat bij jouw ritten past.",
+      ]),
+      "<h2>Wielen, schoenen, kleding en helmen</h2>",
+      p([
+        'Wielen van merken als Scope, Ere en Campagnolo. <a href="/nimbl">Nimbl</a> wielrenschoenen — Italiaans, licht, en op voorraad om te passen. <a href="/lafuga">LaFuga</a> voor wielrenkleding. Helmen van <strong>KASK</strong> — van Mojito tot Protone Icon — passen we hier in Dedemsvaart.',
+      ]),
+      "<h2>Skeelers: Double FF</h2>",
+      p([
+        "Double FF is ons skeelermerk: boots, frames, wielen en lagers uit Italië. Dezelfde standaard als op de fiets: passen, afstellen, en alleen meenemen wat je écht nodig hebt.",
+      ]),
+      contentFigure("showroom", "Merken die je hier ziet hangen, kun je ook netjes laten onderhouden."),
+      p([
+        "Twijfel je tussen twee merken of maten? Plan een afspraak. We zetten de fietsen of schoenen klaar en nemen de tijd.",
+      ]),
+      ctaRow([
+        { href: "/shop", label: "Bekijk de shop", primary: true },
+        { href: "/afspraak#formulier", label: "Plan afspraak" },
+        { href: "/nimbl", label: "Nimbl" },
+        { href: "/lafuga", label: "LaFuga" },
+      ]),
+    ].join("\n"),
   },
   {
     slug: "lafuga",
@@ -270,10 +381,19 @@ ${p([
     meta_title: `LaFuga fietskleding | ${SITE_BRAND_NAME}`,
     meta_description: `LaFuga wielrenkleding bij ${SITE_BRAND_NAME} in Dedemsvaart. Advies en pasvorm in de winkel.`,
     sort_order: 25,
-    body_html: p([
-      "LaFuga maakt wielrenkleding voor renners die comfort en prestaties combineren.",
-      'Bekijk <a href="/shop">LaFuga in de shop</a> of <a href="/afspraak">maak een pasafspraak</a>.',
-    ]),
+    social_image: CONTENT_PHOTOS.showroom.src,
+    image_alt: CONTENT_PHOTOS.showroom.alt,
+    body_html: [
+      p([
+        "LaFuga maakt wielrenkleding voor renners die comfort en prestaties willen combineren. In Dedemsvaart kun je passen, vergelijken en advies krijgen over maat en pasvorm — geen gokwerk vanuit een maattabel alleen.",
+        "Kom langs voor een pasafspraak of bekijk de collectie in de shop. We helpen je met truien, broeken en accessoires die bij jouw ritten horen.",
+      ]),
+      ctaRow([
+        { href: "/afspraak#formulier", label: "Pasafspraak", primary: true },
+        { href: "/shop", label: "LaFuga in de shop" },
+        { href: "/merken", label: "Alle merken" },
+      ]),
+    ].join("\n"),
   },
   {
     slug: "nimbl",
@@ -283,15 +403,28 @@ ${p([
     meta_title: `Nimbl wielrenschoenen | ${SITE_BRAND_NAME}`,
     meta_description: `Nimbl wielrenschoenen bij ${SITE_BRAND_NAME}. Passen en advies in Dedemsvaart.`,
     sort_order: 26,
-    body_html: p([
-      "Nimbl maakt lichte, stijve wielrenschoenen voor op de weg.",
-      'Kom passen in Dedemsvaart of bekijk het aanbod in de <a href="/shop">shop</a>.',
-    ]),
+    social_image: CONTENT_PHOTOS.ingmarNimbl.src,
+    image_alt: CONTENT_PHOTOS.ingmarNimbl.alt,
+    body_html: [
+      p([
+        "Nimbl maakt lichte, stijve wielrenschoenen voor op de weg. Bij Bergasports passen we ze in de winkel: de juiste maat en sluiting maken meer verschil dan een extra gram op papier.",
+        "Of je een eerste performance-schoen zoekt of een upgrade naar Italiaans maatwerk-gevoel: we nemen de tijd. Een deel van de collectie is op voorraad; speciale kleuren of maten bestellen we voor je.",
+      ]),
+      ctaRow([
+        { href: "/afspraak#formulier", label: "Nimbl passen", primary: true },
+        { href: "/shop", label: "Nimbl in de shop" },
+        { href: "/merken", label: "Alle merken" },
+      ]),
+    ].join("\n"),
   },
-] as const;
+];
 
 /**
  * Pagina's die niet meer bestaan maar wel in de database kunnen staan.
  * De seed zet ze op niet-gepubliceerd, zodat ze uit de sitemap verdwijnen.
  */
 export const retiredSitePageSlugs = ["shipping"] as const;
+
+export function getSitePageSeedByPath(path: string): SitePageSeed | undefined {
+  return legalSitePagesSeed.find((page) => page.path === path);
+}

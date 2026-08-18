@@ -16,7 +16,7 @@ function CategoryBranch({ nodes, depth }: { nodes: RalexCategoryNode[]; depth: n
               href={categoryShopHref(node.slug)}
               className="font-semibold text-[var(--foreground)] underline decoration-[#e5dcc8] underline-offset-2 hover:text-[#96741f]"
             >
-              {formatRalexCategoryName(node.name)}
+              {formatRalexCategoryName(node.name, node.slug)}
             </Link>
             <span className="text-xs text-[var(--foreground)]/50">{node.count} prod.</span>
           </div>

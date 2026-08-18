@@ -16,6 +16,7 @@ const PAGE_TITLES: Record<string, string> = {
   "/admin/customers": "Klanten",
   "/admin/categories": "Categorieën",
   "/admin/shipping": "Verzending",
+  "/admin/email": "E-mailtemplates",
 };
 
 function titleForPath(path: string): string {
@@ -48,6 +49,9 @@ function titleForPath(path: string): string {
   }
   if (path.startsWith("/admin/leads")) {
     return "Contact & afspraken";
+  }
+  if (path.startsWith("/admin/email")) {
+    return "E-mailtemplate";
   }
   return "Admin";
 }

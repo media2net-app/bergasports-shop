@@ -10,6 +10,7 @@ import {
 import { shopPhoneTelHref } from "@/lib/site-contact";
 import {
   INSTAGRAM_URL,
+  SHOP_GEO,
   SHOP_MAPS_URL,
   SITE_KVK,
   type OpeningHoursRow,
@@ -113,8 +114,17 @@ function openingHoursSpecification(hours: OpeningHoursRow[]) {
   }));
 }
 
+export type LocalBusinessRating = {
+  ratingValue: number;
+  reviewCount: number;
+};
+
 /** SportingGoodsStore: fysieke winkel met adres, telefoon en openingstijden. */
-export function localBusinessJsonLd(hours: OpeningHoursRow[] = []) {
+export function localBusinessJsonLd(
+  hours: OpeningHoursRow[] = [],
+  instagramUrl = INSTAGRAM_URL,
+  rating?: LocalBusinessRating | null,
+) {
   return {
     "@context": "https://schema.org",
     "@type": "SportingGoodsStore",
@@ -137,9 +147,25 @@ export function localBusinessJsonLd(hours: OpeningHoursRow[] = []) {
       addressCountry: "NL",
     },
     hasMap: SHOP_MAPS_URL,
+    geo: {
+      "@type": "GeoCoordinates",
+      latitude: SHOP_GEO.latitude,
+      longitude: SHOP_GEO.longitude,
+    },
     openingHoursSpecification: openingHoursSpecification(hours),
-    sameAs: [INSTAGRAM_URL],
+    sameAs: [instagramUrl],
     areaServed: ["NL", "BE"],
+    ...(rating && rating.reviewCount > 0
+      ? {
+          aggregateRating: {
+            "@type": "AggregateRating",
+            ratingValue: rating.ratingValue,
+            reviewCount: rating.reviewCount,
+            bestRating: 5,
+            worstRating: 1,
+          },
+        }
+      : {}),
   };
 }
 
@@ -174,7 +200,7 @@ export function newsArticleJsonLd(post: NewsArticleInput) {
   };
 }
 
-export function organizationJsonLd() {
+export function organizationJsonLd(instagramUrl = INSTAGRAM_URL) {
   return {
     "@context": "https://schema.org",
     "@type": "Organization",
@@ -183,7 +209,7 @@ export function organizationJsonLd() {
     url: siteOrigin(),
     logo: absoluteUrl(SITE_LOGO_SRC),
     email: SITE_EMAIL,
-    sameAs: [INSTAGRAM_URL],
+    sameAs: [instagramUrl],
     contactPoint: [
       {
         "@type": "ContactPoint",

@@ -6,9 +6,13 @@ import { revalidatePath } from "next/cache";
 import type { CustomerSummary } from "@/lib/customers";
 import { customerKeyFromPhone } from "@/lib/customers";
 import { requirePrisma } from "@/lib/database";
+import { cancelMolliePayment, getMolliePayment, isMolliePaymentCancellable } from "@/lib/mollie";
+import { deductStockForOrderItems } from "@/lib/easy-sales-stock-sync";
 import { pushOrderToEasySalesAfterCreate } from "@/lib/easy-sales-sync";
 import type { CreateOrderInput, OrderRow, OrderStatus, OrderWithItems } from "@/lib/orders";
-import { ORDER_STATUSES } from "@/lib/orders";
+import { ORDER_STATUSES, orderShippingTotal } from "@/lib/orders";
+import { catalogSalePrice, decodeImportedProductTitle } from "@/lib/products";
+import { getProductsRawByIds } from "@/lib/products-db";
 import {
   parseStatusEmailsSent,
   sendOrderStatusEmailToCustomer,
@@ -213,6 +217,14 @@ type OrderPaidSideEffectInput = CreateOrderInput & {
 };
 
 async function runOrderPaidSideEffects(orderId: number, input: OrderPaidSideEffectInput): Promise<void> {
+  void deductStockForOrderItems(input.items).then((deductions) => {
+    for (const d of deductions) {
+      if (d.easySalesPush && !d.easySalesPush.ok) {
+        console.error("[stock] Easy Sales voorraad-push mislukt:", orderId, d.easySalesPush.error);
+      }
+    }
+  });
+
   void pushOrderToEasySalesAfterCreate(orderId, {
     ...input,
     orderNumber: input.orderNumber,
@@ -555,6 +567,220 @@ export async function updateOrderFulfillment(
   revalidatePath("/admin/orders");
   revalidatePath(`/admin/orders/${id}`);
   return prismaOrderToRow(data);
+}
+
+export type AdminOrderItemWrite = {
+  id?: number;
+  name?: string;
+  quantity: number;
+  unit_price?: number;
+  product_id?: number | null;
+  variation_label?: string | null;
+};
+
+function money2(n: number): number {
+  return Math.round(n * 100) / 100;
+}
+
+export async function updateOrderItems(id: number, items: AdminOrderItemWrite[]): Promise<OrderWithItems> {
+  if (!Array.isArray(items) || items.length === 0) {
+    throw new Error("Een bestelling moet minstens één regel hebben.");
+  }
+
+  const existing = await getOrderById(id);
+  if (!existing) {
+    throw new Error("Bestelling niet gevonden.");
+  }
+
+  const productIds = [
+    ...new Set(
+      items
+        .map((item) => (item.product_id != null && Number.isFinite(item.product_id) ? item.product_id : null))
+        .filter((value): value is number => value != null),
+    ),
+  ];
+  const catalog = new Map((await getProductsRawByIds(productIds)).map((product) => [product.id, product]));
+  const existingById = new Map(existing.items.map((item) => [item.id, item]));
+
+  const normalized = items.map((item) => {
+    const quantity = Math.floor(Number(item.quantity));
+    const productId = item.product_id != null && Number.isFinite(item.product_id) ? item.product_id : null;
+    const existingItem = item.id && Number.isFinite(item.id) ? existingById.get(item.id) : undefined;
+    const isNew = existingItem == null;
+    const product = productId != null ? catalog.get(productId) : undefined;
+
+    if (productId != null && !product) {
+      throw new Error(`Product #${productId} bestaat niet in de catalogus.`);
+    }
+
+    let name = item.name?.trim() || existingItem?.name?.trim() || "";
+    let unitPrice = money2(Number(item.unit_price));
+    let image: string | null | undefined;
+
+    if (isNew && product) {
+      name = decodeImportedProductTitle(product.name);
+      image = product.image?.trim() || null;
+      if (!Number.isFinite(Number(item.unit_price))) {
+        unitPrice = catalogSalePrice(product);
+      }
+    } else if (!isNew && product && existingItem && existingItem.product_id !== productId) {
+      if (!existingItem.image) {
+        image = product.image?.trim() || null;
+      }
+    }
+
+    if (!name && product) {
+      name = decodeImportedProductTitle(product.name);
+    }
+    if (!name) {
+      throw new Error("Elke regel heeft een productnaam nodig.");
+    }
+    if (!Number.isFinite(quantity) || quantity < 1) {
+      throw new Error("Aantal moet minstens 1 zijn.");
+    }
+    if (!Number.isFinite(unitPrice) || unitPrice < 0) {
+      throw new Error("Prijs mag niet negatief zijn.");
+    }
+
+    return {
+      id: item.id && Number.isFinite(item.id) ? item.id : undefined,
+      name,
+      quantity,
+      unitPrice,
+      lineTotal: money2(quantity * unitPrice),
+      productId,
+      variationLabel: item.variation_label?.trim() || null,
+      image,
+    };
+  });
+
+  const subtotal = money2(normalized.reduce((sum, item) => sum + item.lineTotal, 0));
+  const shipping = orderShippingTotal(existing);
+  const total = money2(Math.max(0, subtotal - existing.discount_total + shipping));
+  const keepIds = normalized.filter((item) => item.id != null).map((item) => BigInt(item.id!));
+  const existingIds = new Set(existing.items.map((item) => item.id));
+  for (const item of normalized) {
+    if (item.id != null && !existingIds.has(item.id)) {
+      throw new Error("Een regel hoort niet bij deze bestelling.");
+    }
+  }
+
+  const prisma = requirePrisma();
+  await prisma.$transaction(async (tx) => {
+    if (keepIds.length > 0) {
+      await tx.orderItem.deleteMany({
+        where: { orderId: BigInt(id), id: { notIn: keepIds } },
+      });
+    } else {
+      await tx.orderItem.deleteMany({ where: { orderId: BigInt(id) } });
+    }
+
+    for (const item of normalized) {
+      if (item.id != null) {
+        await tx.orderItem.update({
+          where: { id: BigInt(item.id) },
+          data: {
+            name: item.name,
+            quantity: item.quantity,
+            unitPrice: item.unitPrice,
+            lineTotal: item.lineTotal,
+            productId: item.productId != null ? BigInt(item.productId) : null,
+            variationLabel: item.variationLabel,
+            ...(item.image !== undefined ? { image: item.image } : {}),
+          },
+        });
+        continue;
+      }
+      await tx.orderItem.create({
+        data: {
+          orderId: BigInt(id),
+          name: item.name,
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+          lineTotal: item.lineTotal,
+          currency: existing.currency,
+          productId: item.productId != null ? BigInt(item.productId) : null,
+          variationLabel: item.variationLabel,
+          image: item.image ?? null,
+        },
+      });
+    }
+
+    await tx.order.update({
+      where: { id: BigInt(id) },
+      data: { subtotal, total },
+    });
+  });
+
+  revalidatePath("/admin/orders");
+  revalidatePath(`/admin/orders/${id}`);
+  const updated = await getOrderById(id);
+  if (!updated) {
+    throw new Error("Bestelling niet gevonden.");
+  }
+  return updated;
+}
+
+export async function cancelOrder(id: number): Promise<{
+  order: OrderWithItems;
+  mollieCancelled: boolean;
+  mollieWarning: string | null;
+}> {
+  const existing = await getOrderById(id);
+  if (!existing) {
+    throw new Error("Bestelling niet gevonden.");
+  }
+  if (existing.status === "cancelled") {
+    return { order: existing, mollieCancelled: false, mollieWarning: null };
+  }
+
+  let mollieCancelled = false;
+  let mollieWarning: string | null = null;
+  if (existing.mollie_payment_id) {
+    try {
+      const payment = await getMolliePayment(existing.mollie_payment_id);
+      if (isMolliePaymentCancellable(payment.status)) {
+        await cancelMolliePayment(existing.mollie_payment_id);
+        mollieCancelled = true;
+        await updateOrderFulfillment(id, { payment_status: "canceled" });
+      } else if (payment.status === "paid") {
+        mollieWarning =
+          "De Mollie-betaling is al voldaan. Gebruik terugbetaling als het geld terug moet.";
+        await updateOrderFulfillment(id, { payment_status: payment.status });
+      } else {
+        await updateOrderFulfillment(id, { payment_status: payment.status });
+      }
+    } catch (e) {
+      mollieWarning =
+        e instanceof Error ? e.message : "Mollie-betaling kon niet worden geannuleerd.";
+    }
+  }
+
+  await updateOrderStatus(id, "cancelled");
+  const updated = await getOrderById(id);
+  if (!updated) {
+    throw new Error("Bestelling niet gevonden.");
+  }
+  return { order: updated, mollieCancelled, mollieWarning };
+}
+
+export async function deleteOrder(id: number): Promise<void> {
+  const existing = await getOrderById(id);
+  if (!existing) {
+    throw new Error("Bestelling niet gevonden.");
+  }
+  const paidUnrefunded =
+    (existing.payment_status === "paid" || existing.payment_status === "authorized") &&
+    !existing.refunded_at;
+  if (paidUnrefunded) {
+    throw new Error("Betaalde bestellingen kun je niet verwijderen. Annuleer of betaal terug.");
+  }
+  if (existing.status !== "cancelled" && existing.status !== "awaiting_payment") {
+    throw new Error("Alleen geannuleerde of onbetaalde bestellingen kun je verwijderen. Annuleer eerst.");
+  }
+  const prisma = requirePrisma();
+  await prisma.order.delete({ where: { id: BigInt(id) } });
+  revalidatePath("/admin/orders");
 }
 
 type OrderCustomerFields = {

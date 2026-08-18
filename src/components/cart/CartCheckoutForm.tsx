@@ -4,6 +4,9 @@ import { useEffect, useState } from "react";
 import type { CartItem } from "@/components/cart/CartProvider";
 import TikTokCheckoutEvents from "@/components/analytics/TikTokCheckoutEvents";
 import ApplePayButton from "@/components/payments/ApplePayButton";
+import MollieMethodPicker from "@/components/payments/MollieMethodPicker";
+import { useMollieMethods } from "@/components/payments/useMollieMethods";
+import { formatMollieMethodNames, mollieMethodLabel } from "@/lib/mollie-methods";
 import { getTtclidFromDocument } from "@/lib/tiktok-client";
 import { tikTokIdentify } from "@/lib/tiktok-pixel";
 import { formatProductPrice } from "@/lib/products";
@@ -51,49 +54,65 @@ export default function CartCheckoutForm({
   const [legalAccepted, setLegalAccepted] = useState(false);
   const [shippingCountry, setShippingCountry] = useState("NL");
   const [shippingMethod, setShippingMethod] = useState("standard");
-  const [shippingCost, setShippingCost] = useState(0);
   const [shippingRates, setShippingRates] = useState<
     Array<{ method: string; label: string; price: number }>
   >([]);
   const [couponCode, setCouponCode] = useState("");
   const [couponDiscount, setCouponDiscount] = useState(0);
   const [mollieMethod, setMollieMethod] = useState("");
-  const [mollieMethods, setMollieMethods] = useState<Array<{ id: string; description: string }>>(
-    [],
-  );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   const payableSubtotal = Math.max(0, subtotal - discountTotal - couponDiscount);
+  const selectedShipping =
+    shippingRates.find((r) => r.method === shippingMethod) ?? shippingRates[0];
+  const shippingCost = selectedShipping?.price ?? 0;
   const payableTotal = Math.round((payableSubtotal + shippingCost) * 100) / 100;
 
   useEffect(() => {
-    void fetch(`/api/shipping/quote?country=${shippingCountry}&subtotal=${payableSubtotal}`)
+    let cancelled = false;
+    void fetch(
+      `/api/shipping/quote?country=${encodeURIComponent(shippingCountry)}&subtotal=${payableSubtotal}`,
+    )
       .then((r) => r.json())
       .then((data: { rates?: Array<{ method: string; label: string; price: number }> }) => {
+        if (cancelled) return;
         const rates = data.rates ?? [];
         setShippingRates(rates);
-        const current = rates.find((r) => r.method === shippingMethod) ?? rates[0];
-        if (current) {
-          setShippingMethod(current.method);
-          setShippingCost(current.price);
-        }
+        setShippingMethod((prev) => {
+          const selected = rates.find((r) => r.method === prev) ?? rates[0];
+          return selected?.method ?? prev;
+        });
       })
       .catch(() => undefined);
-  }, [shippingCountry, payableSubtotal, shippingMethod]);
+    return () => {
+      cancelled = true;
+    };
+  }, [shippingCountry, payableSubtotal]);
 
-  useEffect(() => {
-    if (payableTotal <= 0) return;
-    void fetch(`/api/mollie/methods?amount=${payableTotal}&currency=${encodeURIComponent(currency)}`)
-      .then((r) => r.json())
-      .then((data: { methods?: Array<{ id: string; description: string }> }) => {
-        setMollieMethods(data.methods ?? []);
-      })
-      .catch(() => undefined);
-  }, [payableTotal, currency]);
+  const {
+    methods: mollieMethods,
+    fallback: mollieFallback,
+    loading: mollieLoading,
+    configured: mollieConfigured,
+  } = useMollieMethods({
+    amount: payableTotal,
+    currency,
+    country: shippingCountry,
+  });
+  const selectedMollieMethod =
+    (mollieMethod && mollieMethods.some((m) => m.id === mollieMethod)
+      ? mollieMethod
+      : (mollieMethods.find((m) => m.id === "ideal")?.id ?? mollieMethods[0]?.id)) ?? "";
+  const showApplePay =
+    !mollieFallback && mollieMethods.some((m) => m.id === "applepay");
 
   const fieldClass =
-    "mt-1 w-full rounded-lg border border-[#e5dcc8] px-3 py-2 text-sm text-[var(--foreground)] outline-none focus:border-[#B38F27]";
+    "mt-1 w-full rounded-xl border border-[var(--brand-border)] bg-[var(--brand-surface)] px-3 py-2.5 text-sm text-[var(--foreground)] outline-none transition focus:border-[var(--brand)]";
+  const btnGold =
+    "inline-flex min-h-12 w-full items-center justify-center rounded-full bg-[var(--brand-mid)] px-5 text-xs font-bold uppercase tracking-[0.14em] text-[#1a1a1a] transition hover:bg-[#f2d680] disabled:opacity-60";
+  const btnGhost =
+    "inline-flex min-h-11 w-full items-center justify-center rounded-full border border-[var(--brand-border)] px-5 text-xs font-bold uppercase tracking-[0.14em] text-[var(--foreground)] transition hover:border-[var(--brand)] hover:text-[var(--brand)] disabled:opacity-60";
 
   function validateDetails(): boolean {
     if (!customerName.trim() || !customerPhone.trim() || !shippingAddress.trim() || !shippingCity.trim()) {
@@ -150,7 +169,7 @@ export default function CartCheckoutForm({
           marketingConsent,
           legalAccepted: true,
           paymentMethod: "mollie",
-          mollieMethod: forcedMethod || mollieMethod || undefined,
+          mollieMethod: forcedMethod || selectedMollieMethod || undefined,
           shippingAddress,
           shippingCity,
           shippingCounty: shippingCounty || undefined,
@@ -205,13 +224,18 @@ export default function CartCheckoutForm({
   }
 
   return (
-    <div className="space-y-3 border-t border-[#e5dcc8] pt-4">
+    <div className="space-y-4">
       <TikTokCheckoutEvents items={items} total={total} currency={currency} />
 
-      <div className="flex items-center gap-2 text-xs font-semibold text-[var(--foreground)]/70" aria-label="Checkout stappen">
-        <span className={step === "details" ? "text-[var(--foreground)]" : ""}>1. Bezorging</span>
-        <span aria-hidden>→</span>
-        <span className={step === "confirm" ? "text-[var(--foreground)]" : ""}>2. Bevestigen</span>
+      <div
+        className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--foreground)]/40"
+        aria-label="Checkout stappen"
+      >
+        <span className={step === "details" ? "text-[var(--brand)]" : ""}>1. Bezorging</span>
+        <span aria-hidden className="text-[var(--brand-mid)]">
+          →
+        </span>
+        <span className={step === "confirm" ? "text-[var(--brand)]" : ""}>2. Bevestigen</span>
       </div>
 
       {step === "details" ? (
@@ -222,11 +246,19 @@ export default function CartCheckoutForm({
             if (validateDetails()) setStep("confirm");
           }}
         >
-          <p className="text-sm font-semibold text-[var(--foreground)]">Bezorggegevens</p>
+          <p className="font-[family-name:var(--font-heading)] text-sm tracking-tight text-[var(--foreground)]">
+            Bezorggegevens
+          </p>
 
-          <div className="rounded-lg border border-[#e5dcc8] bg-[#faf8f4] px-3 py-2 text-xs text-[var(--foreground)]/85">
-            <p className="font-semibold text-[var(--foreground)]">Online betalen via Mollie</p>
-            <p className="mt-1">iDEAL, Apple Pay, kaarten, Bancontact — veilig afrekenen.</p>
+          <div className="rounded-2xl border border-[var(--brand-border)] bg-[var(--brand-surface)] px-4 py-3 text-xs leading-relaxed text-[var(--foreground)]/75">
+            <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[var(--brand)]">Online betalen</p>
+            <p className="mt-1">
+              {!mollieConfigured && !mollieLoading
+                ? "Online betalen is tijdelijk niet beschikbaar. Kies alvast een methode of neem contact op."
+                : mollieFallback
+                  ? "Kies hier je betaalmethode. Staat die niet aan, dan kies je verder op de beveiligde Mollie-pagina."
+                  : `${formatMollieMethodNames(mollieMethods)} — veilig via Mollie.`}
+            </p>
           </div>
 
           <div>
@@ -252,17 +284,14 @@ export default function CartCheckoutForm({
               {shippingRates.map((rate) => (
                 <label
                   key={rate.method}
-                  className="flex cursor-pointer items-center justify-between gap-2 rounded-lg border border-[#e5dcc8] px-3 py-2 text-xs"
+                  className="flex cursor-pointer items-center justify-between gap-2 rounded-2xl border border-[var(--brand-border)] bg-white px-3 py-2.5 text-xs"
                 >
                   <span className="inline-flex items-center gap-2">
                     <input
                       type="radio"
                       name="shipping"
                       checked={shippingMethod === rate.method}
-                      onChange={() => {
-                        setShippingMethod(rate.method);
-                        setShippingCost(rate.price);
-                      }}
+                      onChange={() => setShippingMethod(rate.method)}
                     />
                     {rate.label}
                   </span>
@@ -270,6 +299,18 @@ export default function CartCheckoutForm({
                 </label>
               ))}
             </fieldset>
+          ) : null}
+
+          <MollieMethodPicker
+            methods={mollieMethods}
+            value={selectedMollieMethod}
+            onChange={setMollieMethod}
+            disabled={loading}
+          />
+          {!mollieConfigured && !mollieLoading ? (
+            <p className="text-xs font-medium text-red-600">
+              Online betalen is tijdelijk niet beschikbaar. Probeer later opnieuw of neem contact op.
+            </p>
           ) : null}
 
           <div className="flex gap-2">
@@ -281,7 +322,7 @@ export default function CartCheckoutForm({
             />
             <button
               type="button"
-              className="mt-1 shrink-0 rounded-lg border border-[#e5dcc8] px-3 text-xs font-semibold"
+              className="mt-1 shrink-0 rounded-full border border-[var(--brand-border)] px-4 text-[11px] font-bold uppercase tracking-[0.12em] transition hover:border-[var(--brand)] hover:text-[var(--brand)]"
               onClick={() => void applyCoupon()}
             >
               Toepassen
@@ -335,41 +376,6 @@ export default function CartCheckoutForm({
               onChange={(e) => setCustomerEmail(e.target.value)}
             />
           </div>
-          <label className="flex cursor-pointer items-start gap-2 rounded-lg border border-[#e5dcc8] bg-white px-3 py-2.5 text-xs text-[var(--foreground)]/85">
-            <input
-              type="checkbox"
-              className="mt-0.5"
-              checked={marketingConsent}
-              onChange={(e) => setMarketingConsent(e.target.checked)}
-            />
-            <span>
-              Ik wil aanbiedingen en nieuws per e-mail ontvangen (optioneel). Je kunt je altijd uitschrijven.
-            </span>
-          </label>
-          <label className="flex cursor-pointer items-start gap-2 rounded-lg border border-[#e5dcc8] bg-white px-3 py-2.5 text-xs text-[var(--foreground)]/85">
-            <input
-              type="checkbox"
-              className="mt-0.5"
-              checked={legalAccepted}
-              onChange={(e) => setLegalAccepted(e.target.checked)}
-              required
-            />
-            <span>
-              Ik ga akkoord met de{" "}
-              <Link href={LEGAL_PAGE_PATHS.terms} className="underline">
-                algemene voorwaarden
-              </Link>
-              , het{" "}
-              <Link href={LEGAL_PAGE_PATHS.privacy} className="underline">
-                privacybeleid
-              </Link>{" "}
-              en het{" "}
-              <Link href="/retouren" className="underline">
-                retourbeleid
-              </Link>
-              .
-            </span>
-          </label>
           <div>
             <label htmlFor="co-address" className="text-xs font-medium text-[var(--foreground)]">
               Adres (straat + huisnummer) *
@@ -439,19 +445,54 @@ export default function CartCheckoutForm({
             />
           </div>
 
+          <label className="flex cursor-pointer items-start gap-2 rounded-2xl border border-[var(--brand-border)] bg-white px-3 py-2.5 text-xs text-[var(--foreground)]/85">
+            <input
+              type="checkbox"
+              className="mt-0.5"
+              checked={marketingConsent}
+              onChange={(e) => setMarketingConsent(e.target.checked)}
+            />
+            <span>
+              Ik wil aanbiedingen en nieuws per e-mail ontvangen (optioneel). Je kunt je altijd uitschrijven.
+            </span>
+          </label>
+          <label className="flex cursor-pointer items-start gap-2 rounded-2xl border border-[var(--brand-border)] bg-white px-3 py-2.5 text-xs text-[var(--foreground)]/85">
+            <input
+              type="checkbox"
+              className="mt-0.5"
+              checked={legalAccepted}
+              onChange={(e) => setLegalAccepted(e.target.checked)}
+              required
+            />
+            <span>
+              Ik ga akkoord met de{" "}
+              <Link href={LEGAL_PAGE_PATHS.terms} className="underline">
+                algemene voorwaarden
+              </Link>
+              , het{" "}
+              <Link href={LEGAL_PAGE_PATHS.privacy} className="underline">
+                privacybeleid
+              </Link>{" "}
+              en het{" "}
+              <Link href={LEGAL_PAGE_PATHS.returns} className="underline">
+                retourbeleid
+              </Link>
+              .
+            </span>
+          </label>
+
           {error ? <p className="text-xs font-medium text-red-600">{error}</p> : null}
 
-          <button
-            type="submit"
-            className="w-full rounded-xl bg-[#B38F27] px-4 py-3 text-sm font-bold text-white transition hover:bg-[#96741f]"
-          >
+          <button type="submit" className={btnGold}>
             Ga naar bevestiging
           </button>
         </form>
       ) : (
         <div className="space-y-3">
-          <p className="text-sm font-semibold text-[var(--foreground)]">Bevestig bestelling</p>
-          <dl className="space-y-2 rounded-lg border border-[#e5dcc8] bg-[#faf9fc] p-3 text-sm text-[var(--foreground)]">
+          <p className="font-[family-name:var(--font-heading)] text-sm tracking-tight text-[var(--foreground)]">
+            Bevestig bestelling
+          </p>
+          <dl className="space-y-2 rounded-3xl border border-[var(--brand-border)] bg-[var(--brand-surface)] p-4 text-sm text-[var(--foreground)]">
             <div>
               <dt className="text-xs text-[var(--foreground)]/65">Naam</dt>
               <dd className="font-medium">{customerName}</dd>
@@ -481,7 +522,9 @@ export default function CartCheckoutForm({
             </div>
             <div>
               <dt className="text-xs text-[var(--foreground)]/65">Betaling</dt>
-              <dd className="font-medium">Online (Mollie)</dd>
+              <dd className="font-medium">
+                {selectedMollieMethod ? mollieMethodLabel(selectedMollieMethod) : "Kies bij Mollie"}
+              </dd>
             </div>
             {notes ? (
               <div>
@@ -491,25 +534,21 @@ export default function CartCheckoutForm({
             ) : null}
           </dl>
 
-          {mollieMethods.length > 0 ? (
-            <div>
-              <label className="text-xs font-medium" htmlFor="mollie-method">
-                Betaalmethode
-              </label>
-              <select
-                id="mollie-method"
-                className={fieldClass}
-                value={mollieMethod}
-                onChange={(e) => setMollieMethod(e.target.value)}
-              >
-                <option value="">Kies in Mollie checkout</option>
-                {mollieMethods.map((m) => (
-                  <option key={m.id} value={m.id}>
-                    {m.description}
-                  </option>
-                ))}
-              </select>
-            </div>
+          <MollieMethodPicker
+            methods={mollieMethods}
+            value={selectedMollieMethod}
+            onChange={setMollieMethod}
+            disabled={loading}
+          />
+          {!mollieConfigured && !mollieLoading ? (
+            <p className="text-xs font-medium text-red-600">
+              Online betalen is tijdelijk niet beschikbaar. Neem contact op of probeer later opnieuw.
+            </p>
+          ) : mollieFallback ? (
+            <p className="text-xs leading-relaxed text-[var(--foreground)]/65">
+              Kies je methode hier. Als Mollie deze niet aan heeft staan, kies je verder op hun
+              betaalpagina.
+            </p>
           ) : null}
 
           <p className="text-base font-bold text-[var(--foreground)]">
@@ -518,22 +557,19 @@ export default function CartCheckoutForm({
 
           {error ? <p className="text-xs font-medium text-red-600">{error}</p> : null}
 
-          <div className="flex flex-col gap-2">
-            <ApplePayButton disabled={loading} onClick={() => void handleSubmit("applepay")} />
+          <div className="flex flex-col gap-2.5">
+            {showApplePay ? (
+              <ApplePayButton disabled={loading} onClick={() => void handleSubmit("applepay")} />
+            ) : null}
             <button
               type="button"
-              disabled={loading}
-              className="w-full rounded-xl bg-[#B38F27] px-4 py-3 text-sm font-bold text-white transition hover:bg-[#96741f] disabled:opacity-60"
+              disabled={loading || !mollieConfigured}
+              className={btnGold}
               onClick={() => void handleSubmit()}
             >
               {loading ? "Bezig…" : "Doorgaan naar betalen"}
             </button>
-            <button
-              type="button"
-              className="w-full rounded-xl border border-[#e5dcc8] px-4 py-2 text-sm font-semibold text-[var(--foreground)]"
-              onClick={() => setStep("details")}
-              disabled={loading}
-            >
+            <button type="button" className={btnGhost} onClick={() => setStep("details")} disabled={loading}>
               Terug naar bezorggegevens
             </button>
           </div>

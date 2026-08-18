@@ -1,5 +1,9 @@
 import "server-only";
 
+import {
+  DEFAULT_FREE_SHIPPING_THRESHOLD_EUR,
+  meetsFreeShippingThreshold,
+} from "@/lib/shop-delivery-trust";
 import { getFreeShippingThresholdSetting } from "@/lib/shop-runtime";
 import { listActiveShippingRates } from "@/lib/shipping-rates-db";
 
@@ -20,16 +24,27 @@ const DEFAULT_RATES: Record<string, ShippingQuote[]> = {
   EU: [{ method: "standard", label: "Verzending EU", price: 24.95, estimatedDays: "3–7 werkdagen" }],
 };
 
-const DEFAULT_FREE_SHIPPING_NL = 150;
+type RateCandidate = ShippingQuote & { countryCode: string; freeAbove: number | null };
 
-type RateCandidate = ShippingQuote & { freeAbove: number | null };
+function resolveFreeAbove(rate: RateCandidate, globalNl: number): number | null {
+  if (rate.method === "pickup" || rate.price <= 0) {
+    return null;
+  }
+  if (rate.freeAbove != null && rate.freeAbove > 0) {
+    return rate.freeAbove;
+  }
+  // Shopdrempel geldt alleen voor NL. BE/DE/EU: alleen bij expliciet tarief.freeAbove.
+  return rate.countryCode === "NL" ? globalNl : null;
+}
 
 export async function quoteShipping(input: {
   countryCode: string;
   subtotal: number;
 }): Promise<ShippingQuote[]> {
   const cc = input.countryCode.toUpperCase();
-  const freeAboveGlobal = await getFreeShippingThresholdSetting().catch(() => DEFAULT_FREE_SHIPPING_NL);
+  const freeAboveGlobal = await getFreeShippingThresholdSetting().catch(
+    () => DEFAULT_FREE_SHIPPING_THRESHOLD_EUR,
+  );
 
   let candidates: RateCandidate[] = [];
   try {
@@ -41,6 +56,7 @@ export async function quoteShipping(input: {
       label: rate.label,
       price: rate.price,
       estimatedDays: rate.estimatedDays ?? undefined,
+      countryCode: rate.countryCode,
       freeAbove: rate.freeAbove,
     }));
   } catch {
@@ -48,15 +64,17 @@ export async function quoteShipping(input: {
   }
 
   if (candidates.length === 0) {
-    candidates = (DEFAULT_RATES[cc] ?? DEFAULT_RATES.EU).map((rate) => ({
+    const tableKey = DEFAULT_RATES[cc] ? cc : "EU";
+    candidates = DEFAULT_RATES[tableKey].map((rate) => ({
       ...rate,
-      freeAbove: rate.method === "pickup" ? null : freeAboveGlobal,
+      countryCode: tableKey,
+      freeAbove: null,
     }));
   }
 
   return candidates.map((rate) => {
-    const threshold = rate.freeAbove ?? (rate.method === "pickup" || rate.price <= 0 ? null : freeAboveGlobal);
-    if (threshold != null && input.subtotal >= threshold && rate.price > 0) {
+    const threshold = resolveFreeAbove(rate, freeAboveGlobal);
+    if (threshold != null && meetsFreeShippingThreshold(input.subtotal, threshold) && rate.price > 0) {
       return { method: rate.method, label: `${rate.label} (gratis)`, price: 0, estimatedDays: rate.estimatedDays };
     }
     return { method: rate.method, label: rate.label, price: rate.price, estimatedDays: rate.estimatedDays };

@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 
 import Footer from "@/components/layout/Footer";
 import Header from "@/components/layout/Header";
 import TrustBar from "@/components/layout/TrustBar";
+import ContentPageLayout from "@/components/site/ContentPageLayout";
 import { buildPageMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = buildPageMetadata({
@@ -12,23 +12,25 @@ export const metadata: Metadata = buildPageMetadata({
   path: "/retouren",
 });
 
+const BODY = `
+<p>Je hebt als consument recht op een bedenktijd volgens de wet. Meld een retour eerst bij ons aan, zodat we de zending kunnen verwachten.</p>
+<h2>Voorwaarden</h2>
+<p>Producten moeten ongebruikt, compleet en in de originele verpakking worden geretourneerd, tenzij anders overeengekomen.</p>
+<p>Maatwerk, gemonteerde fietsen en hygiënegevoelige artikelen kunnen van retourrecht zijn uitgesloten.</p>
+<h2>Terugbetaling</h2>
+<p>Terugbetaling volgt na ontvangst en controle, via dezelfde betaalmethode (Mollie).</p>
+<p class="cms-cta-row">
+  <a class="cms-cta cms-cta-primary" href="/contact">Retour aanmelden</a>
+  <a class="cms-cta" href="/verzending">Verzending &amp; bezorging</a>
+</p>
+`;
+
 export default function RetourenPage() {
   return (
     <main className="min-h-screen bg-[#faf8f5]/40">
       <TrustBar />
       <Header />
-      <article className="mx-auto max-w-[760px] px-4 py-12">
-        <h1 className="font-[family-name:var(--font-heading)] text-3xl">Retourneren</h1>
-        <div className="mt-6 space-y-4 text-sm leading-relaxed text-[var(--foreground)]/85">
-          <p>Je hebt als consument recht op een bedenktijd volgens de wet. Neem contact op om een retour aan te melden.</p>
-          <p>Producten moeten ongebruikt, compleet en in de originele verpakking worden geretourneerd, tenzij anders overeengekomen.</p>
-          <p>Maatwerk, gemonteerde fietsen en hygiënegevoelige artikelen kunnen van retourrecht zijn uitgesloten.</p>
-          <p>Terugbetaling volgt na ontvangst en controle, via dezelfde betaalmethode (Mollie).</p>
-        </div>
-        <Link href="/contact" className="mt-8 inline-flex text-xs font-bold uppercase tracking-wider underline">
-          Retour aanmelden
-        </Link>
-      </article>
+      <ContentPageLayout path="/retouren" heading="Retourneren" bodyHtml={BODY} showCtas />
       <Footer />
     </main>
   );

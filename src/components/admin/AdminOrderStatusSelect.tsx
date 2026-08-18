@@ -13,6 +13,7 @@ export default function AdminOrderStatusSelect({
   currentStatus: OrderStatus;
 }) {
   const router = useRouter();
+  const [open, setOpen] = useState(false);
   const [status, setStatus] = useState(currentStatus);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -33,6 +34,7 @@ export default function AdminOrderStatusSelect({
         setStatus(currentStatus);
         setError(data.error ?? "Status bijwerken mislukt");
       } else {
+        setOpen(false);
         router.refresh();
       }
     } catch {
@@ -43,16 +45,21 @@ export default function AdminOrderStatusSelect({
     }
   }
 
+  if (!open) {
+    return (
+      <button type="button" className="admin-order-text-btn" onClick={() => setOpen(true)}>
+        Andere status
+      </button>
+    );
+  }
+
   return (
-    <div className="admin-stack-tight">
-      <label htmlFor="order-status" className="admin-label">
-        Status
-      </label>
+    <div className="admin-order-status-edit">
       <select
-        id="order-status"
-        className="admin-field"
+        className="admin-order-select"
         value={status}
         disabled={loading}
+        aria-label="Status wijzigen"
         onChange={(e) => handleChange(e.target.value)}
       >
         {ORDER_STATUSES.map((s) => (
@@ -61,7 +68,10 @@ export default function AdminOrderStatusSelect({
           </option>
         ))}
       </select>
-      {error ? <p className="admin-error-box admin-m-0">{error}</p> : null}
+      <button type="button" className="admin-order-text-btn" disabled={loading} onClick={() => setOpen(false)}>
+        Sluiten
+      </button>
+      {error ? <p className="admin-order-inline-error">{error}</p> : null}
     </div>
   );
 }

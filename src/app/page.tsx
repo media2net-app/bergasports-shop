@@ -11,6 +11,7 @@ import HomeHeroFromCms from "@/components/home/HomeHeroFromCms";
 import HomeInstagramSection from "@/components/home/HomeInstagramSection";
 import HomeNewsSection from "@/components/home/HomeNewsSection";
 import HomePillarsSection from "@/components/home/HomePillarsSection";
+import HomeReviewsSection from "@/components/home/HomeReviewsSection";
 import HomeVisitSection from "@/components/home/HomeVisitSection";
 import Footer from "@/components/layout/Footer";
 import Header from "@/components/layout/Header";
@@ -24,6 +25,10 @@ import {
 import { PAGE_SEO, SHOP_OPENING_HOURS } from "@/lib/site-content";
 import { getPublishedPageByPath } from "@/lib/site-pages-db";
 import { getShopOpeningHours } from "@/lib/shop-runtime";
+import { getGooglePlaceAggregateRating } from "@/lib/google-reviews";
+import { getInstagramPublicUrl } from "@/lib/instagram";
+import { resolveWpQueryRedirect } from "@/lib/seo-redirects";
+import { permanentRedirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
@@ -41,9 +46,27 @@ export async function generateMetadata(): Promise<Metadata> {
   });
 }
 
-export default async function Home() {
-  const hours = await getShopOpeningHours().catch(() => SHOP_OPENING_HOURS);
-  const jsonLd = [organizationJsonLd(), websiteJsonLd(), localBusinessJsonLd(hours)];
+type HomeProps = {
+  searchParams?: Promise<{ p?: string; page_id?: string }>;
+};
+
+export default async function Home({ searchParams }: HomeProps) {
+  const wpQuery = (await searchParams) ?? {};
+  if (wpQuery.p || wpQuery.page_id) {
+    const hit = await resolveWpQueryRedirect(wpQuery);
+    if (hit) permanentRedirect(hit.destination);
+  }
+
+  const [hours, instagramUrl, googleRating] = await Promise.all([
+    getShopOpeningHours().catch(() => SHOP_OPENING_HOURS),
+    getInstagramPublicUrl(),
+    getGooglePlaceAggregateRating().catch(() => null),
+  ]);
+  const jsonLd = [
+    organizationJsonLd(instagramUrl),
+    websiteJsonLd(),
+    localBusinessJsonLd(hours, instagramUrl, googleRating),
+  ];
 
   return (
     <main className="min-h-screen bg-[#faf8f5]/40">
@@ -72,6 +95,9 @@ export default async function Home() {
         </Suspense>
         <Suspense fallback={null}>
           <HomeInstagramSection />
+        </Suspense>
+        <Suspense fallback={null}>
+          <HomeReviewsSection />
         </Suspense>
         <HomeVisitSection />
       </div>

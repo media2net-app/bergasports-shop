@@ -1,0 +1,1615 @@
+{
+  "version": 2,
+  "notes": "301-mapping voor cutover. Pad-only. Host/DNS (.nl vs .com, www) blijft hosting. Gegenereerd door scripts/export-seo-redirects.ts.",
+  "redirects": [
+    {
+      "source": "/despre-noi",
+      "destination": "/over-ons",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/livrare-si-retur",
+      "destination": "/verzending",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/metode-de-plata",
+      "destination": "/betaalmethoden",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/termeni-si-conditii",
+      "destination": "/algemene-voorwaarden",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/politica-de-confidentialitate",
+      "destination": "/privacybeleid",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/politica-cookies",
+      "destination": "/cookiebeleid",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/algemene-voorwaarden-en-privacy",
+      "destination": "/algemene-voorwaarden",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/cookie-policy",
+      "destination": "/cookiebeleid",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/terms-and-conditions",
+      "destination": "/algemene-voorwaarden",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/racingbikes",
+      "destination": "/racefietsen",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/cyclingshoes",
+      "destination": "/wielrenschoenen",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/speedskates",
+      "destination": "/skeelers",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/scope-wheels",
+      "destination": "/wielen",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/scope-wheels-2",
+      "destination": "/wielen",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/lafuga-kleding",
+      "destination": "/lafuga",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/bike-repair",
+      "destination": "/onderhoud",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/about-bergasports",
+      "destination": "/over-ons",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/verzendkosten-en-levertijd",
+      "destination": "/verzending",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/retourneren-en-garantie",
+      "destination": "/retouren",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/privacy-policy",
+      "destination": "/privacybeleid",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/privacy",
+      "destination": "/privacybeleid",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/nl",
+      "destination": "/",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/categorii",
+      "destination": "/shop",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/winkel",
+      "destination": "/shop",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/winkelmand",
+      "destination": "/shop",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/winkelwagen",
+      "destination": "/shop",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/winkelmandje",
+      "destination": "/shop",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/cart",
+      "destination": "/shop",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/cart-2",
+      "destination": "/shop",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/bag",
+      "destination": "/shop",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/afrekenen",
+      "destination": "/checkout",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/my-account",
+      "destination": "/account",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/mijn-account",
+      "destination": "/account",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/lost-password",
+      "destination": "/account",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/wachtwoord-vergeten",
+      "destination": "/account",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/author/ingmar",
+      "destination": "/over-ons",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/author/admin",
+      "destination": "/over-ons",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/bikes",
+      "destination": "/fietsen",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/product-category/bikes",
+      "destination": "/fietsen",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/product-categorie/bikes",
+      "destination": "/fietsen",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/nl/product-categorie/bikes",
+      "destination": "/fietsen",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/nl/product-category/bikes",
+      "destination": "/fietsen",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/product-category/fietsen",
+      "destination": "/fietsen",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/product-categorie/fietsen",
+      "destination": "/fietsen",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/nl/product-categorie/fietsen",
+      "destination": "/fietsen",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/road-bike",
+      "destination": "/racefietsen",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/product-category/road-bike",
+      "destination": "/racefietsen",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/product-categorie/road-bike",
+      "destination": "/racefietsen",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/nl/product-categorie/road-bike",
+      "destination": "/racefietsen",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/nl/product-category/road-bike",
+      "destination": "/racefietsen",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/product-category/racefietsen",
+      "destination": "/racefietsen",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/product-categorie/racefietsen",
+      "destination": "/racefietsen",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/nl/product-categorie/racefietsen",
+      "destination": "/racefietsen",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/gravelbike",
+      "destination": "/gravel",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/product-category/gravelbike",
+      "destination": "/gravel",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/product-categorie/gravelbike",
+      "destination": "/gravel",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/nl/product-categorie/gravelbike",
+      "destination": "/gravel",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/nl/product-category/gravelbike",
+      "destination": "/gravel",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/product-category/gravel",
+      "destination": "/gravel",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/product-categorie/gravel",
+      "destination": "/gravel",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/nl/product-categorie/gravel",
+      "destination": "/gravel",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/gravel-bike",
+      "destination": "/gravel",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/product-category/gravel-bike",
+      "destination": "/gravel",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/product-categorie/gravel-bike",
+      "destination": "/gravel",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/nl/product-categorie/gravel-bike",
+      "destination": "/gravel",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/nl/product-category/gravel-bike",
+      "destination": "/gravel",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/product-category/mtb",
+      "destination": "/mtb",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/product-categorie/mtb",
+      "destination": "/mtb",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/nl/product-categorie/mtb",
+      "destination": "/mtb",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/nl/product-category/mtb",
+      "destination": "/mtb",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/speed-skates",
+      "destination": "/skeelers",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/product-category/speed-skates",
+      "destination": "/skeelers",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/product-categorie/speed-skates",
+      "destination": "/skeelers",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/nl/product-categorie/speed-skates",
+      "destination": "/skeelers",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/nl/product-category/speed-skates",
+      "destination": "/skeelers",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/product-category/skeelers",
+      "destination": "/skeelers",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/product-categorie/skeelers",
+      "destination": "/skeelers",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/nl/product-categorie/skeelers",
+      "destination": "/skeelers",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/used-bikes",
+      "destination": "/tweedehands",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/product-category/used-bikes",
+      "destination": "/tweedehands",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/product-categorie/used-bikes",
+      "destination": "/tweedehands",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/nl/product-categorie/used-bikes",
+      "destination": "/tweedehands",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/nl/product-category/used-bikes",
+      "destination": "/tweedehands",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/product-category/tweedehands",
+      "destination": "/tweedehands",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/product-categorie/tweedehands",
+      "destination": "/tweedehands",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/nl/product-categorie/tweedehands",
+      "destination": "/tweedehands",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/wheels",
+      "destination": "/wielen",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/product-category/wheels",
+      "destination": "/wielen",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/product-categorie/wheels",
+      "destination": "/wielen",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/nl/product-categorie/wheels",
+      "destination": "/wielen",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/nl/product-category/wheels",
+      "destination": "/wielen",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/product-category/wielen",
+      "destination": "/wielen",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/product-categorie/wielen",
+      "destination": "/wielen",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/nl/product-categorie/wielen",
+      "destination": "/wielen",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/product-category/scope-outlet",
+      "destination": "/scope-outlet",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/product-categorie/scope-outlet",
+      "destination": "/scope-outlet",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/nl/product-categorie/scope-outlet",
+      "destination": "/scope-outlet",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/nl/product-category/scope-outlet",
+      "destination": "/scope-outlet",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/cycling-shoes",
+      "destination": "/wielrenschoenen",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/product-category/cycling-shoes",
+      "destination": "/wielrenschoenen",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/product-categorie/cycling-shoes",
+      "destination": "/wielrenschoenen",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/nl/product-categorie/cycling-shoes",
+      "destination": "/wielrenschoenen",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/nl/product-category/cycling-shoes",
+      "destination": "/wielrenschoenen",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/product-category/wielrenschoenen",
+      "destination": "/wielrenschoenen",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/product-categorie/wielrenschoenen",
+      "destination": "/wielrenschoenen",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/nl/product-categorie/wielrenschoenen",
+      "destination": "/wielrenschoenen",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/lafuga-wear",
+      "destination": "/lafuga",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/product-category/lafuga-wear",
+      "destination": "/lafuga",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/product-categorie/lafuga-wear",
+      "destination": "/lafuga",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/nl/product-categorie/lafuga-wear",
+      "destination": "/lafuga",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/nl/product-category/lafuga-wear",
+      "destination": "/lafuga",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/product-category/lafuga",
+      "destination": "/lafuga",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/product-categorie/lafuga",
+      "destination": "/lafuga",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/nl/product-categorie/lafuga",
+      "destination": "/lafuga",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/glasses",
+      "destination": "/brillen",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/product-category/glasses",
+      "destination": "/brillen",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/product-categorie/glasses",
+      "destination": "/brillen",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/nl/product-categorie/glasses",
+      "destination": "/brillen",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/nl/product-category/glasses",
+      "destination": "/brillen",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/product-category/brillen",
+      "destination": "/brillen",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/product-categorie/brillen",
+      "destination": "/brillen",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/nl/product-categorie/brillen",
+      "destination": "/brillen",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/accessories",
+      "destination": "/accessoires",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/product-category/accessories",
+      "destination": "/accessoires",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/product-categorie/accessories",
+      "destination": "/accessoires",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/nl/product-categorie/accessories",
+      "destination": "/accessoires",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/nl/product-category/accessories",
+      "destination": "/accessoires",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/product-category/accessoires",
+      "destination": "/accessoires",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/product-categorie/accessoires",
+      "destination": "/accessoires",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/nl/product-categorie/accessoires",
+      "destination": "/accessoires",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/cycling-helmets",
+      "destination": "/helmen",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/product-category/cycling-helmets",
+      "destination": "/helmen",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/product-categorie/cycling-helmets",
+      "destination": "/helmen",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/nl/product-categorie/cycling-helmets",
+      "destination": "/helmen",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/nl/product-category/cycling-helmets",
+      "destination": "/helmen",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/product-category/helmen",
+      "destination": "/helmen",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/product-categorie/helmen",
+      "destination": "/helmen",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/nl/product-categorie/helmen",
+      "destination": "/helmen",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/cleats",
+      "destination": "/schoenplaatjes",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/product-category/cleats",
+      "destination": "/schoenplaatjes",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/product-categorie/cleats",
+      "destination": "/schoenplaatjes",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/nl/product-categorie/cleats",
+      "destination": "/schoenplaatjes",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/nl/product-category/cleats",
+      "destination": "/schoenplaatjes",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/product-category/schoenplaatjes",
+      "destination": "/schoenplaatjes",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/product-categorie/schoenplaatjes",
+      "destination": "/schoenplaatjes",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/nl/product-categorie/schoenplaatjes",
+      "destination": "/schoenplaatjes",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/group-sets",
+      "destination": "/groepsets",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/product-category/group-sets",
+      "destination": "/groepsets",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/product-categorie/group-sets",
+      "destination": "/groepsets",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/nl/product-categorie/group-sets",
+      "destination": "/groepsets",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/nl/product-category/group-sets",
+      "destination": "/groepsets",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/product-category/groepsets",
+      "destination": "/groepsets",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/product-categorie/groepsets",
+      "destination": "/groepsets",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/nl/product-categorie/groepsets",
+      "destination": "/groepsets",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/about-us",
+      "destination": "/over-ons",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/service",
+      "destination": "/onderhoud",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/shipping",
+      "destination": "/verzending",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/returns",
+      "destination": "/retouren",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/cookies",
+      "destination": "/cookiebeleid",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/payment",
+      "destination": "/betaalmethoden",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/payment-methods",
+      "destination": "/betaalmethoden",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/betalen",
+      "destination": "/betaalmethoden",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/nl/contact",
+      "destination": "/contact",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/nl/shop",
+      "destination": "/shop",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/nl/product/:slug",
+      "destination": "/product/:slug",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/en/product/:slug",
+      "destination": "/product/:slug",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/winkel/product/:slug",
+      "destination": "/product/:slug",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/nl/blog/:slug",
+      "destination": "/nieuws/:slug",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/blog/:slug",
+      "destination": "/nieuws/:slug",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/brand/:slug",
+      "destination": "/merken",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/winkel/:path*",
+      "destination": "/shop",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/my-account/:path*",
+      "destination": "/account",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/mijn-account/:path*",
+      "destination": "/account",
+      "statusCode": 301,
+      "kind": "static"
+    },
+    {
+      "source": "/nl/product/assioma-duo",
+      "destination": "/product/assioma-duo",
+      "statusCode": 301,
+      "kind": "product"
+    },
+    {
+      "source": "/nl/product/cipollini-nk1k-racefiets-large-ultegra-di2-campagnolo-bora-wto",
+      "destination": "/product/cipollini-nk1k-racefiets-large-ultegra-di2-campagnolo-bora-wto",
+      "statusCode": 301,
+      "kind": "product"
+    },
+    {
+      "source": "/nl/product/double-ff-125mm-frames-gold",
+      "destination": "/product/double-ff-125mm-frames-gold",
+      "statusCode": 301,
+      "kind": "product"
+    },
+    {
+      "source": "/nl/product/double-ff-a2-white-gold",
+      "destination": "/product/double-ff-a2-white-gold",
+      "statusCode": 301,
+      "kind": "product"
+    },
+    {
+      "source": "/nl/product/double-ff-duo-skeeler-wielen-100mm",
+      "destination": "/product/double-ff-duo-skeeler-wielen-100mm",
+      "statusCode": 301,
+      "kind": "product"
+    },
+    {
+      "source": "/nl/product/double-ff-skating-wheels-90mm",
+      "destination": "/product/double-ff-skating-wheels-90mm",
+      "statusCode": 301,
+      "kind": "product"
+    },
+    {
+      "source": "/nl/product/double-ff-swiss-ceramic-7-black-ball-bearings",
+      "destination": "/product/double-ff-swiss-ceramic-7-black-ball-bearings",
+      "statusCode": 301,
+      "kind": "product"
+    },
+    {
+      "source": "/nl/product/kask-bambino-pro-tijdrit-helm",
+      "destination": "/product/kask-bambino-pro-tijdrit-helm",
+      "statusCode": 301,
+      "kind": "product"
+    },
+    {
+      "source": "/nl/product/kask-elemento-helmet",
+      "destination": "/product/kask-elemento-helmet",
+      "statusCode": 301,
+      "kind": "product"
+    },
+    {
+      "source": "/nl/product/kask-mojito-cyclinghelmet-white",
+      "destination": "/product/kask-mojito-cyclinghelmet-white",
+      "statusCode": 301,
+      "kind": "product"
+    },
+    {
+      "source": "/nl/product/lafuga-aero-jersey-longsleeve",
+      "destination": "/product/lafuga-aero-jersey-longsleeve",
+      "statusCode": 301,
+      "kind": "product"
+    },
+    {
+      "source": "/nl/product/lafuga-jersey-black-gold-aero",
+      "destination": "/product/lafuga-jersey-black-gold-aero",
+      "statusCode": 301,
+      "kind": "product"
+    },
+    {
+      "source": "/nl/product/nimbl-ultimate-cyclingshoes-white-gold",
+      "destination": "/product/nimbl-ultimate-cyclingshoes-white-gold",
+      "statusCode": 301,
+      "kind": "product"
+    },
+    {
+      "source": "/nl/product/nimbl-ultimate-cyclingshoes-white-silver",
+      "destination": "/product/nimbl-ultimate-cyclingshoes-white-silver",
+      "statusCode": 301,
+      "kind": "product"
+    },
+    {
+      "source": "/nl/product/rid-100-s3-white-hiper-2",
+      "destination": "/product/rid-100-s3-white-hiper-2",
+      "statusCode": 301,
+      "kind": "product"
+    },
+    {
+      "source": "/nl/product/ride-100-s2-black-gold",
+      "destination": "/product/ride-100-s2-black-gold",
+      "statusCode": 301,
+      "kind": "product"
+    },
+    {
+      "source": "/nl/product/ride-100-s2-white-2",
+      "destination": "/product/ride-100-s2-white-2",
+      "statusCode": 301,
+      "kind": "product"
+    },
+    {
+      "source": "/nl/product/ride-100-speedcraft-sl-tokyo-night",
+      "destination": "/product/ride-100-speedcraft-sl-tokyo-night",
+      "statusCode": 301,
+      "kind": "product"
+    },
+    {
+      "source": "/nl/product/scope-s5-disc-wheelset",
+      "destination": "/product/scope-s5-disc-wheelset",
+      "statusCode": 301,
+      "kind": "product"
+    },
+    {
+      "source": "/nl/shop/product/assioma-duo",
+      "destination": "/product/assioma-duo",
+      "statusCode": 301,
+      "kind": "product"
+    },
+    {
+      "source": "/nl/shop/product/cipollini-nk1k-racefiets-large-ultegra-di2-campagnolo-bora-wto",
+      "destination": "/product/cipollini-nk1k-racefiets-large-ultegra-di2-campagnolo-bora-wto",
+      "statusCode": 301,
+      "kind": "product"
+    },
+    {
+      "source": "/nl/shop/product/double-ff-125mm-frames-gold",
+      "destination": "/product/double-ff-125mm-frames-gold",
+      "statusCode": 301,
+      "kind": "product"
+    },
+    {
+      "source": "/nl/shop/product/double-ff-a2-white-gold",
+      "destination": "/product/double-ff-a2-white-gold",
+      "statusCode": 301,
+      "kind": "product"
+    },
+    {
+      "source": "/nl/shop/product/double-ff-duo-skeeler-wielen-100mm",
+      "destination": "/product/double-ff-duo-skeeler-wielen-100mm",
+      "statusCode": 301,
+      "kind": "product"
+    },
+    {
+      "source": "/nl/shop/product/double-ff-skating-wheels-90mm",
+      "destination": "/product/double-ff-skating-wheels-90mm",
+      "statusCode": 301,
+      "kind": "product"
+    },
+    {
+      "source": "/nl/shop/product/double-ff-swiss-ceramic-7-black-ball-bearings",
+      "destination": "/product/double-ff-swiss-ceramic-7-black-ball-bearings",
+      "statusCode": 301,
+      "kind": "product"
+    },
+    {
+      "source": "/nl/shop/product/kask-bambino-pro-tijdrit-helm",
+      "destination": "/product/kask-bambino-pro-tijdrit-helm",
+      "statusCode": 301,
+      "kind": "product"
+    },
+    {
+      "source": "/nl/shop/product/kask-elemento-helmet",
+      "destination": "/product/kask-elemento-helmet",
+      "statusCode": 301,
+      "kind": "product"
+    },
+    {
+      "source": "/nl/shop/product/kask-mojito-cyclinghelmet-white",
+      "destination": "/product/kask-mojito-cyclinghelmet-white",
+      "statusCode": 301,
+      "kind": "product"
+    },
+    {
+      "source": "/nl/shop/product/lafuga-aero-jersey-longsleeve",
+      "destination": "/product/lafuga-aero-jersey-longsleeve",
+      "statusCode": 301,
+      "kind": "product"
+    },
+    {
+      "source": "/nl/shop/product/lafuga-jersey-black-gold-aero",
+      "destination": "/product/lafuga-jersey-black-gold-aero",
+      "statusCode": 301,
+      "kind": "product"
+    },
+    {
+      "source": "/nl/shop/product/nimbl-ultimate-cyclingshoes-white-gold",
+      "destination": "/product/nimbl-ultimate-cyclingshoes-white-gold",
+      "statusCode": 301,
+      "kind": "product"
+    },
+    {
+      "source": "/nl/shop/product/nimbl-ultimate-cyclingshoes-white-silver",
+      "destination": "/product/nimbl-ultimate-cyclingshoes-white-silver",
+      "statusCode": 301,
+      "kind": "product"
+    },
+    {
+      "source": "/nl/shop/product/rid-100-s3-white-hiper-2",
+      "destination": "/product/rid-100-s3-white-hiper-2",
+      "statusCode": 301,
+      "kind": "product"
+    },
+    {
+      "source": "/nl/shop/product/ride-100-s2-black-gold",
+      "destination": "/product/ride-100-s2-black-gold",
+      "statusCode": 301,
+      "kind": "product"
+    },
+    {
+      "source": "/nl/shop/product/ride-100-s2-white-2",
+      "destination": "/product/ride-100-s2-white-2",
+      "statusCode": 301,
+      "kind": "product"
+    },
+    {
+      "source": "/nl/shop/product/ride-100-speedcraft-sl-tokyo-night",
+      "destination": "/product/ride-100-speedcraft-sl-tokyo-night",
+      "statusCode": 301,
+      "kind": "product"
+    },
+    {
+      "source": "/nl/shop/product/scope-s5-disc-wheelset",
+      "destination": "/product/scope-s5-disc-wheelset",
+      "statusCode": 301,
+      "kind": "product"
+    },
+    {
+      "source": "/nl/winkel/product/assioma-duo",
+      "destination": "/product/assioma-duo",
+      "statusCode": 301,
+      "kind": "product"
+    },
+    {
+      "source": "/nl/winkel/product/cipollini-nk1k-racefiets-large-ultegra-di2-campagnolo-bora-wto",
+      "destination": "/product/cipollini-nk1k-racefiets-large-ultegra-di2-campagnolo-bora-wto",
+      "statusCode": 301,
+      "kind": "product"
+    },
+    {
+      "source": "/nl/winkel/product/double-ff-125mm-frames-gold",
+      "destination": "/product/double-ff-125mm-frames-gold",
+      "statusCode": 301,
+      "kind": "product"
+    },
+    {
+      "source": "/nl/winkel/product/double-ff-a2-white-gold",
+      "destination": "/product/double-ff-a2-white-gold",
+      "statusCode": 301,
+      "kind": "product"
+    },
+    {
+      "source": "/nl/winkel/product/double-ff-duo-skeeler-wielen-100mm",
+      "destination": "/product/double-ff-duo-skeeler-wielen-100mm",
+      "statusCode": 301,
+      "kind": "product"
+    },
+    {
+      "source": "/nl/winkel/product/double-ff-skating-wheels-90mm",
+      "destination": "/product/double-ff-skating-wheels-90mm",
+      "statusCode": 301,
+      "kind": "product"
+    },
+    {
+      "source": "/nl/winkel/product/double-ff-swiss-ceramic-7-black-ball-bearings",
+      "destination": "/product/double-ff-swiss-ceramic-7-black-ball-bearings",
+      "statusCode": 301,
+      "kind": "product"
+    },
+    {
+      "source": "/nl/winkel/product/kask-bambino-pro-tijdrit-helm",
+      "destination": "/product/kask-bambino-pro-tijdrit-helm",
+      "statusCode": 301,
+      "kind": "product"
+    },
+    {
+      "source": "/nl/winkel/product/kask-elemento-helmet",
+      "destination": "/product/kask-elemento-helmet",
+      "statusCode": 301,
+      "kind": "product"
+    },
+    {
+      "source": "/nl/winkel/product/kask-mojito-cyclinghelmet-white",
+      "destination": "/product/kask-mojito-cyclinghelmet-white",
+      "statusCode": 301,
+      "kind": "product"
+    },
+    {
+      "source": "/nl/winkel/product/lafuga-aero-jersey-longsleeve",
+      "destination": "/product/lafuga-aero-jersey-longsleeve",
+      "statusCode": 301,
+      "kind": "product"
+    },
+    {
+      "source": "/nl/winkel/product/lafuga-jersey-black-gold-aero",
+      "destination": "/product/lafuga-jersey-black-gold-aero",
+      "statusCode": 301,
+      "kind": "product"
+    },
+    {
+      "source": "/nl/winkel/product/nimbl-ultimate-cyclingshoes-white-gold",
+      "destination": "/product/nimbl-ultimate-cyclingshoes-white-gold",
+      "statusCode": 301,
+      "kind": "product"
+    },
+    {
+      "source": "/nl/winkel/product/nimbl-ultimate-cyclingshoes-white-silver",
+      "destination": "/product/nimbl-ultimate-cyclingshoes-white-silver",
+      "statusCode": 301,
+      "kind": "product"
+    },
+    {
+      "source": "/nl/winkel/product/rid-100-s3-white-hiper-2",
+      "destination": "/product/rid-100-s3-white-hiper-2",
+      "statusCode": 301,
+      "kind": "product"
+    },
+    {
+      "source": "/nl/winkel/product/ride-100-s2-black-gold",
+      "destination": "/product/ride-100-s2-black-gold",
+      "statusCode": 301,
+      "kind": "product"
+    },
+    {
+      "source": "/nl/winkel/product/ride-100-s2-white-2",
+      "destination": "/product/ride-100-s2-white-2",
+      "statusCode": 301,
+      "kind": "product"
+    },
+    {
+      "source": "/nl/winkel/product/ride-100-speedcraft-sl-tokyo-night",
+      "destination": "/product/ride-100-speedcraft-sl-tokyo-night",
+      "statusCode": 301,
+      "kind": "product"
+    },
+    {
+      "source": "/nl/winkel/product/scope-s5-disc-wheelset",
+      "destination": "/product/scope-s5-disc-wheelset",
+      "statusCode": 301,
+      "kind": "product"
+    },
+    {
+      "source": "/shop/product/assioma-duo",
+      "destination": "/product/assioma-duo",
+      "statusCode": 301,
+      "kind": "product"
+    },
+    {
+      "source": "/shop/product/cipollini-nk1k-racefiets-large-ultegra-di2-campagnolo-bora-wto",
+      "destination": "/product/cipollini-nk1k-racefiets-large-ultegra-di2-campagnolo-bora-wto",
+      "statusCode": 301,
+      "kind": "product"
+    },
+    {
+      "source": "/shop/product/double-ff-125mm-frames-gold",
+      "destination": "/product/double-ff-125mm-frames-gold",
+      "statusCode": 301,
+      "kind": "product"
+    },
+    {
+      "source": "/shop/product/double-ff-a2-white-gold",
+      "destination": "/product/double-ff-a2-white-gold",
+      "statusCode": 301,
+      "kind": "product"
+    },
+    {
+      "source": "/shop/product/double-ff-duo-skeeler-wielen-100mm",
+      "destination": "/product/double-ff-duo-skeeler-wielen-100mm",
+      "statusCode": 301,
+      "kind": "product"
+    },
+    {
+      "source": "/shop/product/double-ff-skating-wheels-90mm",
+      "destination": "/product/double-ff-skating-wheels-90mm",
+      "statusCode": 301,
+      "kind": "product"
+    },
+    {
+      "source": "/shop/product/double-ff-swiss-ceramic-7-black-ball-bearings",
+      "destination": "/product/double-ff-swiss-ceramic-7-black-ball-bearings",
+      "statusCode": 301,
+      "kind": "product"
+    },
+    {
+      "source": "/shop/product/kask-bambino-pro-tijdrit-helm",
+      "destination": "/product/kask-bambino-pro-tijdrit-helm",
+      "statusCode": 301,
+      "kind": "product"
+    },
+    {
+      "source": "/shop/product/kask-elemento-helmet",
+      "destination": "/product/kask-elemento-helmet",
+      "statusCode": 301,
+      "kind": "product"
+    },
+    {
+      "source": "/shop/product/kask-mojito-cyclinghelmet-white",
+      "destination": "/product/kask-mojito-cyclinghelmet-white",
+      "statusCode": 301,
+      "kind": "product"
+    },
+    {
+      "source": "/shop/product/lafuga-aero-jersey-longsleeve",
+      "destination": "/product/lafuga-aero-jersey-longsleeve",
+      "statusCode": 301,
+      "kind": "product"
+    },
+    {
+      "source": "/shop/product/lafuga-jersey-black-gold-aero",
+      "destination": "/product/lafuga-jersey-black-gold-aero",
+      "statusCode": 301,
+      "kind": "product"
+    },
+    {
+      "source": "/shop/product/nimbl-ultimate-cyclingshoes-white-gold",
+      "destination": "/product/nimbl-ultimate-cyclingshoes-white-gold",
+      "statusCode": 301,
+      "kind": "product"
+    },
+    {
+      "source": "/shop/product/nimbl-ultimate-cyclingshoes-white-silver",
+      "destination": "/product/nimbl-ultimate-cyclingshoes-white-silver",
+      "statusCode": 301,
+      "kind": "product"
+    },
+    {
+      "source": "/shop/product/rid-100-s3-white-hiper-2",
+      "destination": "/product/rid-100-s3-white-hiper-2",
+      "statusCode": 301,
+      "kind": "product"
+    },
+    {
+      "source": "/shop/product/ride-100-s2-black-gold",
+      "destination": "/product/ride-100-s2-black-gold",
+      "statusCode": 301,
+      "kind": "product"
+    },
+    {
+      "source": "/shop/product/ride-100-s2-white-2",
+      "destination": "/product/ride-100-s2-white-2",
+      "statusCode": 301,
+      "kind": "product"
+    },
+    {
+      "source": "/shop/product/ride-100-speedcraft-sl-tokyo-night",
+      "destination": "/product/ride-100-speedcraft-sl-tokyo-night",
+      "statusCode": 301,
+      "kind": "product"
+    },
+    {
+      "source": "/shop/product/scope-s5-disc-wheelset",
+      "destination": "/product/scope-s5-disc-wheelset",
+      "statusCode": 301,
+      "kind": "product"
+    },
+    {
+      "source": "/winkel/product/assioma-duo",
+      "destination": "/product/assioma-duo",
+      "statusCode": 301,
+      "kind": "product"
+    },
+    {
+      "source": "/winkel/product/cipollini-nk1k-racefiets-large-ultegra-di2-campagnolo-bora-wto",
+      "destination": "/product/cipollini-nk1k-racefiets-large-ultegra-di2-campagnolo-bora-wto",
+      "statusCode": 301,
+      "kind": "product"
+    },
+    {
+      "source": "/winkel/product/double-ff-125mm-frames-gold",
+      "destination": "/product/double-ff-125mm-frames-gold",
+      "statusCode": 301,
+      "kind": "product"
+    },
+    {
+      "source": "/winkel/product/double-ff-a2-white-gold",
+      "destination": "/product/double-ff-a2-white-gold",
+      "statusCode": 301,
+      "kind": "product"
+    },
+    {
+      "source": "/winkel/product/double-ff-duo-skeeler-wielen-100mm",
+      "destination": "/product/double-ff-duo-skeeler-wielen-100mm",
+      "statusCode": 301,
+      "kind": "product"
+    },
+    {
+      "source": "/winkel/product/double-ff-skating-wheels-90mm",
+      "destination": "/product/double-ff-skating-wheels-90mm",
+      "statusCode": 301,
+      "kind": "product"
+    },
+    {
+      "source": "/winkel/product/double-ff-swiss-ceramic-7-black-ball-bearings",
+      "destination": "/product/double-ff-swiss-ceramic-7-black-ball-bearings",
+      "statusCode": 301,
+      "kind": "product"
+    },
+    {
+      "source": "/winkel/product/kask-bambino-pro-tijdrit-helm",
+      "destination": "/product/kask-bambino-pro-tijdrit-helm",
+      "statusCode": 301,
+      "kind": "product"
+    },
+    {
+      "source": "/winkel/product/kask-elemento-helmet",
+      "destination": "/product/kask-elemento-helmet",
+      "statusCode": 301,
+      "kind": "product"
+    },
+    {
+      "source": "/winkel/product/kask-mojito-cyclinghelmet-white",
+      "destination": "/product/kask-mojito-cyclinghelmet-white",
+      "statusCode": 301,
+      "kind": "product"
+    },
+    {
+      "source": "/winkel/product/lafuga-aero-jersey-longsleeve",
+      "destination": "/product/lafuga-aero-jersey-longsleeve",
+      "statusCode": 301,
+      "kind": "product"
+    },
+    {
+      "source": "/winkel/product/lafuga-jersey-black-gold-aero",
+      "destination": "/product/lafuga-jersey-black-gold-aero",
+      "statusCode": 301,
+      "kind": "product"
+    },
+    {
+      "source": "/winkel/product/nimbl-ultimate-cyclingshoes-white-gold",
+      "destination": "/product/nimbl-ultimate-cyclingshoes-white-gold",
+      "statusCode": 301,
+      "kind": "product"
+    },
+    {
+      "source": "/winkel/product/nimbl-ultimate-cyclingshoes-white-silver",
+      "destination": "/product/nimbl-ultimate-cyclingshoes-white-silver",
+      "statusCode": 301,
+      "kind": "product"
+    },
+    {
+      "source": "/winkel/product/rid-100-s3-white-hiper-2",
+      "destination": "/product/rid-100-s3-white-hiper-2",
+      "statusCode": 301,
+      "kind": "product"
+    },
+    {
+      "source": "/winkel/product/ride-100-s2-black-gold",
+      "destination": "/product/ride-100-s2-black-gold",
+      "statusCode": 301,
+      "kind": "product"
+    },
+    {
+      "source": "/winkel/product/ride-100-s2-white-2",
+      "destination": "/product/ride-100-s2-white-2",
+      "statusCode": 301,
+      "kind": "product"
+    },
+    {
+      "source": "/winkel/product/ride-100-speedcraft-sl-tokyo-night",
+      "destination": "/product/ride-100-speedcraft-sl-tokyo-night",
+      "statusCode": 301,
+      "kind": "product"
+    },
+    {
+      "source": "/winkel/product/scope-s5-disc-wheelset",
+      "destination": "/product/scope-s5-disc-wheelset",
+      "statusCode": 301,
+      "kind": "product"
+    }
+  ],
+  "staticExactCount": 162
+}

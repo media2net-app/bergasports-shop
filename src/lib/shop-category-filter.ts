@@ -1,5 +1,5 @@
-import { categoryDisplayName } from "@/lib/category-meta";
-import { publicCategoryPath, toCanonicalWcSlug } from "@/lib/category-slugs";
+import { categoryMatchLabels, dutchLabelFromImportedName } from "@/lib/category-meta";
+import { publicCategoryPath, toCanonicalWcSlug, toPublicCategorySlug } from "@/lib/category-slugs";
 import { decodeImportedProductTitle, formatProductCardPrice, type Product } from "@/lib/products";
 import {
   flattenRalexCategoryTree,
@@ -35,18 +35,67 @@ export function findRalexCategoryNodeBySlug(
   return null;
 }
 
-function collectFormattedCategoryLabels(node: RalexCategoryNode): string[] {
-  const labels: string[] = [formatRalexCategoryName(node.name)];
-  for (const child of node.children ?? []) {
-    labels.push(...collectFormattedCategoryLabels(child));
+function collectCategoryMatchContext(node: RalexCategoryNode): {
+  labels: Set<string>;
+  slugs: Set<string>;
+} {
+  const labels = new Set<string>();
+  const slugs = new Set<string>();
+  const walk = (n: RalexCategoryNode) => {
+    const rawSlug = n.slug.trim().toLowerCase();
+    const canonical = toCanonicalWcSlug(rawSlug);
+    slugs.add(rawSlug);
+    slugs.add(canonical);
+    slugs.add(toPublicCategorySlug(canonical, "nl"));
+    for (const label of categoryMatchLabels(n.slug, n.name)) {
+      labels.add(label);
+      const asSlug = slugifyCategoryLabel(label);
+      if (asSlug) slugs.add(asSlug);
+    }
+    for (const child of n.children ?? []) {
+      walk(child);
+    }
+  };
+  walk(node);
+  return { labels, slugs };
+}
+
+function productMatchesCategoryContext(
+  product: { category?: string; wcCategories?: { slug?: string; name?: string }[] },
+  labels: Set<string>,
+  slugs: Set<string>,
+): boolean {
+  const cat = product.category?.trim() ?? "";
+  if (cat && labels.has(cat)) {
+    return true;
   }
-  return labels;
+  if (cat) {
+    const catSlug = slugifyCategoryLabel(cat);
+    if (catSlug && slugs.has(catSlug)) {
+      return true;
+    }
+    if (slugs.has(toCanonicalWcSlug(cat))) {
+      return true;
+    }
+  }
+  for (const wc of product.wcCategories ?? []) {
+    const slug = wc.slug?.trim().toLowerCase();
+    if (slug && (slugs.has(slug) || slugs.has(toCanonicalWcSlug(slug)))) {
+      return true;
+    }
+    const name = wc.name?.trim();
+    if (name && labels.has(name)) {
+      return true;
+    }
+  }
+  return false;
 }
 
 export type ShopCategoryMatch = {
   slug: string;
   label: string;
   labels: Set<string>;
+  slugs?: Set<string>;
 };
 
 /** Labels + slug for matching imported product `category` strings (admin AI images, etc.). */
@@ -58,22 +107,20 @@ export function resolveShopCategoryMatch(
   if (!node) {
     return null;
   }
+  const { labels, slugs } = collectCategoryMatchContext(node);
   return {
     slug: node.slug.toLowerCase(),
-    label: formatRalexCategoryName(node.name),
-    labels: new Set(collectFormattedCategoryLabels(node)),
+    label: formatRalexCategoryName(node.name, node.slug),
+    labels,
+    slugs,
   };
 }
 
 export function productMatchesShopCategory(
-  product: { category?: string },
+  product: { category?: string; wcCategories?: { slug?: string; name?: string }[] },
   match: ShopCategoryMatch,
 ): boolean {
-  const cat = product.category ?? "";
-  if (match.labels.has(cat)) {
-    return true;
-  }
-  return slugifyCategoryLabel(cat) === match.slug;
+  return productMatchesCategoryContext(product, match.labels, match.slugs ?? new Set([match.slug]));
 }
 
 function categoryDepth(node: RalexCategoryNode, byId: Map<number, RalexCategoryNode>): number {
@@ -120,8 +167,12 @@ export function resolveProductShopCategory(
   const catLabel = product.category?.trim();
   if (catLabel) {
     for (const node of flat) {
-      const labels = new Set(collectFormattedCategoryLabels(node));
-      if (labels.has(catLabel) || slugifyCategoryLabel(catLabel) === node.slug.toLowerCase()) {
+      const { labels, slugs } = collectCategoryMatchContext(node);
+      if (
+        labels.has(catLabel) ||
+        slugs.has(slugifyCategoryLabel(catLabel)) ||
+        slugs.has(toCanonicalWcSlug(catLabel))
+      ) {
         candidates.push(node);
       }
     }
@@ -144,7 +195,7 @@ export function resolveProductShopCategory(
 
   return {
     slug: best.slug,
-    label: formatRalexCategoryName(best.name),
+    label: formatRalexCategoryName(best.name, best.slug),
     href: shopCategoryPath(best.slug),
   };
 }
@@ -188,19 +239,13 @@ export function resolveShopCategoryFilter(
     };
   }
 
-  const labelSet = new Set(collectFormattedCategoryLabels(node));
-  const nodeSlug = node.slug.toLowerCase();
+  const { labels, slugs } = collectCategoryMatchContext(node);
 
-  const filteredProducts = catalog.filter((p) => {
-    if (labelSet.has(p.category)) {
-      return true;
-    }
-    return slugifyCategoryLabel(p.category) === nodeSlug;
-  });
+  const filteredProducts = catalog.filter((p) => productMatchesCategoryContext(p, labels, slugs));
 
   return {
     filteredProducts,
-    categoryLabel: categoryDisplayName(node.slug, formatRalexCategoryName(node.name)),
+    categoryLabel: formatRalexCategoryName(node.name, node.slug),
     categorySlug: node.slug,
     unknownCategory: false,
   };
@@ -648,6 +693,7 @@ export function productSearchHaystackNormalized(product: Product): string {
   }
   if (product.category?.trim()) {
     parts.push(product.category);
+    parts.push(dutchLabelFromImportedName(product.category));
   }
   if (product.wcVariations?.length) {
     for (const v of product.wcVariations) {

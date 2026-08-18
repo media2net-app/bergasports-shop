@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 
+import DateTimePicker from "@/components/ui/DateTimePicker";
 import { parseOpeningHoursJson, serializeOpeningHours, type OpeningHoursRow } from "@/lib/opening-hours";
 import { SHOP_OPENING_HOURS } from "@/lib/site-content";
 
@@ -106,21 +107,25 @@ export default function AdminOpeningHoursEditor({ initialJson }: AdminOpeningHou
                     </label>
                   </td>
                   <td>
-                    <input
-                      className="admin-field"
-                      type="time"
+                    <DateTimePicker
+                      variant="admin"
+                      mode="time"
+                      minuteStep={15}
                       disabled={closed}
                       value={closed ? "" : (row.opens ?? "")}
-                      onChange={(e) => updateRow(index, { opens: e.target.value })}
+                      onChange={(opens) => updateRow(index, { opens })}
+                      placeholder="Open"
                     />
                   </td>
                   <td>
-                    <input
-                      className="admin-field"
-                      type="time"
+                    <DateTimePicker
+                      variant="admin"
+                      mode="time"
+                      minuteStep={15}
                       disabled={closed}
                       value={closed ? "" : (row.closes ?? "")}
-                      onChange={(e) => updateRow(index, { closes: e.target.value })}
+                      onChange={(closes) => updateRow(index, { closes })}
+                      placeholder="Dicht"
                     />
                   </td>
                 </tr>

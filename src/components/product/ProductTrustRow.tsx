@@ -79,9 +79,9 @@ export default function ProductTrustRow({
           {formatEstimatedDeliveryRange()}
         </span>{" "}
         {freeCargo ? (
-          <span className="font-semibold text-[#166534]">· gratis verzending</span>
+          <span className="font-semibold text-[#166534]">· gratis verzending naar NL</span>
         ) : (
-          <>· gratis vanaf {formatFreeShippingThreshold(currency, freeShippingThreshold)}</>
+          <>· gratis verzending NL vanaf {formatFreeShippingThreshold(currency, freeShippingThreshold)}</>
         )}
       </Row>
       <Row icon={<IconReturn />}>

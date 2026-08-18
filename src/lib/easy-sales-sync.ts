@@ -2,7 +2,6 @@ import "server-only";
 
 import { requirePrisma } from "@/lib/database";
 import { syncOrderToEasySales } from "@/lib/easy-sales";
-import { deductStockForOrderItems } from "@/lib/easy-sales-stock-sync";
 import type { CreateOrderInput } from "@/lib/orders";
 
 export type EasySalesOrderPushInput = CreateOrderInput & {
@@ -45,12 +44,4 @@ export async function pushOrderToEasySalesAfterCreate(
   if (!result.ok) {
     console.error("[easy-sales] Order sync failed:", orderId, result.error);
   }
-
-  void deductStockForOrderItems(input.items).then((deductions) => {
-    for (const d of deductions) {
-      if (d.easySalesPush && !d.easySalesPush.ok) {
-        console.error("[easy-sales] Stock push failed:", orderId, d.easySalesPush.error);
-      }
-    }
-  });
 }

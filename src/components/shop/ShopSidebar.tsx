@@ -179,7 +179,7 @@ export default function ShopSidebar({
     flattenRalexCategoryTree(tree).find(
       (n) => n.slug.toLowerCase() === activeCategorySlug.trim().toLowerCase(),
     );
-  const activeCategoryTitle = activeNode ? formatRalexCategoryName(activeNode.name) : null;
+  const activeCategoryTitle = activeNode ? formatRalexCategoryName(activeNode.name, activeNode.slug) : null;
   const sizeFacetGroups = groupSizeFacets(sizeFacets);
 
   return (
@@ -238,7 +238,7 @@ export default function ShopSidebar({
                   })}
                   className={`${linkBase} ${active ? linkActive : linkInactive}`}
                 >
-                  {formatRalexCategoryName(root.name)}
+                  {formatRalexCategoryName(root.name, root.slug)}
                 </Link>
               );
             })}

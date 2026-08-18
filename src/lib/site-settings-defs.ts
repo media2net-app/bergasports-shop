@@ -15,6 +15,7 @@ export type SiteSettingGroupId =
   | "shipping"
   | "easysales"
   | "instagram"
+  | "google"
   | "woocommerce"
   | "analytics"
   | "pixels"
@@ -48,8 +49,8 @@ export const SITE_SETTING_SECTIONS: {
 }[] = [
   { id: "shop", title: "Shop", intro: "Winkelgegevens, URL en gratis verzending." },
   { id: "products", title: "Producten", intro: "Voorraadwaarschuwingen in het CMS." },
-  { id: "email", title: "E-mails", intro: "SMTP, afzender en ordermails." },
-  { id: "integrations", title: "Koppelingen", intro: "Mollie, Sendcloud, Easy Sales, Instagram." },
+  { id: "email", title: "E-mails", intro: "SMTP en afzender. Mailteksten bewerk je onder E-mails." },
+  { id: "integrations", title: "Koppelingen", intro: "Mollie, Sendcloud, Easy Sales, Instagram, Google-reviews." },
   { id: "marketing", title: "Marketing", intro: "Analytics, pixels en zoekmachines." },
 ];
 
@@ -100,7 +101,7 @@ export const SITE_SETTING_GROUPS: {
     section: "integrations",
     title: "Betalingen (Mollie)",
     navLabel: "Mollie",
-    intro: "Nodig voor iDEAL, kaarten en overige betaalmethodes in de checkout.",
+    intro: "Checkout toont de methodes die in het Mollie-dashboard aanstaan (iDEAL, Bancontact, kaarten, …).",
   },
   {
     id: "shipping",
@@ -121,14 +122,21 @@ export const SITE_SETTING_GROUPS: {
     section: "integrations",
     title: "Instagram",
     navLabel: "Instagram",
-    intro: "Feed op de homepage + link naar jullie profiel.",
+    intro: "Live feed op de homepage, of eigen winkelfoto’s als fallback. Profiel-URL voor header, footer en JSON-LD.",
+  },
+  {
+    id: "google",
+    section: "integrations",
+    title: "Google-reviews",
+    navLabel: "Google-reviews",
+    intro: "Places API voor live score en citaten op de homepage, of uitgelichte klantquotes zonder API.",
   },
   {
     id: "woocommerce",
     section: "integrations",
     title: "WooCommerce (oude site)",
     navLabel: "WooCommerce",
-    intro: "Alleen voor synchronisatie van orders/catalogus vanaf bergasports.com.",
+    intro: "REST-sleutels van bergasports.com. Daarmee kun je producten, klanten, orders, nieuws en pagina’s overnemen.",
   },
   {
     id: "analytics",
@@ -174,7 +182,7 @@ export const SITE_SETTING_DEFS: SiteSettingDef[] = [
         { label: "Mollie dashboard", href: "https://my.mollie.com/" },
         { label: "API-keys hulp", href: "https://docs.mollie.com/docs/authentication" },
       ],
-      whereUsed: "Checkout, webhook `/api/mollie/webhook`, betaalmethodes-lijst.",
+      whereUsed: "Checkout, webhook `/api/mollie/webhook`, live betaalmethodes via `/api/mollie/methods`.",
     },
   },
   {
@@ -246,22 +254,21 @@ export const SITE_SETTING_DEFS: SiteSettingDef[] = [
     placeholder: "IGAAxxxx…",
     manual: {
       summary:
-        "Lange-levensduur token voor de Instagram Basic Display / Graph API, zodat recente posts op de homepage verschijnen.",
+        "Optionele long-lived token via Instagram Login (instagram_business_basic). Zonder token toont de homepage eigen winkelfoto’s die naar het profiel linken.",
       steps: [
-        "Maak (of gebruik) een Meta Developer-app gekoppeld aan @bergasports.",
-        "Voeg Instagram Basic Display of Instagram Graph API toe.",
-        "Genereer een User access token voor het Instagram Business/Creator-account.",
-        "Wissel om naar een long-lived token (60 dagen) via Meta’s token-exchange.",
-        "Plak de token hier. Vernieuw hem vóór hij verloopt (anders zie je weer placeholders).",
+        "Maak (of gebruik) een Meta Developer-app voor @bergasportsnl.",
+        "Voeg Instagram Login toe met het recht instagram_business_basic.",
+        "Genereer een User access token en wissel om naar een long-lived token (60 dagen).",
+        "Plak de token hier. De shop ververst hem automatisch als de feed-aanvraag faalt.",
       ],
       links: [
         { label: "Meta for Developers", href: "https://developers.facebook.com/" },
         {
-          label: "Instagram Graph API",
-          href: "https://developers.facebook.com/docs/instagram-api/",
+          label: "Instagram Login API",
+          href: "https://developers.facebook.com/docs/instagram-platform/instagram-api-with-instagram-login",
         },
       ],
-      whereUsed: "Homepage Instagram-sectie (echte foto’s i.p.v. placeholders).",
+      whereUsed: "Homepage-feed via GET graph.instagram.com/me/media.",
     },
   },
   {
@@ -273,10 +280,11 @@ export const SITE_SETTING_DEFS: SiteSettingDef[] = [
     optional: true,
     placeholder: "17841…",
     manual: {
-      summary: "Numerieke Instagram-user-id die bij het access token hoort.",
+      summary:
+        "Optioneel. De feed gebruikt standaard GET /me/media; dit ID is alleen een fallback als dat mislukt.",
       steps: [
-        "In Meta Graph API Explorer: GET /me?fields=id,username met je token.",
-        "Of via Instagram Graph: GET /{ig-user-id} na koppeling van de Facebook Page.",
+        "Niet verplicht bij Instagram Login.",
+        "Eventueel: GET /me?fields=id,username met je token in Graph API Explorer.",
         "Plak alleen het numerieke ID (geen @handle).",
       ],
       links: [
@@ -285,7 +293,7 @@ export const SITE_SETTING_DEFS: SiteSettingDef[] = [
           href: "https://developers.facebook.com/tools/explorer/",
         },
       ],
-      whereUsed: "Ophalen van media: `/{user-id}/media`.",
+      whereUsed: "Fallback-pad: `/{user-id}/media` als `/me/media` faalt.",
     },
   },
   {
@@ -303,7 +311,112 @@ export const SITE_SETTING_DEFS: SiteSettingDef[] = [
         "Kopieer de URL (bijv. https://www.instagram.com/bergasportsnl/).",
         "Plak hier en sla op.",
       ],
-      whereUsed: "Header, footer, homepage CTA’s.",
+      whereUsed: "Header, footer, homepage-CTA’s, JSON-LD sameAs.",
+    },
+  },
+  {
+    key: "GOOGLE_PLACES_API_KEY",
+    envKey: "GOOGLE_PLACES_API_KEY",
+    label: "Google Places API-key",
+    group: "google",
+    secret: true,
+    optional: true,
+    placeholder: "AIza…",
+    manual: {
+      summary:
+        "Optioneel. Met deze key haalt de homepage de echte Google-score en recente reviews op (max. 5, gecachet 1 uur).",
+      steps: [
+        "Open Google Cloud Console met het Bergasports-account.",
+        "Maak een project (of gebruik een bestaand) en zet Places API (New) aan — of de klassieke Places API.",
+        "Maak een API-key. Beperk hem tot Places API / Places API (New).",
+        "Plak de key hier. De waarde blijft na opslaan verborgen.",
+        "Vul het Place ID in, of laat leeg: de shop zoekt dan ‘Bergasports Julianastraat 3A Dedemsvaart’.",
+        "Klik op deze pagina op ‘Koppeling testen’.",
+      ],
+      links: [
+        { label: "Google Cloud Console", href: "https://console.cloud.google.com/" },
+        {
+          label: "Places API (New)",
+          href: "https://developers.google.com/maps/documentation/places/web-service/op-overview",
+        },
+      ],
+      whereUsed: "Homepage-reviews, contactkaart, LocalBusiness JSON-LD (alleen echte score).",
+    },
+  },
+  {
+    key: "GOOGLE_PLACE_ID",
+    envKey: "GOOGLE_PLACE_ID",
+    label: "Google Place ID",
+    group: "google",
+    secret: false,
+    optional: true,
+    placeholder: "ChIJ…",
+    manual: {
+      summary: "Het Google Place ID van Bergasports in Dedemsvaart. Nodig voor de reviews-URL en de API.",
+      steps: [
+        "Open de Place ID Finder en zoek op Bergasports, Julianastraat 3A Dedemsvaart.",
+        "Kopieer het ID (begint meestal met ChIJ).",
+        "Plak hier. Zonder ID probeert de API het adres zelf te vinden.",
+      ],
+      links: [
+        {
+          label: "Place ID Finder",
+          href: "https://developers.google.com/maps/documentation/javascript/examples/places-placeid-finder",
+        },
+      ],
+      whereUsed: "Google-reviewssectie, ‘Bekijk op Google’-link, Places Details.",
+    },
+  },
+  {
+    key: "GOOGLE_PLACE_RATING",
+    envKey: "GOOGLE_PLACE_RATING",
+    label: "Google-score (handmatig)",
+    group: "google",
+    secret: false,
+    optional: true,
+    placeholder: "4.9",
+    manual: {
+      summary:
+        "Alleen invullen met het echte cijfer van Google Maps, als de API geen score teruggeeft. Komt in JSON-LD.",
+      steps: [
+        "Open de Google-profielpagina van de winkel.",
+        "Neem het gemiddelde over (bijv. 4,9).",
+        "Laat leeg als je de Places API gebruikt of het cijfer niet zeker weet — nooit een verzonnen score.",
+      ],
+      whereUsed: "Homepage-score en LocalBusiness aggregateRating (alleen als de API niets heeft).",
+    },
+  },
+  {
+    key: "GOOGLE_PLACE_RATING_COUNT",
+    envKey: "GOOGLE_PLACE_RATING_COUNT",
+    label: "Aantal Google-reviews (handmatig)",
+    group: "google",
+    secret: false,
+    optional: true,
+    placeholder: "40",
+    manual: {
+      summary: "Het echte aantal beoordelingen van Google Maps, samen met de handmatige score.",
+      steps: [
+        "Neem het aantal reviews van de Google-pagina (niet van een andere site).",
+        "Vul alleen een geheel getal in.",
+        "Laat leeg zonder betrouwbaar cijfer — JSON-LD krijgt dan geen aggregateRating.",
+      ],
+      whereUsed: "Homepage-score en LocalBusiness aggregateRating.",
+    },
+  },
+  {
+    key: "GOOGLE_REVIEWS_FEATURED_JSON",
+    envKey: "GOOGLE_REVIEWS_FEATURED_JSON",
+    label: "Uitgelichte citaten",
+    group: "google",
+    secret: false,
+    optional: true,
+    hidden: true,
+    multiline: true,
+    manual: {
+      summary: "Handmatig gekozen klantcitaten voor als de Places API geen reviewteksten geeft.",
+      steps: ["Bewerk de citaten op deze pagina.", "Sla op."],
+      whereUsed: "Homepage en contact, gelabeld als ‘klanten over Bergasports’.",
     },
   },
   {
@@ -499,7 +612,7 @@ export const SITE_SETTING_DEFS: SiteSettingDef[] = [
         "Meestal https://www.bergasports.com (zonder trailing slash).",
         "Alleen wijzigen als de oude site op een ander domein draait.",
       ],
-      whereUsed: "Order-sync en catalogus-import scripts/API.",
+      whereUsed: "WordPress-import, order-sync en catalogus-scripts.",
     },
   },
   {
@@ -518,7 +631,7 @@ export const SITE_SETTING_DEFS: SiteSettingDef[] = [
         "Rechten: Lezen (of Lezen/Schrijven als sync dat nodig heeft).",
         "Kopieer de Consumer Key (ck_…) en secret (cs_…).",
       ],
-      whereUsed: "Admin-knop ‘Sync WooCommerce-orders’ en importscripts.",
+      whereUsed: "Admin WooCommerce-import, order-sync en `npm run import:wordpress`.",
     },
   },
   {
@@ -535,7 +648,7 @@ export const SITE_SETTING_DEFS: SiteSettingDef[] = [
         "Wordt één keer getoond bij het aanmaken van de REST API-sleutel in WooCommerce.",
         "Kwijtgeraakt? Maak een nieuwe sleutel aan en vervang key + secret hier.",
       ],
-      whereUsed: "Samen met Consumer Key voor WooCommerce REST.",
+      whereUsed: "Samen met Consumer Key voor WooCommerce REST (producten, klanten, orders).",
     },
   },
   {
@@ -562,11 +675,15 @@ export const SITE_SETTING_DEFS: SiteSettingDef[] = [
     group: "shop",
     secret: false,
     optional: true,
-    placeholder: "50",
+    placeholder: "150",
     manual: {
-      summary: "Vanaf dit bedrag (euro) is verzending naar NL gratis. Leeg = 50 euro.",
-      steps: ["Vul een bedrag in, bijvoorbeeld 50 of 150.", "Sla op. De shop toont dit bij producten en in de winkelwagen."],
-      whereUsed: "Productpagina, checkout-vertrouwen en verzendkosten.",
+      summary: "Vanaf dit bedrag (euro) is standaard verzending naar Nederland gratis. Leeg = 150 euro.",
+      steps: [
+        "Vul een bedrag in, bijvoorbeeld 150.",
+        "Sla op. Productpagina’s, winkelwagen en checkout gebruiken dezelfde drempel.",
+        "Afhalen in Dedemsvaart blijft altijd gratis. Andere landen alleen bij een eigen ‘gratis vanaf’ op het verzendtarief.",
+      ],
+      whereUsed: "Productpagina, winkelwagen, checkout-verzendkosten en /verzending.",
     },
   },
   {

@@ -225,7 +225,7 @@ export default function AdminShippingRatesPanel({ initialRates }: { initialRates
               step="0.01"
               value={freeAbove}
               onChange={(e) => setFreeAbove(e.target.value)}
-              placeholder="Leeg = shopdrempel"
+              placeholder="Leeg = shopdrempel (alleen NL)"
             />
           </div>
         </div>
@@ -261,6 +261,10 @@ export default function AdminShippingRatesPanel({ initialRates }: { initialRates
                     {formatProductPrice(rate.price, "EUR")}
                     {rate.freeAbove != null ? (
                       <div className="admin-muted">gratis vanaf {formatProductPrice(rate.freeAbove, "EUR")}</div>
+                    ) : rate.countryCode === "NL" && rate.method !== "pickup" && rate.price > 0 ? (
+                      <div className="admin-muted">erft shopdrempel (NL)</div>
+                    ) : rate.price > 0 ? (
+                      <div className="admin-muted">geen gratis drempel</div>
                     ) : null}
                   </td>
                   <td className="admin-muted">{rate.estimatedDays ?? "—"}</td>

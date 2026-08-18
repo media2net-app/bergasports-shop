@@ -6,6 +6,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 import AdminHtmlEditor from "@/components/admin/AdminHtmlEditor";
 import AdminImageUploadButton from "@/components/admin/AdminImageUploadButton";
+import { dutchLabelFromImportedName } from "@/lib/category-meta";
 import { productPath, slugifyProductTitle } from "@/lib/product-slug";
 import {
   CATALOG_SOURCES,
@@ -430,6 +431,14 @@ export default function ProductEditorForm({ initial, categoryOptions = [] }: Pro
     return [...groups.entries()];
   }, [categoryOptions]);
 
+  const categorySelectValue = useMemo(() => {
+    if (!category) return "";
+    if (categoryOptions.some((c) => c.name === category)) return category;
+    const dutch = dutchLabelFromImportedName(category);
+    const mapped = categoryOptions.find((c) => c.name === dutch || c.slug === category.toLowerCase());
+    return mapped?.name ?? category;
+  }, [category, categoryOptions]);
+
   function handleAddImages() {
     const raw = window.prompt(
       "Plak één of meer foto-URL’s (https…). Meerdere URL’s scheiden met komma’s of nieuwe regels.",
@@ -546,12 +555,12 @@ export default function ProductEditorForm({ initial, categoryOptions = [] }: Pro
                 {categoryOptions.length > 0 ? (
                   <select
                     className={fieldClass}
-                    value={category}
+                    value={categorySelectValue}
                     onChange={(e) => setCategory(e.target.value)}
                   >
                     <option value="">— Kies —</option>
-                    {category && !categoryOptions.some((c) => c.name === category) ? (
-                      <option value={category}>{category}</option>
+                    {category && !categoryOptions.some((c) => c.name === categorySelectValue) ? (
+                      <option value={category}>{dutchLabelFromImportedName(category)}</option>
                     ) : null}
                     {categoryOptionGroups.map(([group, items]) =>
                       group ? (
@@ -747,7 +756,7 @@ export default function ProductEditorForm({ initial, categoryOptions = [] }: Pro
               </div>
               <label>
                 <input type="checkbox" checked={freeCargo} onChange={(e) => setFreeCargo(e.target.checked)} />
-                Gratis verzending
+                Gratis verzending (alleen weergave; checkout gebruikt de shopdrempel)
               </label>
               <label>
                 <input

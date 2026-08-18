@@ -1,11 +1,17 @@
 import { notFound, redirect } from "next/navigation";
 
+import AdminGoogleReviewsPanel from "@/components/admin/AdminGoogleReviewsPanel";
+import AdminInstagramPanel from "@/components/admin/AdminInstagramPanel";
 import AdminOpeningHoursEditor from "@/components/admin/AdminOpeningHoursEditor";
 import AdminSettingsForm from "@/components/admin/AdminSettingsForm";
 import AdminSettingsShell from "@/components/admin/AdminSettingsShell";
+import AdminWordpressImportPanel from "@/components/admin/AdminWordpressImportPanel";
 import { requireAdminPage } from "@/lib/admin-access";
+import { getGoogleReviewsConnectionStatus } from "@/lib/google-reviews";
+import { getInstagramConnectionStatus } from "@/lib/instagram";
 import { buildAdminSettingsView } from "@/lib/site-settings-db";
 import { getSettingGroup, isSettingGroupId } from "@/lib/site-settings-defs";
+import { isWooCommerceApiConfigured } from "@/lib/woocommerce-api";
 
 export const dynamic = "force-dynamic";
 
@@ -35,12 +41,21 @@ export default async function AdminSettingsGroupPage({ params }: PageProps) {
   const fields = await buildAdminSettingsView();
   const groupFields = fields.filter((f) => f.group === groupId && !f.hidden);
   const hoursJson = fields.find((f) => f.key === "SHOP_OPENING_HOURS_JSON")?.displayValue ?? "";
+  const instagramStatus = groupId === "instagram" ? await getInstagramConnectionStatus() : null;
+  const googleStatus = groupId === "google" ? await getGoogleReviewsConnectionStatus() : null;
+  const featuredJson = fields.find((f) => f.key === "GOOGLE_REVIEWS_FEATURED_JSON")?.displayValue ?? "";
+  const wooConfigured = groupId === "woocommerce" ? await isWooCommerceApiConfigured() : false;
 
   return (
     <AdminSettingsShell activeGroup={groupId}>
       <div className="admin-stack">
         <AdminSettingsForm groupId={groupId} initialFields={groupFields} />
         {groupId === "store" ? <AdminOpeningHoursEditor initialJson={hoursJson} /> : null}
+        {instagramStatus ? <AdminInstagramPanel initial={instagramStatus} /> : null}
+        {googleStatus ? (
+          <AdminGoogleReviewsPanel initial={googleStatus} initialFeaturedJson={featuredJson} />
+        ) : null}
+        {groupId === "woocommerce" ? <AdminWordpressImportPanel wooConfigured={wooConfigured} /> : null}
       </div>
     </AdminSettingsShell>
   );

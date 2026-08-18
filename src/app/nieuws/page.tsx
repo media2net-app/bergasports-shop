@@ -4,6 +4,8 @@ import Link from "next/link";
 import Footer from "@/components/layout/Footer";
 import Header from "@/components/layout/Header";
 import TrustBar from "@/components/layout/TrustBar";
+import NewsCard from "@/components/news/NewsCard";
+import ContentCtaCard from "@/components/site/ContentCtaCard";
 import { loadNewsPosts } from "@/lib/news-db";
 import { buildPageMetadata } from "@/lib/seo";
 
@@ -17,57 +19,57 @@ export const metadata: Metadata = buildPageMetadata({
 
 export default async function NieuwsPage() {
   const posts = await loadNewsPosts({ limit: 40 });
+  const [featured, ...rest] = posts;
+
   return (
     <main className="min-h-screen bg-[#faf8f5]/40">
       <TrustBar />
       <Header />
-      <div className="mx-auto w-full max-w-[900px] px-4 py-10 md:py-14">
-        <h1 className="font-[family-name:var(--font-heading)] text-3xl md:text-4xl">Nieuws & inspiratie</h1>
-        <p className="mt-3 text-[var(--foreground)]/70">
-          Nieuw binnen, merken, LaFuga, techniek, tips en acties.
-        </p>
-        <ul className="mt-10 space-y-8">
-          {posts.length === 0 ? (
-            <li className="text-sm text-[var(--foreground)]/60">Nog geen artikelen — sync WP-posts via admin.</li>
-          ) : (
-            posts.map((post) => (
-              <li key={post.id} className="border-b border-[var(--foreground)]/10 pb-8">
-                <Link href={`/nieuws/${post.slug}`} className="group block md:grid md:grid-cols-[240px_1fr] md:gap-6">
-                  {post.coverImage ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={post.coverImage}
-                      alt=""
-                      className="mb-4 aspect-[16/10] w-full object-cover md:mb-0"
-                      loading="lazy"
-                    />
-                  ) : (
-                    <div className="mb-4 aspect-[16/10] bg-[var(--foreground)]/5 md:mb-0" />
-                  )}
-                  <div>
-                    <p className="text-[11px] uppercase tracking-wider text-[var(--foreground)]/50">
-                      {post.publishedAt
-                        ? new Date(post.publishedAt).toLocaleDateString("nl-NL", {
-                            day: "numeric",
-                            month: "long",
-                            year: "numeric",
-                          })
-                        : null}
-                      {post.category ? ` · ${post.category}` : ""}
-                    </p>
-                    <h2 className="mt-1 font-[family-name:var(--font-heading)] text-2xl group-hover:text-[var(--brand)]">
-                      {post.title}
-                    </h2>
-                    {post.excerpt ? (
-                      <p className="mt-2 text-sm text-[var(--foreground)]/70">{post.excerpt}</p>
-                    ) : null}
-                    <span className="mt-3 inline-block text-xs font-bold uppercase tracking-wider">Lees meer →</span>
-                  </div>
-                </Link>
-              </li>
-            ))
-          )}
-        </ul>
+      <div className="mx-auto w-full max-w-[1440px] px-4 py-8 md:py-12 lg:px-6">
+        <div className="grid items-start gap-10 lg:grid-cols-[minmax(0,1fr)_21rem] lg:gap-14">
+          <div>
+            <p className="mb-3 text-[11px] font-bold uppercase tracking-[0.2em] text-[var(--brand)]">
+              Bergasports · Dedemsvaart
+            </p>
+            <h1 className="section-rule font-[family-name:var(--font-heading)] text-3xl font-semibold tracking-tight text-[var(--foreground)] md:text-4xl lg:text-[2.6rem]">
+              Nieuws &amp; inspiratie
+            </h1>
+            <p className="mt-4 max-w-2xl text-base leading-relaxed text-[var(--foreground)]/70 md:text-lg">
+              Nieuwe fietsen, Nimbl, LaFuga, wedstrijden en wat er speelt in de winkel.
+            </p>
+
+            {posts.length === 0 ? (
+              <p className="mt-10 rounded-3xl border border-dashed border-[var(--brand-border)] bg-white px-6 py-12 text-sm leading-relaxed text-[var(--foreground)]/65">
+                Nog geen berichten. Zodra er nieuws is — een nieuwe fiets, een pasavond of een wedstrijd —
+                staat het hier.
+              </p>
+            ) : (
+              <div className="mt-10 space-y-6">
+                {featured ? <NewsCard post={featured} variant="featured" /> : null}
+                {rest.length > 0 ? (
+                  <ul className="grid gap-5 sm:grid-cols-2">
+                    {rest.map((post) => (
+                      <li key={post.id}>
+                        <NewsCard post={post} />
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
+              </div>
+            )}
+          </div>
+
+          <aside className="space-y-4 lg:sticky lg:top-24">
+            <ContentCtaCard />
+            <p className="px-1 text-sm text-[var(--foreground)]/60">
+              Liever meteen kijken?{" "}
+              <Link href="/shop" className="font-semibold text-[var(--brand)] underline-offset-4 hover:underline">
+                Naar de shop
+              </Link>
+              .
+            </p>
+          </aside>
+        </div>
       </div>
       <Footer />
     </main>

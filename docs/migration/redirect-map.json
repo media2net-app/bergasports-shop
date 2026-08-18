@@ -46,9 +46,20 @@
     { "source": "/nl/shop/", "destination": "/shop", "permanent": true },
     { "source": "/nl/product-categorie/racefietsen", "destination": "/racefietsen", "permanent": true },
     { "source": "/nl/product-categorie/racefietsen/", "destination": "/racefietsen", "permanent": true },
-    { "source": "/nl/product-categorie/:slug", "destination": "/:slug", "permanent": true },
-    { "source": "/product-categorie/:slug", "destination": "/:slug", "permanent": true },
-    { "source": "/product-category/:slug", "destination": "/:slug", "permanent": true },
-    { "source": "/categorii", "destination": "/shop", "permanent": true }
+    { "source": "/categorii", "destination": "/shop", "permanent": true },
+    { "source": "/winkel", "destination": "/shop", "permanent": true },
+    { "source": "/winkelwagen", "destination": "/shop", "permanent": true },
+    { "source": "/winkelmand", "destination": "/shop", "permanent": true },
+    { "source": "/cart", "destination": "/shop", "permanent": true },
+    { "source": "/product-category/bikes", "destination": "/fietsen", "permanent": true },
+    { "source": "/product-category/lafuga-wear", "destination": "/lafuga", "permanent": true },
+    { "source": "/product-category/road-bike", "destination": "/racefietsen", "permanent": true },
+    { "source": "/product-category/gravelbike", "destination": "/gravel", "permanent": true },
+    { "source": "/product-category/cycling-shoes", "destination": "/wielrenschoenen", "permanent": true },
+    { "source": "/product-category/speed-skates", "destination": "/skeelers", "permanent": true },
+    { "source": "/lost-password", "destination": "/account", "permanent": true },
+    { "source": "/afrekenen", "destination": "/checkout", "permanent": true },
+    { "source": "/my-account", "destination": "/account", "permanent": true },
+    { "source": "/mijn-account", "destination": "/account", "permanent": true }
   ]
 }

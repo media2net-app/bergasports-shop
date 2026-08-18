@@ -154,7 +154,7 @@ export function wcStoreProductToTrendyolJson(
 
 function resolveCategoryLabel(snapshot: RalexCategoriesFile, categoryId: number): string {
   const row = snapshot.categories.find((c) => c.id === categoryId);
-  return row ? formatRalexCategoryName(row.name) : `Categorie ${categoryId}`;
+  return row ? formatRalexCategoryName(row.name, row.slug) : `Categorie ${categoryId}`;
 }
 
 export async function importRalexProductsForCategory(categoryId: number): Promise<{

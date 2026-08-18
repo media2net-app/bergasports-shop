@@ -1,22 +1,36 @@
+import Image from "next/image";
 import Link from "next/link";
 
+import { CONTENT_PHOTOS } from "@/lib/content-photos";
 import { HOME_ABOUT } from "@/lib/site-content";
 
 export default function HomeAboutTeaser() {
+  const photo = CONTENT_PHOTOS.ingmarNimbl;
+
   return (
-    <section className="grid gap-6 md:grid-cols-[1.2fr_0.8fr] md:items-end">
-      <div>
-        <h2 className="section-rule font-[family-name:var(--font-heading)] text-2xl tracking-tight text-[var(--foreground)] md:text-3xl">
+    <section className="grid items-center gap-8 overflow-hidden rounded-3xl border border-[var(--brand-border)] bg-white md:grid-cols-[0.9fr_1.1fr] md:gap-10">
+      <div className="relative aspect-[4/5] min-h-[280px] overflow-hidden bg-[var(--brand-surface-alt)] md:aspect-auto md:min-h-[420px]">
+        <Image
+          src={photo.src}
+          alt={photo.alt}
+          fill
+          sizes="(max-width: 768px) 100vw, 42vw"
+          className="object-cover object-center"
+        />
+      </div>
+      <div className="px-6 pb-8 md:py-10 md:pr-10 md:pl-0">
+        <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[var(--brand)]">
+          Ingmar Berga
+        </p>
+        <h2 className="section-rule mt-2 font-[family-name:var(--font-heading)] text-2xl tracking-tight text-[var(--foreground)] md:text-3xl">
           {HOME_ABOUT.title}
         </h2>
         <p className="mt-4 max-w-xl text-sm leading-relaxed text-[var(--foreground)]/75 md:text-base">
           {HOME_ABOUT.text}
         </p>
-      </div>
-      <div className="md:text-right">
         <Link
           href={HOME_ABOUT.ctaHref}
-          className="arrow-link inline-flex min-h-11 items-center gap-2 border-b border-[var(--foreground)] text-xs font-bold uppercase tracking-[0.14em] transition hover:border-[var(--brand)] hover:text-[var(--brand)]"
+          className="arrow-link mt-6 inline-flex min-h-11 items-center gap-2 border-b border-[var(--foreground)] text-xs font-bold uppercase tracking-[0.14em] transition hover:border-[var(--brand)] hover:text-[var(--brand)]"
         >
           {HOME_ABOUT.cta}
           <span aria-hidden className="arrow-link-icon">

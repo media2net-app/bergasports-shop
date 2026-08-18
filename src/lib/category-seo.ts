@@ -87,7 +87,7 @@ function pickRelatedCategories(
       return;
     }
     out.push({
-      label: formatRalexCategoryName(n.name),
+      label: formatRalexCategoryName(n.name, n.slug),
       href: shopCategoryPath(n.slug),
     });
   };

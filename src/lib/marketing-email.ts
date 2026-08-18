@@ -4,12 +4,19 @@ import { requirePrisma } from "@/lib/database";
 import type { OrderWithItems } from "@/lib/orders";
 import { sendOutboundEmail, isOutboundEmailConfigured } from "@/lib/outbound-email";
 import { getEmailLogoUrlSetting, getWinBackEmailSettings } from "@/lib/shop-runtime";
+import { getEmailTemplate } from "@/lib/email-templates-db";
 import {
-  buildPostPurchaseEmailParts,
-  buildWelcomeEmailParts,
-  buildWinBackEmailParts,
-  type MarketingEmailKind,
-} from "@/lib/transactional-marketing-emails";
+  buildEmailVars,
+  customerOnlyOrder,
+  renderEmailTemplate,
+} from "@/lib/email-template-render";
+import type { MarketingEmailKind } from "@/lib/transactional-marketing-emails";
+
+function expiryDateNl(days: number): string {
+  const d = new Date();
+  d.setDate(d.getDate() + days);
+  return new Intl.DateTimeFormat("nl-NL", { dateStyle: "long" }).format(d);
+}
 
 async function wasMarketingEmailSent(
   email: string,
@@ -74,7 +81,12 @@ export async function sendWelcomeMarketingEmail(
   }
 
   const logoUrl = await getEmailLogoUrlSetting();
-  const { subject, text, html } = buildWelcomeEmailParts(customerName.trim() || "client", { logoUrl });
+  const template = await getEmailTemplate("marketing.welcome");
+  const { subject, text, html } = renderEmailTemplate(
+    template,
+    buildEmailVars(customerOnlyOrder(customerName.trim() || "klant")),
+    logoUrl,
+  );
   const ok = await sendOutboundEmail({ to, subject, text, html });
   if (ok) {
     await logMarketingEmail(to, "welcome", orderId);
@@ -95,7 +107,8 @@ export async function sendPostPurchaseMarketingEmail(order: OrderWithItems): Pro
   }
 
   const logoUrl = await getEmailLogoUrlSetting();
-  const { subject, text, html } = buildPostPurchaseEmailParts(order, { logoUrl });
+  const template = await getEmailTemplate("marketing.post_purchase");
+  const { subject, text, html } = renderEmailTemplate(template, buildEmailVars(order), logoUrl);
   const ok = await sendOutboundEmail({ to, subject, text, html });
   if (ok) {
     await logMarketingEmail(to, "post_purchase", order.id);
@@ -130,11 +143,15 @@ export async function sendWinBackMarketingEmail(
   }
 
   const [logoUrl, winBack] = await Promise.all([getEmailLogoUrlSetting(), getWinBackEmailSettings()]);
-  const { subject, text, html } = buildWinBackEmailParts(customerName.trim() || "client", {
+  const template = await getEmailTemplate("marketing.win_back");
+  const { subject, text, html } = renderEmailTemplate(
+    template,
+    buildEmailVars(customerOnlyOrder(customerName.trim() || "klant"), {
+      winBackCode: winBack.code,
+      winBackExpiry: expiryDateNl(winBack.expiryDays),
+    }),
     logoUrl,
-    winBackCode: winBack.code,
-    winBackExpiryDays: winBack.expiryDays,
-  });
+  );
   const ok = await sendOutboundEmail({ to, subject, text, html });
   if (ok) {
     await logMarketingEmail(to, "win_back");

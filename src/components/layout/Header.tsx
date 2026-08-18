@@ -16,8 +16,8 @@ import HeaderSearchSlot from "@/components/layout/HeaderSearchSlot";
 import HeaderShopMegaMenu from "@/components/layout/HeaderShopMegaMenu";
 import HeaderSimpleDropdown from "@/components/layout/HeaderSimpleDropdown";
 import MobileNavDrillDown from "@/components/layout/MobileNavDrillDown";
+import { useInstagramProfileUrl } from "@/components/layout/InstagramProfileProvider";
 import LanguageSwitcher from "@/components/locale/LanguageSwitcher";
-import { INSTAGRAM_URL } from "@/lib/site-content";
 
 const navLinkClass =
   "text-[11px] font-bold uppercase tracking-[0.14em] text-white/85 transition hover:text-white md:text-xs";
@@ -105,6 +105,7 @@ function IconMenu() {
 export default function Header() {
   const pathname = usePathname();
   const { totalItems, openCart } = useCart();
+  const instagramUrl = useInstagramProfileUrl();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   useEffect(() => {
@@ -189,7 +190,7 @@ export default function Header() {
                 <IconUser />
               </HeaderIconLink>
               <a
-                href={INSTAGRAM_URL}
+                href={instagramUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="hidden h-10 w-10 items-center justify-center rounded-full text-white/90 transition hover:bg-white/10 md:inline-flex"

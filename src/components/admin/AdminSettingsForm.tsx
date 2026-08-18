@@ -64,7 +64,7 @@ export default function AdminSettingsForm({ groupId, initialFields }: AdminSetti
         return;
       }
       if (data.fields) {
-        const next = data.fields.filter((f) => f.group === groupId);
+        const next = data.fields.filter((f) => f.group === groupId && !f.hidden);
         setFields(next);
         setDrafts((prev) => {
           const merged = { ...prev };

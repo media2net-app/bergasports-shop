@@ -9,7 +9,9 @@ export default function AdminLoginPage() {
     <Suspense
       fallback={
         <div className="admin-login-center">
-          <p className="admin-muted">Laden…</p>
+          <div className="admin-login-card">
+            <p className="admin-muted admin-m-0">Laden…</p>
+          </div>
         </div>
       }
     >

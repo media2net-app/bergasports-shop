@@ -32,6 +32,13 @@ export const SHOP_OPENING_HOURS_SHORT =
 export const SHOP_MAPS_URL =
   "https://www.google.com/maps/search/?api=1&query=Julianastraat+3A+7701+GH+Dedemsvaart";
 
+/** Embedbare kaart (geen API-key). */
+export const SHOP_MAPS_EMBED_URL =
+  "https://maps.google.com/maps?q=Julianastraat%203A%2C%207701%20GH%20Dedemsvaart&hl=nl&z=16&output=embed";
+
+/** WGS84 van Julianastraat 3A, Dedemsvaart — voor LocalBusiness JSON-LD. */
+export const SHOP_GEO = { latitude: 52.5998, longitude: 6.4584 } as const;
+
 /** Nederlandse URL's voor de juridische pagina's — één bron voor links, seed en sitemap. */
 export const LEGAL_PAGE_PATHS = {
   terms: "/algemene-voorwaarden",
@@ -133,7 +140,7 @@ export const WEBSHOP_MEGA_MENU = {
     title: "Persoonlijk advies in Dedemsvaart",
     text: "Van racefiets tot wielrenschoenen — onze specialisten helpen je de juiste setup te kiezen.",
     cta: "Plan een afspraak",
-    ctaHref: "/contact",
+    ctaHref: "/afspraak#formulier",
     shopCta: "Bekijk alle producten",
     shopHref: "/shop",
   },
@@ -220,7 +227,7 @@ export const HOME_HERO = {
   primaryCta: "Bekijk fietsen",
   primaryHref: BERGASPORTS_CATEGORY_PATHS.roadBikes,
   secondaryCta: "Plan een afspraak",
-  secondaryHref: "/contact",
+  secondaryHref: "/afspraak#formulier",
 } as const;
 
 export const HOME_PILLARS = [
@@ -247,18 +254,33 @@ export const HOME_PILLARS = [
 ] as const;
 
 export const HOME_BRANDS =
-  "Colnago · Orbea · Basso · Cervélo · Cipollini · Titici · Sensa · Scope · Nimbl · LaFuga" as const;
+  "Colnago · Orbea · Basso · Cervélo · Cipollini · Titici · Sensa · Scope · Nimbl · LaFuga · Double FF · KASK" as const;
+
+export const HOME_BRAND_LIST = [
+  "Colnago",
+  "Orbea",
+  "Basso",
+  "Cervélo",
+  "Cipollini",
+  "Titici",
+  "Sensa",
+  "Scope",
+  "Nimbl",
+  "LaFuga",
+  "Double FF",
+  "KASK",
+] as const;
 
 export const HOME_ADVICE = {
   title: "De juiste keuze begint met goed advies.",
-  text: "Niet iedere fietser heeft dezelfde doelen. Daarom kijken we naar jouw rijstijl, niveau, wensen en materiaal.",
+  text: "Niet iedere fietser heeft dezelfde doelen. We kijken naar jouw rijstijl, niveau, pasvorm en materiaal — of je nu race, gravel of mountainbike rijdt. Plan een afspraak in Dedemsvaart, of bel en WhatsApp als het snel moet.",
   cta: "Plan een afspraak",
-  ctaHref: "/contact",
+  ctaHref: "/afspraak#formulier",
 } as const;
 
 export const HOME_ABOUT = {
   title: "Van topsport naar Bergasports",
-  text: "Van 2004 tot 2022 actief als professioneel schaatser en skeeleraar. Die ervaring met materiaal, prestaties en sport vormt de basis van Bergasports.",
+  text: "Twee keer Nederlands kampioen marathonschaatsen (2007 en 2013), Europees kampioen skeeleren op de marathon (2010) en Nederlands kampioen inline in 2019. Die jaren op het hoogste niveau — plus een KNSB Marathon Cup-klassement — vormen de basis van Bergasports: materiaal dat klopt, advies zonder omwegen.",
   cta: "Lees mijn verhaal",
   ctaHref: "/over-ons",
 } as const;
@@ -271,7 +293,7 @@ export const HOME_INSTAGRAM = {
 
 export const HOME_VISIT = {
   title: "Bezoek Bergasports in Dedemsvaart",
-  text: "Kom langs voor persoonlijk advies, een vakkundige check van je racefiets of gewoon een goede kop koffie.",
+  text: "Kom langs aan de Julianastraat voor persoonlijk advies, Nimbl of LaFuga passen, een vakkundige check van je racefiets of gewoon een goede kop koffie.",
   address: SITE_ADDRESS,
   cta: "Contact & route",
   ctaHref: "/contact",

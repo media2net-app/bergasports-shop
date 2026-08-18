@@ -35,7 +35,8 @@ export function adminProductListQuery(
 
   if (qLower) {
     list = list.filter((p) => {
-      const hay = `${p.id} ${p.name ?? ""} ${p.category ?? ""} ${p.brand ?? ""}`.toLowerCase();
+      const hay =
+        `${p.id} ${p.name ?? ""} ${p.category ?? ""} ${p.brand ?? ""} ${p.wcSku ?? ""} ${p.easySalesSku ?? ""}`.toLowerCase();
       return hay.includes(qLower);
     });
   }

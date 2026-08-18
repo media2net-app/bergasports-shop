@@ -77,7 +77,7 @@ function toAdminCategory(
 ): AdminCategory {
   return {
     id: row.id,
-    name: row.name,
+    name: formatRalexCategoryName(row.name, row.slug),
     slug: row.slug,
     parentId: row.parentId,
     productCount: row.productCount,
@@ -89,8 +89,8 @@ function toAdminCategory(
   };
 }
 
-function normalizeName(raw: string): string {
-  const name = formatRalexCategoryName(raw);
+function normalizeName(raw: string, slug?: string): string {
+  const name = formatRalexCategoryName(raw, slug);
   if (!name) {
     throw new Error("Naam is verplicht.");
   }
@@ -205,7 +205,7 @@ async function retargetProductCategory(oldName: string, newName: string): Promis
 }
 
 export async function createAdminCategory(input: AdminCategoryInput): Promise<AdminCategory> {
-  const name = normalizeName(input.name);
+  const name = normalizeName(input.name, input.slug);
   const slug = normalizeSlug(input.slug, name);
   const parentId = normalizeParentId(input.parentId);
   await assertSlugAvailable(slug);
@@ -238,7 +238,7 @@ export async function updateAdminCategory(id: number, input: AdminCategoryInput)
     throw new Error("Categorie niet gevonden.");
   }
 
-  const name = normalizeName(input.name);
+  const name = normalizeName(input.name, input.slug);
   const slug = normalizeSlug(input.slug, name);
   const parentId = normalizeParentId(input.parentId);
   if (parentId === id) {

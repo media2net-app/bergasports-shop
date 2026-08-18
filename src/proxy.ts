@@ -3,6 +3,7 @@ import type { NextRequest } from "next/server";
 
 import { adminSessionCookieName, verifyAdminSessionToken } from "@/lib/admin-auth";
 import { localeFromHost } from "@/lib/i18n/locale-shared";
+import { matchStaticSeoRedirect, normalizeRedirectPath } from "@/lib/seo-redirects-static";
 
 /** Next.js 16+: `middleware` heet `proxy` (zelfde gedrag). */
 export async function proxy(request: NextRequest) {
@@ -12,6 +13,20 @@ export async function proxy(request: NextRequest) {
 
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("x-bergasports-locale", locale);
+
+  if (
+    !pathname.startsWith("/admin") &&
+    !pathname.startsWith("/api") &&
+    !pathname.startsWith("/_next")
+  ) {
+    const dest = matchStaticSeoRedirect(pathname);
+    const from = normalizeRedirectPath(pathname);
+    if (dest && dest !== from) {
+      const url = request.nextUrl.clone();
+      url.pathname = dest;
+      return NextResponse.redirect(url, 301);
+    }
+  }
 
   if (!pathname.startsWith("/admin") && !pathname.startsWith("/api/admin")) {
     return NextResponse.next({

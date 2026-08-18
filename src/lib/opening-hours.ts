@@ -37,3 +37,22 @@ export function parseOpeningHoursJson(raw: string, fallback: OpeningHoursRow[]):
 export function serializeOpeningHours(rows: OpeningHoursRow[]): string {
   return JSON.stringify(rows);
 }
+
+const SCHEMA_DAY_TO_JS: Record<string, number> = {
+  Sunday: 0,
+  Monday: 1,
+  Tuesday: 2,
+  Wednesday: 3,
+  Thursday: 4,
+  Friday: 5,
+  Saturday: 6,
+};
+
+export function hoursForJsWeekday(hours: OpeningHoursRow[], jsDay: number): OpeningHoursRow | undefined {
+  return hours.find((row) => SCHEMA_DAY_TO_JS[row.schemaDay] === jsDay);
+}
+
+export function isShopOpenOnJsWeekday(hours: OpeningHoursRow[], jsDay: number): boolean {
+  const row = hoursForJsWeekday(hours, jsDay);
+  return Boolean(row && row.hours !== "Gesloten" && row.opens && row.closes);
+}

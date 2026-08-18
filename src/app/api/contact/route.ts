@@ -13,6 +13,7 @@ export async function POST(request: Request) {
     message?: string;
     kind?: string;
     preferredDate?: string;
+    legalAccepted?: boolean;
   };
   try {
     body = (await request.json()) as typeof body;
@@ -24,6 +25,12 @@ export async function POST(request: Request) {
   const message = body.message?.trim() ?? "";
   if (name.length < 2 || !email.includes("@") || message.length < 8) {
     return NextResponse.json({ error: "Vul naam, e-mail en een bericht in." }, { status: 400 });
+  }
+  if (body.legalAccepted !== true) {
+    return NextResponse.json(
+      { error: "Accepteer de voorwaarden om door te gaan." },
+      { status: 400 },
+    );
   }
   try {
     await createContactLead({

@@ -12,8 +12,14 @@ import { productAvailableStock } from "@/lib/stock";
 import {
   createMolliePayment,
   isMollieConfigured,
+  listMollieMethods,
   mollieCheckoutUrl,
 } from "@/lib/mollie";
+import {
+  mollieBillingCountry,
+  mollieLocaleForCountry,
+  sanitizeMollieMethodId,
+} from "@/lib/mollie-methods";
 import { applyCouponCode } from "@/lib/coupons";
 import { getShippingQuote } from "@/lib/shipping";
 
@@ -179,6 +185,25 @@ export async function POST(request: Request) {
     });
   }
 
+  const locale = mollieLocaleForCountry(country);
+  const billingCountry = mollieBillingCountry(country);
+  let method = sanitizeMollieMethodId(body.mollieMethod);
+  if (method) {
+    try {
+      const available = await listMollieMethods({
+        amount: total,
+        currency,
+        locale,
+        billingCountry,
+      });
+      if (!available.some((m) => m.id === method)) {
+        method = undefined;
+      }
+    } catch {
+      // Keep sanitized id; Mollie hosted checkout is used if createPayment rejects it.
+    }
+  }
+
   try {
     const result = await createOrder({
       customerName,
@@ -196,7 +221,7 @@ export async function POST(request: Request) {
       ]
         .filter(Boolean)
         .join("\n") || undefined,
-      paymentMethod: body.mollieMethod?.trim() ? `mollie:${body.mollieMethod.trim()}` : paymentMethod,
+      paymentMethod: method ? `mollie:${method}` : paymentMethod,
       currency,
       subtotal,
       discountTotal: Number.isFinite(discountTotal) ? discountTotal : 0,
@@ -218,6 +243,7 @@ export async function POST(request: Request) {
 
     const orderNumber = result.orderNumber;
     const base = siteBaseUrl(request);
+
     const payment = await createMolliePayment({
       amount: total,
       currency,
@@ -228,7 +254,22 @@ export async function POST(request: Request) {
         orderId: String(result.id),
         orderNumber,
       },
-      method: body.mollieMethod?.trim() || undefined,
+      method,
+      locale,
+    }).catch(async (err) => {
+      if (!method) throw err;
+      return createMolliePayment({
+        amount: total,
+        currency,
+        description: `Bergasports bestelling ${orderNumber}`,
+        redirectUrl: `${base}/checkout/return?order=${encodeURIComponent(orderNumber)}`,
+        webhookUrl: `${base}/api/mollie/webhook`,
+        metadata: {
+          orderId: String(result.id),
+          orderNumber,
+        },
+        locale,
+      });
     });
     await attachMolliePaymentId(result.id, payment.id);
     const checkoutUrl = mollieCheckoutUrl(payment);

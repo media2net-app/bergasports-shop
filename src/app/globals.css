@@ -86,12 +86,19 @@ body {
 }
 
 :is(.wc-store-html, .cms-html, .cms-page-body) {
-  line-height: 1.65;
+  line-height: 1.7;
+  font-size: 1.05rem;
 }
 
-:is(.wc-store-html, .cms-html, .cms-page-body) :where(p, ul, ol, table, pre, blockquote) {
-  margin-top: 0.75em;
-  margin-bottom: 0.75em;
+:is(.wc-store-html, .cms-html, .cms-page-body) > p:first-of-type {
+  font-size: 1.125rem;
+  line-height: 1.65;
+  color: var(--foreground);
+}
+
+:is(.wc-store-html, .cms-html, .cms-page-body) :where(p, ul, ol, table, pre, blockquote, figure) {
+  margin-top: 0.9em;
+  margin-bottom: 0.9em;
 }
 
 :is(.wc-store-html, .cms-html, .cms-page-body) :where(ul) {
@@ -110,11 +117,13 @@ body {
 }
 
 :is(.wc-store-html, .cms-html, .cms-page-body) :where(h1, h2, h3, h4) {
-  margin-top: 1.35em;
-  margin-bottom: 0.45em;
+  margin-top: 1.75em;
+  margin-bottom: 0.55em;
+  font-family: var(--font-heading), var(--font-ubuntu), Ubuntu, system-ui, sans-serif;
   font-weight: 700;
   color: var(--foreground);
   line-height: 1.25;
+  letter-spacing: -0.02em;
 }
 
 :is(.wc-store-html, .cms-html, .cms-page-body) :where(h1, h2, h3, h4):first-child {
@@ -126,7 +135,7 @@ body {
 }
 
 :is(.wc-store-html, .cms-html, .cms-page-body) :where(h2) {
-  font-size: 1.35rem;
+  font-size: 1.45rem;
 }
 
 :is(.wc-store-html, .cms-html, .cms-page-body) :where(h3) {
@@ -151,29 +160,81 @@ body {
   text-decoration: underline;
 }
 
+:is(.wc-store-html, .cms-html, .cms-page-body) :where(figure) {
+  margin: 1.75rem 0;
+}
+
+:is(.wc-store-html, .cms-html, .cms-page-body) :where(figcaption) {
+  margin-top: 0.6rem;
+  font-size: 0.8rem;
+  color: color-mix(in srgb, var(--foreground) 55%, transparent);
+}
+
 :is(.wc-store-html, .cms-html, .cms-page-body) :where(img) {
   display: block;
   max-width: 100%;
   height: auto;
-  margin: 1em 0;
-  border-radius: 0.5rem;
+  margin: 0;
+  border-radius: 1.25rem;
+  border: 1px solid var(--brand-border);
+}
+
+:is(.wc-store-html, .cms-html, .cms-page-body) .cms-cta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  margin-top: 1.5rem;
+  margin-bottom: 0.25rem;
+}
+
+:is(.wc-store-html, .cms-html, .cms-page-body) .cms-cta-row a,
+:is(.wc-store-html, .cms-html, .cms-page-body) a.cms-cta {
+  display: inline-flex;
+  min-height: 2.75rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  padding: 0 1.25rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  text-decoration: none;
+  border: 1px solid var(--brand-border);
+  color: var(--foreground);
+  background: white;
+}
+
+:is(.wc-store-html, .cms-html, .cms-page-body) a.cms-cta-primary {
+  background: var(--topbar);
+  border-color: var(--topbar);
+  color: white;
+}
+
+:is(.wc-store-html, .cms-html, .cms-page-body) :where(table) {
+  width: 100%;
+  overflow: hidden;
+  border-collapse: collapse;
+  font-size: 0.95em;
+  border: 1px solid var(--brand-border);
+  border-radius: 1rem;
+  background: white;
+}
+
+:is(.wc-store-html, .cms-html, .cms-page-body) :where(th, td) {
+  border: 0;
+  border-bottom: 1px solid var(--brand-border);
+  padding: 0.65rem 0.85rem;
+  vertical-align: top;
+}
+
+:is(.wc-store-html, .cms-html, .cms-page-body) tr:last-child :where(th, td) {
+  border-bottom: 0;
 }
 
 :is(.wc-store-html, .cms-html, .cms-page-body) :where(strong, b) {
   font-weight: 700;
   color: var(--foreground);
-}
-
-:is(.wc-store-html, .cms-html, .cms-page-body) :where(table) {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.9em;
-}
-
-:is(.wc-store-html, .cms-html, .cms-page-body) :where(th, td) {
-  border: 1px solid var(--brand-border);
-  padding: 0.4rem 0.5rem;
-  vertical-align: top;
 }
 
 .trendyol-reviews-dialog::backdrop {

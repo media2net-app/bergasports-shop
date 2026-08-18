@@ -16,11 +16,13 @@ import { SITE_DEFAULT_URL } from "@/lib/site-brand";
 import { isNumericProductPathSegment, productPath } from "@/lib/product-slug";
 import { loadRalexCategories } from "@/lib/categories-db";
 import { loadCatalogProducts, loadProductFromPathSegment } from "@/lib/products-db";
+import { followSeoRedirect } from "@/lib/seo-redirects";
 import {
   productMatchesShopCategory,
   resolveProductShopCategory,
   resolveShopCategoryMatch,
 } from "@/lib/shop-category-filter";
+import { categoryDisplayName, dutchLabelFromImportedName } from "@/lib/category-meta";
 import { isProductInStock } from "@/lib/products";
 import {
   productBreadcrumbJsonLd,
@@ -30,6 +32,7 @@ import {
 } from "@/lib/product-seo";
 import { buildPageMetadata } from "@/lib/seo";
 import { resolveProductContentTier } from "@/lib/product-content-tier";
+import { DEFAULT_FREE_SHIPPING_THRESHOLD_EUR, meetsFreeShippingThreshold } from "@/lib/shop-delivery-trust";
 import { getFreeShippingThresholdSetting } from "@/lib/shop-runtime";
 
 export const dynamic = "force-dynamic";
@@ -111,6 +114,7 @@ export async function generateMetadata({ params }: ProductDetailPageProps): Prom
   const { slug: segment } = await params;
   const product = await loadProductFromPathSegment(segment);
   if (!product) {
+    await followSeoRedirect(`/product/${segment}`);
     return { title: "Product niet gevonden" };
   }
   return buildPageMetadata({
@@ -139,6 +143,7 @@ export default async function ProductDetailPage({ params, searchParams }: Produc
 
   const product = await loadProductFromPathSegment(segment);
   if (!product) {
+    await followSeoRedirect(`/product/${segment}`);
     notFound();
   }
 
@@ -149,7 +154,7 @@ export default async function ProductDetailPage({ params, searchParams }: Produc
   const [catalog, categoriesFile, freeShippingThreshold] = await Promise.all([
     loadCatalogProducts(),
     loadRalexCategories(),
-    getFreeShippingThresholdSetting().catch(() => 50),
+    getFreeShippingThresholdSetting().catch(() => DEFAULT_FREE_SHIPPING_THRESHOLD_EUR),
   ]);
   const productCategory = resolveProductShopCategory(product, categoriesFile.tree);
 
@@ -183,8 +188,8 @@ export default async function ProductDetailPage({ params, searchParams }: Produc
   if (product.discount) {
     sellingPoints.push({ label: `${product.discount}% korting`, tone: "good" });
   }
-  if (product.freeCargo) {
-    sellingPoints.push({ label: "Gratis verzending", tone: "good" });
+  if (meetsFreeShippingThreshold(product.price, freeShippingThreshold)) {
+    sellingPoints.push({ label: "Gratis verzending naar NL", tone: "good" });
   }
   if (product.sameDayShipping) {
     sellingPoints.push({ label: "Zelfde dag verzonden", tone: "good" });
@@ -329,7 +334,7 @@ export default async function ProductDetailPage({ params, searchParams }: Produc
 
               <ProductTrustRow
                 className="mt-7 border-t border-[var(--brand-border)] pt-6"
-                freeCargo={product.freeCargo}
+                freeCargo={meetsFreeShippingThreshold(product.price, freeShippingThreshold)}
                 currency={product.currency}
                 freeShippingThreshold={freeShippingThreshold}
               />
@@ -354,7 +359,7 @@ export default async function ProductDetailPage({ params, searchParams }: Produc
                   advies.
                 </p>
                 <Link
-                  href="/contact"
+                  href="/afspraak#formulier"
                   className="arrow-link mt-3 inline-flex min-h-11 items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[#96741f]"
                 >
                   Plan een afspraak
@@ -462,12 +467,12 @@ export default async function ProductDetailPage({ params, searchParams }: Produc
                   <SpecRow
                     label="Categorieën"
                     value={product.wcCategories
-                      .map((c) => c.name)
+                      .map((c) => categoryDisplayName(c.slug, c.name))
                       .filter(Boolean)
                       .join(", ")}
                   />
                 ) : (
-                  <SpecRow label="Categorie" value={product.category} />
+                  <SpecRow label="Categorie" value={dutchLabelFromImportedName(product.category)} />
                 )}
               </dl>
             </div>

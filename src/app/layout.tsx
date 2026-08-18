@@ -14,7 +14,11 @@ import {
   SITE_TAGLINE,
 } from "@/lib/site-brand";
 import { SITE_META_DESCRIPTION } from "@/lib/site-content";
+import { InstagramProfileProvider } from "@/components/layout/InstagramProfileProvider";
+import { getInstagramPublicUrl } from "@/lib/instagram";
 import { DEFAULT_OG_IMAGE } from "@/lib/seo";
+import { INSTAGRAM_URL } from "@/lib/site-content";
+import { DEFAULT_FREE_SHIPPING_THRESHOLD_EUR } from "@/lib/shop-delivery-trust";
 import { getRuntimeSetting } from "@/lib/site-settings-db";
 import { getFreeShippingThresholdSetting } from "@/lib/shop-runtime";
 import "./globals.css";
@@ -84,13 +88,14 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const [ga4, gtm, metaPixel, googleAds, tiktokPixel, freeShippingThreshold] = await Promise.all([
+  const [ga4, gtm, metaPixel, googleAds, tiktokPixel, freeShippingThreshold, instagramUrl] = await Promise.all([
     getRuntimeSetting("NEXT_PUBLIC_GA4_ID"),
     getRuntimeSetting("NEXT_PUBLIC_GTM_ID"),
     getRuntimeSetting("NEXT_PUBLIC_META_PIXEL_ID"),
     getRuntimeSetting("NEXT_PUBLIC_GOOGLE_ADS_ID"),
     getRuntimeSetting("NEXT_PUBLIC_TIKTOK_PIXEL_ID"),
-    getFreeShippingThresholdSetting().catch(() => 50),
+    getFreeShippingThresholdSetting().catch(() => DEFAULT_FREE_SHIPPING_THRESHOLD_EUR),
+    getInstagramPublicUrl().catch(() => INSTAGRAM_URL),
   ]);
 
   return (
@@ -105,14 +110,16 @@ export default async function RootLayout({
           <CategoriesProviderRoot>
             <ProductLookupProvider>
               <CartProvider freeShippingThreshold={freeShippingThreshold}>
-                <ShopAnalyticsShell
-                  tiktokPixelId={tiktokPixel}
-                  metaPixelId={metaPixel}
-                  googleAdsId={googleAds}
-                >
-                  {children}
-                </ShopAnalyticsShell>
-                <CookieConsentBanner />
+                <InstagramProfileProvider url={instagramUrl}>
+                  <ShopAnalyticsShell
+                    tiktokPixelId={tiktokPixel}
+                    metaPixelId={metaPixel}
+                    googleAdsId={googleAds}
+                  >
+                    {children}
+                  </ShopAnalyticsShell>
+                  <CookieConsentBanner />
+                </InstagramProfileProvider>
               </CartProvider>
             </ProductLookupProvider>
           </CategoriesProviderRoot>

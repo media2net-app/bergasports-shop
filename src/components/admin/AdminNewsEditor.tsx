@@ -7,6 +7,8 @@ import { useMemo, useState } from "react";
 import AdminFeaturedImagePanel from "@/components/admin/AdminFeaturedImagePanel";
 import AdminHtmlEditor from "@/components/admin/AdminHtmlEditor";
 import AdminImageUploadButton from "@/components/admin/AdminImageUploadButton";
+import DateTimePicker from "@/components/ui/DateTimePicker";
+import { isoToLocalDateTimeValue, localDateTimeValueToIso } from "@/lib/datetime-picker";
 import type { NewsPostRow } from "@/lib/news-db";
 import { slugifyNl } from "@/lib/slugify";
 
@@ -24,9 +26,7 @@ export default function AdminNewsEditor({ post }: Props) {
   const [coverImage, setCoverImage] = useState(post?.coverImage ?? "");
   const [imageAlt, setImageAlt] = useState(post?.imageAlt ?? "");
   const [category, setCategory] = useState(post?.category ?? "Algemeen");
-  const [publishedAt, setPublishedAt] = useState(
-    post?.publishedAt ? new Date(post.publishedAt).toISOString().slice(0, 16) : "",
-  );
+  const [publishedAt, setPublishedAt] = useState(isoToLocalDateTimeValue(post?.publishedAt));
   const [isPublished, setIsPublished] = useState(post?.isPublished ?? false);
   const [seoTitle, setSeoTitle] = useState(post?.seoTitle ?? "");
   const [seoDescription, setSeoDescription] = useState(post?.seoDescription ?? "");
@@ -56,7 +56,7 @@ export default function AdminNewsEditor({ post }: Props) {
       coverImage,
       imageAlt,
       category,
-      publishedAt: publishedAt ? new Date(publishedAt).toISOString() : null,
+      publishedAt: localDateTimeValueToIso(publishedAt),
       isPublished,
       seoTitle,
       seoDescription,
@@ -212,14 +212,16 @@ export default function AdminNewsEditor({ post }: Props) {
             </p>
             <div>
               <label className="admin-label" htmlFor="news-published-at">
-                Publicatiedatum
+                Publicatiedatum en tijd
               </label>
-              <input
+              <DateTimePicker
                 id="news-published-at"
-                className="admin-field admin-field--flush"
-                type="datetime-local"
+                variant="admin"
+                mode="datetime"
+                minuteStep={15}
                 value={publishedAt}
-                onChange={(e) => setPublishedAt(e.target.value)}
+                onChange={setPublishedAt}
+                placeholder="Kies publicatiedatum en tijd"
               />
             </div>
             <div>

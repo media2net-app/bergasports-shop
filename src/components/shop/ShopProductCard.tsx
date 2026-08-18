@@ -4,6 +4,7 @@ import ShopProductCardVariationChips from "@/components/shop/ShopProductCardVari
 import OptimizedProductImage, {
   type OptimizedProductImageVariant,
 } from "@/components/ui/OptimizedProductImage";
+import { dutchLabelFromImportedName } from "@/lib/category-meta";
 import { productPath } from "@/lib/product-slug";
 import { formatProductCardPrice, formatProductPrice, isProductInStock, type Product } from "@/lib/products";
 
@@ -61,7 +62,7 @@ export default function ShopProductCard({
           ) : null}
 
           <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--foreground)]/60">
-            {product.brand || product.category}
+            {product.brand || dutchLabelFromImportedName(product.category)}
           </p>
 
           {catalogBadge ? (
