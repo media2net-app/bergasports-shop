@@ -7,6 +7,7 @@
     "build": "prisma generate && node scripts/run-next.mjs build",
     "start": "next start -p 3060",
     "lint": "eslint",
+    "postinstall": "prisma db push",
     "import:wordpress": "npx tsx scripts/import-wordpress.ts",
     "import:wordpress:dry-run": "npx tsx scripts/import-wordpress.ts --dry-run",
     "export:seo-redirects": "npx tsx scripts/export-seo-redirects.ts",
