@@ -3,7 +3,6 @@ import LocalizedLink from "@/components/locale/LocalizedLink";
 
 import Footer from "@/components/layout/Footer";
 import Header from "@/components/layout/Header";
-import TrustBar from "@/components/layout/TrustBar";
 import NewsCard from "@/components/news/NewsCard";
 import ContentCtaCard from "@/components/site/ContentCtaCard";
 import { loadNewsPosts } from "@/lib/news-db";
@@ -23,7 +22,6 @@ export default async function NieuwsPage() {
 
   return (
     <main className="min-h-screen bg-[#faf8f5]/40">
-      <TrustBar />
       <Header />
       <div className="mx-auto w-full max-w-[1440px] px-4 py-8 md:py-12 lg:px-6">
         <div className="grid items-start gap-10 lg:grid-cols-[minmax(0,1fr)_21rem] lg:gap-14">
@@ -59,7 +57,7 @@ export default async function NieuwsPage() {
             )}
           </div>
 
-          <aside className="space-y-4 lg:sticky lg:top-24">
+          <aside className="space-y-4 lg:sticky lg:top-28">
             <ContentCtaCard />
             <p className="px-1 text-sm text-[var(--foreground)]/60">
               Liever meteen kijken?{" "}

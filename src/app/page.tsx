@@ -15,7 +15,6 @@ import HomeReviewsSection from "@/components/home/HomeReviewsSection";
 import HomeVisitSection from "@/components/home/HomeVisitSection";
 import Footer from "@/components/layout/Footer";
 import Header from "@/components/layout/Header";
-import TrustBar from "@/components/layout/TrustBar";
 import {
   buildPageMetadata,
   localBusinessJsonLd,
@@ -77,7 +76,6 @@ export default async function Home({ searchParams }: HomeProps) {
           dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
         />
       ))}
-      <TrustBar />
       <Header />
       <Suspense fallback={<HeroFromCms blocks={null} />}>
         <HomeHeroFromCms />

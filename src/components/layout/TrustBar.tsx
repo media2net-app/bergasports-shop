@@ -24,9 +24,9 @@ export default function TrustBar() {
 
   return (
     <div className="bg-gradient-to-r from-[var(--brand-dark)] via-[var(--brand)] to-[var(--brand-dark)] text-white">
-      <div className="mx-auto w-full max-w-[1440px] px-4 py-2.5">
+      <div className="mx-auto w-full max-w-[1440px] px-4 py-1.5">
         <p
-          className="flex items-center justify-center gap-2 text-center text-[11px] font-semibold tracking-wide sm:text-xs"
+          className="flex items-center justify-center gap-2 text-center text-[11px] font-semibold tracking-wide"
           aria-live="polite"
           aria-atomic="true"
         >

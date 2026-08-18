@@ -875,7 +875,7 @@ export const SITE_SETTING_DEFS: SiteSettingDef[] = [
     group: "notifications",
     secret: false,
     optional: true,
-    placeholder: "https://www.bergasports.com/brand/bergasports-logo.png",
+    placeholder: "https://www.bergasports.com/bergasports-logo.png",
     manual: {
       summary: "Optionele absolute URL van het logo in ordermails. Leeg = standaard Bergasports-logo.",
       steps: ["Plak een https-URL naar een PNG/JPG.", "Sla op en stuur een testmail."],

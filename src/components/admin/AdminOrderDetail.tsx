@@ -55,39 +55,43 @@ export default async function AdminOrderDetail({
   }
 
   return (
-    <div className="admin-order">
+    <div className="admin-product-editor-root admin-order-detail admin-stack">
       <Link href="/admin/orders" className="admin-breadcrumb">
         ← Bestellingen
       </Link>
 
-      <header className="admin-order-head">
+      <header className="admin-product-editor-head">
         <div>
-          <p className="admin-order-kicker">Bestelling</p>
-          <h1 className="admin-order-number">{order.order_number}</h1>
-          <time className="admin-order-when" dateTime={order.created_at}>
-            {formatWhen(order.created_at)}
-          </time>
+          <p className="admin-product-editor-kicker">Bestelling</p>
+          <h1 className="admin-h1 admin-m-0">{order.order_number}</h1>
+          <p className="admin-muted admin-m-0 admin-mt-05">
+            <time dateTime={order.created_at}>{formatWhen(order.created_at)}</time>
+          </p>
         </div>
-        <AdminOrderHeaderStatuses
-          key={`status-${order.updated_at}`}
-          orderId={order.id}
-          paymentStatus={order.payment_status}
-          fulfillmentStatus={order.status}
-        />
+        <div className="admin-product-editor-head-meta">
+          <AdminOrderHeaderStatuses
+            key={`status-${order.updated_at}`}
+            orderId={order.id}
+            paymentStatus={order.payment_status}
+            fulfillmentStatus={order.status}
+          />
+        </div>
       </header>
 
-      <div className="admin-order-layout">
-        <AdminOrderLineItems
-          key={`lines-${order.updated_at}`}
-          orderId={order.id}
-          currency={order.currency}
-          items={order.items}
-          catalogById={catalogById}
-          discountTotal={order.discount_total}
-          shippingTotal={shippingTotal}
-          shippingLabel={shippingLabel}
-          couponCode={couponCode}
-        />
+      <div className="admin-product-editor-grid">
+        <div className="admin-product-editor-main">
+          <AdminOrderLineItems
+            key={`lines-${order.updated_at}`}
+            orderId={order.id}
+            currency={order.currency}
+            items={order.items}
+            catalogById={catalogById}
+            discountTotal={order.discount_total}
+            shippingTotal={shippingTotal}
+            shippingLabel={shippingLabel}
+            couponCode={couponCode}
+          />
+        </div>
         <AdminOrderFulfillment
           key={`fulfill-${order.updated_at}`}
           order={order}

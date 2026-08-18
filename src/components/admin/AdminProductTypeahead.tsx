@@ -124,10 +124,10 @@ export default function AdminProductTypeahead({
   }
 
   return (
-    <div ref={rootRef} className="admin-order-typeahead">
+    <div ref={rootRef} className="admin-typeahead">
       <input
         ref={inputRef}
-        className="admin-order-input"
+        className="admin-search-input"
         type="search"
         role="combobox"
         value={query}
@@ -148,31 +148,31 @@ export default function AdminProductTypeahead({
         aria-autocomplete="list"
       />
       {showPanel ? (
-        <ul id={listId} className="admin-order-suggest" role="listbox">
+        <ul id={listId} className="admin-typeahead-list" role="listbox">
           {loading && visibleHits.length === 0 ? (
-            <li className="admin-order-suggest-empty">Zoeken…</li>
+            <li className="admin-typeahead-empty">Zoeken…</li>
           ) : visibleHits.length === 0 ? (
-            <li className="admin-order-suggest-empty">Geen producten gevonden</li>
+            <li className="admin-typeahead-empty">Geen producten gevonden</li>
           ) : (
             visibleHits.map((hit, index) => (
               <li key={hit.id} role="option" aria-selected={index === active}>
                 <button
                   type="button"
-                  className={`admin-order-suggest-item${index === active ? " is-active" : ""}`}
+                  className={`admin-typeahead-item${index === active ? " is-active" : ""}`}
                   onMouseEnter={() => setActive(index)}
                   onClick={() => pick(hit)}
                 >
-                  <span className="admin-order-thumb admin-order-thumb--sm">
+                  <span className="admin-thumb-wrap">
                     {hit.image ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={hit.image} alt="" loading="lazy" decoding="async" />
+                      <img src={hit.image} alt="" className="admin-thumb" loading="lazy" decoding="async" />
                     ) : null}
                   </span>
-                  <span className="admin-order-suggest-copy">
-                    <span className="admin-order-suggest-name">{hit.name}</span>
-                    {hit.sku ? <span className="admin-order-suggest-sku">SKU {hit.sku}</span> : null}
+                  <span className="admin-table-customer">
+                    <span className="admin-table-product-name">{hit.name}</span>
+                    {hit.sku ? <span className="admin-td-mono">SKU {hit.sku}</span> : null}
                   </span>
-                  <span className="admin-order-suggest-price">{formatProductPrice(hit.price, currency)}</span>
+                  <span className="admin-td-mono">{formatProductPrice(hit.price, currency)}</span>
                 </button>
               </li>
             ))

@@ -76,12 +76,6 @@ function lineTotal(row: DraftItem) {
   return qty * price;
 }
 
-function bumpQty(value: string, delta: number) {
-  const current = Number.parseInt(value, 10);
-  const next = (Number.isFinite(current) ? current : 1) + delta;
-  return String(Math.max(1, next));
-}
-
 export default function AdminOrderLineItems({
   orderId,
   currency,
@@ -177,165 +171,9 @@ export default function AdminOrderLineItems({
   }
 
   return (
-    <section className="admin-order-sheet">
-      <div className="admin-order-sheet-head">
-        <p className="admin-order-label">Producten</p>
-        {editing ? (
-          <div className="admin-order-sheet-actions">
-            <button type="button" className="admin-order-text-btn" disabled={busy} onClick={cancelEdit}>
-              Annuleren
-            </button>
-            <button type="button" className="admin-btn-primary" disabled={busy} onClick={() => void save()}>
-              {busy ? "Opslaan…" : "Opslaan"}
-            </button>
-          </div>
-        ) : (
-          <button type="button" className="admin-order-text-btn" onClick={() => setEditing(true)}>
-            Regels bewerken
-          </button>
-        )}
-      </div>
-
-      {error ? <div className="admin-error-box">{error}</div> : null}
-
-      <div className="admin-order-lines">
-        {rows.map((row) => {
-          const line = lineTotal(row);
-          const qty = Number(row.quantity);
-          const price = Number(row.unit_price);
-          const nameLabel = row.name || "Naamloos product";
-          const nameNode =
-            row.product_id != null ? (
-              <Link
-                href={`/admin/products/${row.product_id}`}
-                className="admin-order-line-name"
-                {...(editing ? { target: "_blank", rel: "noreferrer" } : {})}
-              >
-                {nameLabel}
-              </Link>
-            ) : (
-              <span className="admin-order-line-name">{nameLabel}</span>
-            );
-
-          if (editing) {
-            return (
-              <div key={row.key} className="admin-order-line admin-order-line--edit">
-                <div className="admin-order-thumb">
-                  {row.image ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={row.image} alt="" loading="lazy" decoding="async" />
-                  ) : null}
-                </div>
-                <div className="admin-order-line-fields">
-                  {row.kind === "custom" ? (
-                    <input
-                      className="admin-order-input"
-                      value={row.name}
-                      onChange={(e) => updateRow(row.key, { name: e.target.value })}
-                      aria-label="Omschrijving"
-                      placeholder="Bijv. montagekosten"
-                    />
-                  ) : (
-                    nameNode
-                  )}
-                  {row.sku ? <span className="admin-order-line-sku">SKU {row.sku}</span> : null}
-                  {row.kind === "unlinked" ? (
-                    <span className="admin-order-line-unlinked">Niet gekoppeld</span>
-                  ) : null}
-                  {row.kind === "custom" ? (
-                    <span className="admin-order-line-unlinked">Aangepaste regel</span>
-                  ) : null}
-                  {row.variation_label ? (
-                    <input
-                      className="admin-order-input"
-                      value={row.variation_label}
-                      onChange={(e) => updateRow(row.key, { variation_label: e.target.value })}
-                      aria-label="Variant"
-                      placeholder="Variant (optioneel)"
-                    />
-                  ) : null}
-                  {row.kind === "unlinked" ? (
-                    <AdminProductTypeahead
-                      placeholder="Koppel product…"
-                      disabled={busy}
-                      currency={currency}
-                      onPick={(hit) => linkProduct(row.key, hit)}
-                    />
-                  ) : null}
-                </div>
-                <div className="admin-order-qty" role="group" aria-label="Aantal">
-                  <button
-                    type="button"
-                    disabled={busy}
-                    onClick={() => updateRow(row.key, { quantity: bumpQty(row.quantity, -1) })}
-                    aria-label="Minder"
-                  >
-                    −
-                  </button>
-                  <input
-                    className="admin-order-qty-input"
-                    type="number"
-                    min={1}
-                    step={1}
-                    value={row.quantity}
-                    onChange={(e) => updateRow(row.key, { quantity: e.target.value })}
-                    aria-label="Aantal"
-                  />
-                  <button
-                    type="button"
-                    disabled={busy}
-                    onClick={() => updateRow(row.key, { quantity: bumpQty(row.quantity, 1) })}
-                    aria-label="Meer"
-                  >
-                    +
-                  </button>
-                </div>
-                <AdminMoneyInput
-                  className="admin-order-input admin-order-input--num"
-                  value={row.unit_price}
-                  onChange={(unit_price) => updateRow(row.key, { unit_price })}
-                  aria-label="Stukprijs"
-                />
-                <span className="admin-order-line-money">{formatProductPrice(line, currency)}</span>
-                <button
-                  type="button"
-                  className="admin-order-text-btn admin-order-text-btn--mute"
-                  disabled={busy || rows.length <= 1}
-                  onClick={() => setRows((prev) => prev.filter((item) => item.key !== row.key))}
-                >
-                  Weg
-                </button>
-              </div>
-            );
-          }
-
-          return (
-            <div key={row.key} className="admin-order-line">
-              <div className="admin-order-thumb">
-                {row.image ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={row.image} alt="" loading="lazy" decoding="async" />
-                ) : null}
-              </div>
-              <div className="admin-order-line-copy">
-                {nameNode}
-                {row.sku ? <span className="admin-order-line-sku">SKU {row.sku}</span> : null}
-                {row.product_id == null ? <span className="admin-order-line-unlinked">Niet gekoppeld</span> : null}
-                {row.variation_label ? <span className="admin-order-line-variant">{row.variation_label}</span> : null}
-              </div>
-              <span className="admin-order-line-qty">{Number.isFinite(qty) ? qty : row.quantity} ×</span>
-              <span className="admin-order-line-unit">
-                {formatProductPrice(Number.isFinite(price) ? price : 0, currency)}
-              </span>
-              <span className="admin-order-line-money">{formatProductPrice(line, currency)}</span>
-            </div>
-          );
-        })}
-      </div>
-
+    <div className="admin-stack-tight">
       {editing ? (
-        <div className="admin-order-add">
-          <p className="admin-order-add-label">Product toevoegen</p>
+        <div className="admin-list-toolbar">
           <AdminProductTypeahead
             placeholder="Zoek op naam of SKU…"
             disabled={busy}
@@ -344,35 +182,197 @@ export default function AdminOrderLineItems({
           />
           <button
             type="button"
-            className="admin-order-text-btn admin-order-text-btn--mute"
+            className="admin-btn-secondary"
             disabled={busy}
             onClick={() => setRows((prev) => [...prev, customRow()])}
           >
             Aangepaste regel
           </button>
+          <button type="button" className="admin-link-action" disabled={busy} onClick={cancelEdit}>
+            Annuleren
+          </button>
+          <button type="button" className="admin-btn-secondary" disabled={busy} onClick={() => void save()}>
+            {busy ? "Opslaan…" : "Opslaan"}
+          </button>
         </div>
-      ) : null}
+      ) : (
+        <div className="admin-page-head">
+          <h2 className="admin-h2 admin-m-0">Producten</h2>
+          <button type="button" className="admin-link-action" onClick={() => setEditing(true)}>
+            Regels bewerken
+          </button>
+        </div>
+      )}
 
-      <div className="admin-order-totals">
-        <div className="admin-order-totals-row">
-          <span>Subtotaal</span>
-          <span>{formatProductPrice(previewSubtotal, currency)}</span>
-        </div>
-        {discountTotal > 0.005 ? (
-          <div className="admin-order-totals-row">
-            <span>Korting{couponCode ? ` · ${couponCode}` : ""}</span>
-            <span>−{formatProductPrice(discountTotal, currency)}</span>
-          </div>
-        ) : null}
-        <div className="admin-order-totals-row">
-          <span>Verzending{shippingLabel ? ` · ${shippingLabel}` : ""}</span>
-          <span>{shippingTotal > 0.004 ? formatProductPrice(shippingTotal, currency) : "Gratis"}</span>
-        </div>
-        <div className="admin-order-totals-row admin-order-totals-row--grand">
-          <span>Te betalen</span>
-          <span>{formatProductPrice(previewGrand, currency)}</span>
-        </div>
+      {error ? <div className="admin-error-box">{error}</div> : null}
+
+      <div className={`admin-panel admin-table-wrap admin-products-table${editing ? " admin-table-wrap--suggest" : ""}`}>
+        <table className="admin-table">
+          <thead>
+            <tr>
+              <th scope="col" className="admin-th-thumb">
+                <span className="admin-sr-only">Foto</span>
+              </th>
+              <th scope="col">Naam</th>
+              <th scope="col">SKU</th>
+              <th className="admin-td-right" scope="col">
+                Aantal
+              </th>
+              <th className="admin-td-right" scope="col">
+                Prijs
+              </th>
+              <th className="admin-td-right" scope="col">
+                Totaal
+              </th>
+              {editing ? <th scope="col" aria-label="Acties" /> : null}
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row) => {
+              const line = lineTotal(row);
+              const qty = Number(row.quantity);
+              const price = Number(row.unit_price);
+              const nameLabel = row.name || "Naamloos product";
+              const nameNode =
+                row.product_id != null ? (
+                  <Link
+                    href={`/admin/products/${row.product_id}`}
+                    className="admin-table-product-name"
+                    {...(editing ? { target: "_blank", rel: "noreferrer" } : {})}
+                  >
+                    {nameLabel}
+                  </Link>
+                ) : editing && row.kind === "custom" ? null : (
+                  <span className="admin-table-product-name">{nameLabel}</span>
+                );
+
+              return (
+                <tr key={row.key}>
+                  <td className="admin-thumb-cell">
+                    <div className="admin-thumb-wrap">
+                      {row.image ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={row.image} alt="" className="admin-thumb" loading="lazy" decoding="async" />
+                      ) : null}
+                    </div>
+                  </td>
+                  <td>
+                    <div className="admin-table-product">
+                      {editing && row.kind === "custom" ? (
+                        <input
+                          className="admin-field admin-field--flush"
+                          value={row.name}
+                          onChange={(e) => updateRow(row.key, { name: e.target.value })}
+                          aria-label="Omschrijving"
+                          placeholder="Bijv. montagekosten"
+                        />
+                      ) : (
+                        nameNode
+                      )}
+                      {row.kind === "unlinked" ? <span className="admin-badge-concept">Niet gekoppeld</span> : null}
+                      {row.kind === "custom" ? <span className="admin-badge-concept">Aangepast</span> : null}
+                      {row.variation_label || (editing && row.kind === "product") ? (
+                        editing ? (
+                          <input
+                            className="admin-field admin-field--flush"
+                            value={row.variation_label}
+                            onChange={(e) => updateRow(row.key, { variation_label: e.target.value })}
+                            aria-label="Variant"
+                            placeholder="Variant (optioneel)"
+                          />
+                        ) : (
+                          <span className="admin-muted">{row.variation_label}</span>
+                        )
+                      ) : null}
+                      {editing && row.kind === "unlinked" ? (
+                        <AdminProductTypeahead
+                          placeholder="Koppel product…"
+                          disabled={busy}
+                          currency={currency}
+                          onPick={(hit) => linkProduct(row.key, hit)}
+                        />
+                      ) : null}
+                    </div>
+                  </td>
+                  <td className="admin-td-mono">{row.sku || "—"}</td>
+                  <td className="admin-td-right">
+                    {editing ? (
+                      <input
+                        className="admin-field admin-field--flush admin-table-num"
+                        type="number"
+                        min={1}
+                        step={1}
+                        value={row.quantity}
+                        onChange={(e) => updateRow(row.key, { quantity: e.target.value })}
+                        aria-label="Aantal"
+                      />
+                    ) : (
+                      <span className="admin-td-mono">{Number.isFinite(qty) ? qty : row.quantity}</span>
+                    )}
+                  </td>
+                  <td className="admin-td-right">
+                    {editing ? (
+                      <AdminMoneyInput
+                        className="admin-field admin-field--flush admin-table-num"
+                        value={row.unit_price}
+                        onChange={(unit_price) => updateRow(row.key, { unit_price })}
+                        aria-label="Stukprijs"
+                      />
+                    ) : (
+                      <span className="admin-td-mono">
+                        {formatProductPrice(Number.isFinite(price) ? price : 0, currency)}
+                      </span>
+                    )}
+                  </td>
+                  <td className="admin-td-right admin-td-mono">{formatProductPrice(line, currency)}</td>
+                  {editing ? (
+                    <td className="admin-td-right">
+                      <button
+                        type="button"
+                        className="admin-link-action"
+                        disabled={busy || rows.length <= 1}
+                        onClick={() => setRows((prev) => prev.filter((item) => item.key !== row.key))}
+                      >
+                        Weg
+                      </button>
+                    </td>
+                  ) : null}
+                </tr>
+              );
+            })}
+          </tbody>
+          <tfoot>
+            <tr>
+              <td colSpan={4} />
+              <td className="admin-td-right">Subtotaal</td>
+              <td className="admin-td-right admin-td-mono">{formatProductPrice(previewSubtotal, currency)}</td>
+              {editing ? <td /> : null}
+            </tr>
+            {discountTotal > 0.005 ? (
+              <tr>
+                <td colSpan={4} />
+                <td className="admin-td-right">Korting{couponCode ? ` · ${couponCode}` : ""}</td>
+                <td className="admin-td-right admin-td-mono">−{formatProductPrice(discountTotal, currency)}</td>
+                {editing ? <td /> : null}
+              </tr>
+            ) : null}
+            <tr>
+              <td colSpan={4} />
+              <td className="admin-td-right">Verzending{shippingLabel ? ` · ${shippingLabel}` : ""}</td>
+              <td className="admin-td-right admin-td-mono">
+                {shippingTotal > 0.004 ? formatProductPrice(shippingTotal, currency) : "Gratis"}
+              </td>
+              {editing ? <td /> : null}
+            </tr>
+            <tr className="admin-table-total">
+              <td colSpan={4} />
+              <td className="admin-td-right">Te betalen</td>
+              <td className="admin-td-right admin-td-mono">{formatProductPrice(previewGrand, currency)}</td>
+              {editing ? <td /> : null}
+            </tr>
+          </tfoot>
+        </table>
       </div>
-    </section>
+    </div>
   );
 }

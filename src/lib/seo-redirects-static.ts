@@ -207,7 +207,7 @@ export function matchStaticSeoRedirect(pathname: string): string | null {
     return `/product/${shopProduct[1]}`;
   }
 
-  const brand = path.match(/^\/brand\/[^/]+$/);
+  const brand = path.match(/^\/brand\/[^/.]+$/);
   if (brand) return "/merken";
 
   const blog = path.match(/^\/(?:blog|nieuws|news)\/([^/]+)$/);
@@ -260,7 +260,7 @@ export function nextConfigSeoRedirects(): Array<{
     { source: "/winkel/product/:slug", destination: "/product/:slug", statusCode: 301 },
     { source: "/nl/blog/:slug", destination: "/nieuws/:slug", statusCode: 301 },
     { source: "/blog/:slug", destination: "/nieuws/:slug", statusCode: 301 },
-    { source: "/brand/:slug", destination: "/merken", statusCode: 301 },
+    { source: "/brand/:slug([^/.]+)", destination: "/merken", statusCode: 301 },
     { source: "/winkel/:path*", destination: "/shop", statusCode: 301 },
     { source: "/my-account/:path*", destination: "/account", statusCode: 301 },
     { source: "/mijn-account/:path*", destination: "/account", statusCode: 301 },

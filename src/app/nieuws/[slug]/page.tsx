@@ -4,7 +4,6 @@ import { notFound } from "next/navigation";
 
 import Footer from "@/components/layout/Footer";
 import Header from "@/components/layout/Header";
-import TrustBar from "@/components/layout/TrustBar";
 import NewsCard from "@/components/news/NewsCard";
 import ContentCtaCard from "@/components/site/ContentCtaCard";
 import { loadNewsPostBySlug, loadNewsPosts } from "@/lib/news-db";
@@ -62,7 +61,6 @@ export default async function NieuwsArticlePage({ params }: Props) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(newsArticleJsonLd(post)) }}
       />
-      <TrustBar />
       <Header />
       <div className="mx-auto w-full max-w-[1440px] px-4 py-8 md:py-12 lg:px-6">
         <div className="grid items-start gap-10 lg:grid-cols-[minmax(0,1fr)_21rem] lg:gap-14">
@@ -97,7 +95,7 @@ export default async function NieuwsArticlePage({ params }: Props) {
             />
           </article>
 
-          <aside className="space-y-4 lg:sticky lg:top-24">
+          <aside className="space-y-4 lg:sticky lg:top-28">
             <ContentCtaCard />
           </aside>
         </div>

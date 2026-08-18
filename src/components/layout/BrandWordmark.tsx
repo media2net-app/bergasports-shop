@@ -28,8 +28,8 @@ export default function BrandWordmark({ className = "", compact = false }: Props
         width={SITE_LOGO_WIDTH}
         height={SITE_LOGO_HEIGHT}
         priority
-        className={`w-auto object-contain object-left transition group-hover:opacity-90 ${
-          compact ? "h-7 max-w-[200px]" : "h-8 max-w-[240px] md:h-9 md:max-w-[280px]"
+        className={`w-auto object-contain object-center transition group-hover:opacity-90 ${
+          compact ? "h-6 max-w-[160px]" : "h-7 max-w-[200px] md:h-8 md:max-w-[220px]"
         }`}
       />
     </LocalizedLink>

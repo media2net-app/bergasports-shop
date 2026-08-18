@@ -17,8 +17,8 @@ export default function HeaderIconButton({ label, children, badge, className = "
       {...props}
     >
       {children}
-      {badge != null ? (
-        <span className="absolute -right-0.5 -bottom-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-[var(--brand-mid)] px-1 text-[10px] font-bold leading-none text-[#1a1a1a]">
+      {badge != null && badge > 0 ? (
+        <span className="absolute -right-0.5 -top-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-[var(--brand-mid)] px-1 text-[10px] font-bold leading-none text-[#1a1a1a]">
           {badge > 99 ? "99+" : badge}
         </span>
       ) : null}
@@ -46,8 +46,8 @@ export function HeaderIconLink({
       aria-label={label}
     >
       {children}
-      {badge != null ? (
-        <span className="absolute -right-0.5 -bottom-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-[var(--brand-mid)] px-1 text-[10px] font-bold leading-none text-[#1a1a1a]">
+      {badge != null && badge > 0 ? (
+        <span className="absolute -right-0.5 -top-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-[var(--brand-mid)] px-1 text-[10px] font-bold leading-none text-[#1a1a1a]">
           {badge > 99 ? "99+" : badge}
         </span>
       ) : null}

@@ -1,7 +1,6 @@
 import LocalizedLink from "@/components/locale/LocalizedLink";
 import Footer from "@/components/layout/Footer";
 import Header from "@/components/layout/Header";
-import TrustBar from "@/components/layout/TrustBar";
 import ShopProductCard from "@/components/shop/ShopProductCard";
 import ShopSidebar from "@/components/shop/ShopSidebar";
 import ShopToolbar from "@/components/shop/ShopToolbar";
@@ -199,12 +198,11 @@ export default async function ShopListingPage({ pathCategorySlug, searchParams }
 
   return (
     <main className="min-h-screen bg-[#faf8f5]">
-      <TrustBar />
       <Header />
 
-      <section className="mx-auto w-full max-w-[1440px] px-4 py-6 md:py-10">
+      <section className="mx-auto w-full max-w-[1440px] px-4 py-6 md:py-10 lg:px-6">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-          <h1 className="font-[family-name:var(--font-heading)] text-3xl font-semibold text-[var(--foreground)] md:text-4xl">
+          <h1 className="font-[family-name:var(--font-heading)] text-2xl font-semibold tracking-tight text-[var(--foreground)] md:text-3xl">
             {heading}
           </h1>
           {(categorySlug || catResolved.unknownCategory) && (
@@ -274,7 +272,7 @@ export default async function ShopListingPage({ pathCategorySlug, searchParams }
         ) : null}
 
         <div className="mt-6 flex flex-col gap-6 lg:flex-row lg:items-start">
-          <aside className="shrink-0 lg:sticky lg:top-24 lg:z-20 lg:w-72 lg:max-h-[calc(100vh-6.5rem)] lg:self-start lg:overflow-y-auto lg:overscroll-contain lg:pr-1">
+          <aside className="shrink-0 lg:sticky lg:top-28 lg:z-20 lg:w-64 lg:max-h-[calc(100vh-8rem)] lg:self-start lg:overflow-y-auto lg:overscroll-contain lg:pr-1">
             <ShopSidebar
               activeCategorySlug={categorySlug}
               selectedColors={colorIds}

@@ -3,7 +3,6 @@ import { notFound, permanentRedirect } from "next/navigation";
 
 import Footer from "@/components/layout/Footer";
 import Header from "@/components/layout/Header";
-import TrustBar from "@/components/layout/TrustBar";
 import ShopListingPage, { type ShopListingSearchParams } from "@/components/shop/ShopListingPage";
 import CmsPageView from "@/components/site/CmsPageView";
 import { buildCategorySeoContent } from "@/lib/category-seo";
@@ -162,7 +161,6 @@ export default async function SlugPage({ params, searchParams }: PageProps) {
 
   return (
     <main className="min-h-screen bg-[#faf8f5]/40">
-      <TrustBar />
       <Header />
       <CmsPageView
         page={{

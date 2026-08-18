@@ -16,6 +16,8 @@ const footerLink =
 const footerHeading =
   "text-sm font-semibold uppercase tracking-wide text-[var(--topbar-foreground)] after:mt-2 after:block after:h-[2px] after:w-8 after:rounded-full after:bg-gradient-to-r after:from-[var(--brand)] after:to-[var(--brand-mid)]";
 
+const legalLink = "transition-colors hover:text-[var(--brand-mid)]";
+
 export default async function Footer() {
   const [contact, hours, instagramUrl] = await Promise.all([
     getShopPublicContact().catch(() => ({
@@ -38,7 +40,7 @@ export default async function Footer() {
         className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[var(--brand)] to-transparent"
         aria-hidden
       />
-      <div className="mx-auto grid w-full max-w-[1440px] gap-8 px-4 py-12 md:grid-cols-4">
+      <div className="mx-auto grid w-full max-w-[1440px] gap-10 px-4 py-12 md:grid-cols-2 lg:grid-cols-4 lg:px-6">
         <div>
           <h3 className="font-[family-name:var(--font-heading)] text-xl font-semibold text-[var(--topbar-foreground)]">
             {SITE_BRAND_NAME}
@@ -49,18 +51,41 @@ export default async function Footer() {
           <p className="mt-3 text-sm leading-relaxed text-[var(--topbar-muted)]">{SITE_TAGLINE}</p>
         </div>
         <div>
-          <h4 className={footerHeading}>
-            Klantenservice
-          </h4>
+          <h4 className={footerHeading}>Winkel</h4>
           <ul className="mt-3 space-y-2 text-sm">
             <li>
-              <LocalizedLink href="/over-ons" className={footerLink}>
-                Over ons
+              <LocalizedLink href="/shop" className={footerLink}>
+                Webshop
               </LocalizedLink>
             </li>
             <li>
               <LocalizedLink href="/merken" className={footerLink}>
                 Merken
+              </LocalizedLink>
+            </li>
+            <li>
+              <LocalizedLink href="/nieuws" className={footerLink}>
+                Nieuws
+              </LocalizedLink>
+            </li>
+            <li>
+              <LocalizedLink href="/verzending" className={footerLink}>
+                Verzending
+              </LocalizedLink>
+            </li>
+            <li>
+              <LocalizedLink href="/retouren" className={footerLink}>
+                Retouren
+              </LocalizedLink>
+            </li>
+          </ul>
+        </div>
+        <div>
+          <h4 className={footerHeading}>Bergasports</h4>
+          <ul className="mt-3 space-y-2 text-sm">
+            <li>
+              <LocalizedLink href="/over-ons" className={footerLink}>
+                Over ons
               </LocalizedLink>
             </li>
             <li>
@@ -79,71 +104,14 @@ export default async function Footer() {
               </LocalizedLink>
             </li>
             <li>
-              <LocalizedLink href="/verzending" className={footerLink}>
-                Verzending
-              </LocalizedLink>
-            </li>
-            <li>
-              <LocalizedLink href="/retouren" className={footerLink}>
-                Retouren
-              </LocalizedLink>
-            </li>
-            <li>
-              <LocalizedLink href="/nieuws" className={footerLink}>
-                Nieuws
-              </LocalizedLink>
-            </li>
-            <li>
-              <a
-                href={instagramUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={footerLink}
-              >
+              <a href={instagramUrl} target="_blank" rel="noopener noreferrer" className={footerLink}>
                 Instagram
               </a>
             </li>
           </ul>
         </div>
         <div>
-          <h4 className={footerHeading}>
-            Juridisch
-          </h4>
-          <ul className="mt-3 space-y-2 text-sm">
-            <li>
-              <LocalizedLink href={LEGAL_PAGE_PATHS.terms} className={footerLink}>
-                Algemene voorwaarden
-              </LocalizedLink>
-            </li>
-            <li>
-              <LocalizedLink href={LEGAL_PAGE_PATHS.privacy} className={footerLink}>
-                Privacybeleid (AVG)
-              </LocalizedLink>
-            </li>
-            <li>
-              <LocalizedLink href={LEGAL_PAGE_PATHS.cookies} className={footerLink}>
-                Cookiebeleid
-              </LocalizedLink>
-            </li>
-            <li>
-              <CookiePreferencesLink className={footerLink} />
-            </li>
-            <li>
-              <a href={CONSUWIJZER_URL} target="_blank" rel="noopener noreferrer" className={footerLink}>
-                Consuwijzer
-              </a>
-            </li>
-            <li>
-              <a href={EU_ODR_URL} target="_blank" rel="noopener noreferrer" className={footerLink}>
-                Online geschillen (EU)
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div>
-          <h4 className={footerHeading}>
-            Contact
-          </h4>
+          <h4 className={footerHeading}>Contact</h4>
           <ul className="mt-3 space-y-2 text-sm">
             <li>
               <a href={`mailto:${contact.email}`} className={footerLink}>
@@ -187,9 +155,41 @@ export default async function Footer() {
         </div>
       </div>
       <div className="border-t border-white/10">
-        <p className="mx-auto max-w-[1440px] px-4 py-4 text-center text-xs text-[var(--topbar-muted)]">
-          © {new Date().getFullYear()} {SITE_BRAND_SHORT} · Dedemsvaart
-        </p>
+        <div className="mx-auto flex max-w-[1440px] flex-col items-center gap-3 px-4 py-4 text-xs text-[var(--topbar-muted)] lg:px-6 sm:flex-row sm:flex-wrap sm:justify-between">
+          <p>
+            © {new Date().getFullYear()} {SITE_BRAND_SHORT} · Dedemsvaart
+          </p>
+          <ul className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1">
+            <li>
+              <LocalizedLink href={LEGAL_PAGE_PATHS.terms} className={legalLink}>
+                Voorwaarden
+              </LocalizedLink>
+            </li>
+            <li>
+              <LocalizedLink href={LEGAL_PAGE_PATHS.privacy} className={legalLink}>
+                Privacy
+              </LocalizedLink>
+            </li>
+            <li>
+              <LocalizedLink href={LEGAL_PAGE_PATHS.cookies} className={legalLink}>
+                Cookies
+              </LocalizedLink>
+            </li>
+            <li>
+              <CookiePreferencesLink className={legalLink} />
+            </li>
+            <li>
+              <a href={CONSUWIJZER_URL} target="_blank" rel="noopener noreferrer" className={legalLink}>
+                Consuwijzer
+              </a>
+            </li>
+            <li>
+              <a href={EU_ODR_URL} target="_blank" rel="noopener noreferrer" className={legalLink}>
+                EU-geschillen
+              </a>
+            </li>
+          </ul>
+        </div>
       </div>
     </footer>
   );

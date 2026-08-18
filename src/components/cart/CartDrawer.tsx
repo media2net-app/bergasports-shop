@@ -305,7 +305,7 @@ export default function CartDrawer({
 
   return (
     <div
-      className={`fixed inset-0 z-50 transition-opacity duration-300 ${
+      className={`fixed inset-0 z-[80] transition-opacity duration-300 ${
         isOpen ? "pointer-events-auto bg-black/45 opacity-100" : "pointer-events-none bg-black/0 opacity-0"
       }`}
       onClick={onClose}
@@ -396,7 +396,7 @@ export default function CartDrawer({
               </p>
               <div className="mt-6 flex w-full max-w-xs flex-col gap-2.5">
                 <LocalizedLink href="/shop" className={btnGold} onClick={onClose}>
-                  Naar de shop
+                  Naar de webshop
                 </LocalizedLink>
                 <LocalizedLink href="/fietsen" className={btnGhost} onClick={onClose}>
                   Bekijk fietsen

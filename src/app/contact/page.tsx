@@ -3,7 +3,6 @@ import { notFound } from "next/navigation";
 
 import Footer from "@/components/layout/Footer";
 import Header from "@/components/layout/Header";
-import TrustBar from "@/components/layout/TrustBar";
 import CmsPageView from "@/components/site/CmsPageView";
 import ContactLeadForm from "@/components/site/ContactLeadForm";
 import GoogleReviewsCard from "@/components/site/GoogleReviewsCard";
@@ -70,7 +69,6 @@ export default async function ContactPage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(localBusinessJsonLd(hours, instagramUrl, googleRating)) }}
       />
-      <TrustBar />
       <Header />
       <CmsPageView
         page={{ ...source, body_html: bodyWithPhone }}

@@ -1,6 +1,6 @@
 import "server-only";
 
-import { resolveSiteEmailLogoUrl, SITE_EMAIL } from "@/lib/site-brand";
+import { resolveSiteEmailLogoUrl, SITE_EMAIL, usableEmailLogoUrl } from "@/lib/site-brand";
 import {
   SHOP_PHONE_LABEL,
   SITE_ADDRESS,
@@ -54,7 +54,7 @@ export async function getShopOpeningHours() {
 
 export async function getEmailLogoUrlSetting(): Promise<string> {
   const fromSettings = (await getRuntimeSetting("NEXT_PUBLIC_EMAIL_LOGO_URL")).trim();
-  return fromSettings || resolveSiteEmailLogoUrl();
+  return usableEmailLogoUrl(fromSettings) || resolveSiteEmailLogoUrl();
 }
 
 export async function getWinBackEmailSettings(): Promise<{ code: string; expiryDays: number }> {

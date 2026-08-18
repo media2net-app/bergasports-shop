@@ -4,19 +4,21 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+import { PRODUCT_STATUS_LABEL } from "@/lib/product-status";
 import { stockStateLabel, type StockState } from "@/lib/stock";
 
 export type AdminProductListRow = {
   id: number;
-  catalogLabel: string;
   displayName: string;
+  sku: string;
   category: string;
+  brand: string;
   priceLabel: string;
   stockLabel: string;
   stockState: StockState;
   thumbUrl: string;
   featuredOnHomepage?: boolean;
-  productStatus?: "published" | "concept";
+  productStatus: "published" | "concept";
 };
 
 const STOCK_STATE_CLASS: Record<StockState, string> = {
@@ -31,6 +33,17 @@ type Props = {
   exportHref: string;
   canWrite: boolean;
 };
+
+function StatusBadge({ status }: { status: "published" | "concept" }) {
+  if (status === "published") {
+    return <span className="admin-badge-published">{PRODUCT_STATUS_LABEL.published}</span>;
+  }
+  return <span className="admin-badge-concept">{PRODUCT_STATUS_LABEL.concept}</span>;
+}
+
+function stockDisplay(row: AdminProductListRow) {
+  return row.stockLabel === "—" ? stockStateLabel(row.stockState) : row.stockLabel;
+}
 
 export default function AdminProductsInteractiveList({ rows, exportHref, canWrite }: Props) {
   const router = useRouter();
@@ -132,7 +145,7 @@ export default function AdminProductsInteractiveList({ rows, exportHref, canWrit
       {bulkError ? <p className="admin-error-box admin-m-0">{bulkError}</p> : null}
 
       <div className="admin-table-desktop-wrap">
-        <div className="admin-table-wrap">
+        <div className="admin-panel admin-table-wrap admin-products-table">
           <table className="admin-table">
             <thead>
               <tr>
@@ -146,73 +159,92 @@ export default function AdminProductsInteractiveList({ rows, exportHref, canWrit
                     aria-label="Alles op deze pagina selecteren"
                   />
                 </th>
-                <th scope="col">Foto</th>
-                <th scope="col">ID</th>
-                <th scope="col">Catalogus</th>
+                <th scope="col" className="admin-th-thumb">
+                  <span className="admin-sr-only">Foto</span>
+                </th>
                 <th scope="col">Naam</th>
-                <th scope="col">Prijs</th>
+                <th scope="col">SKU</th>
+                <th className="admin-td-right" scope="col">
+                  Prijs
+                </th>
                 <th scope="col">Voorraad</th>
                 <th scope="col">Categorie</th>
+                <th scope="col">Status</th>
+                <th scope="col">Merk</th>
                 <th className="admin-td-right" scope="col" aria-label="Acties" />
               </tr>
             </thead>
             <tbody>
-              {rows.map((p) => (
-                <tr
-                  key={p.id}
-                  className="admin-table-row-click"
-                  onClick={() => router.push(`/admin/products/${p.id}`)}
-                  title="Klik om te bewerken"
-                >
-                  <td className="admin-td-checkbox" onClick={(e) => e.stopPropagation()}>
-                    <input
-                      type="checkbox"
-                      className="admin-checkbox"
-                      checked={selected.has(p.id)}
-                      onChange={() => toggleRow(p.id)}
-                      aria-label={`Product ${p.id} selecteren`}
-                    />
-                  </td>
-                  <td className="admin-thumb-cell">
-                    <div className="admin-thumb-wrap">
-                      {p.thumbUrl ? (
-                        <img src={p.thumbUrl} alt="" className="admin-thumb" loading="lazy" decoding="async" />
-                      ) : null}
-                    </div>
-                  </td>
-                  <td className="admin-td-mono">{p.id}</td>
-                  <td>
-                    <span className="admin-badge-src">{p.catalogLabel}</span>
-                  </td>
-                  <td className="admin-td-truncate" title={p.displayName}>
-                    {p.displayName}
-                    {p.productStatus === "concept" ? (
-                      <span className="admin-badge-concept">Concept</span>
-                    ) : null}
-                    {p.featuredOnHomepage ? (
-                      <span className="admin-badge-homepage">Homepage</span>
-                    ) : null}
-                  </td>
-                  <td className="admin-td-mono">{p.priceLabel}</td>
-                  <td>
-                    <span className={STOCK_STATE_CLASS[p.stockState]} title={stockStateLabel(p.stockState)}>
-                      {p.stockLabel === "—" ? stockStateLabel(p.stockState) : p.stockLabel}
-                    </span>
-                  </td>
-                  <td className="admin-td-truncate" title={p.category}>
-                    {p.category}
-                  </td>
-                  <td className="admin-td-right" onClick={(e) => e.stopPropagation()}>
-                    <Link
-                      href={`/admin/products/${p.id}`}
-                      className="admin-link-action"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      Bewerken
-                    </Link>
+              {rows.length === 0 ? (
+                <tr>
+                  <td colSpan={10} className="admin-muted">
+                    Geen producten gevonden.
                   </td>
                 </tr>
-              ))}
+              ) : (
+                rows.map((p) => (
+                  <tr
+                    key={p.id}
+                    className="admin-table-row-click"
+                    onClick={() => router.push(`/admin/products/${p.id}`)}
+                    title="Klik om te bewerken"
+                  >
+                    <td className="admin-td-checkbox" onClick={(e) => e.stopPropagation()}>
+                      <input
+                        type="checkbox"
+                        className="admin-checkbox"
+                        checked={selected.has(p.id)}
+                        onChange={() => toggleRow(p.id)}
+                        aria-label={`Product ${p.displayName} selecteren`}
+                      />
+                    </td>
+                    <td className="admin-thumb-cell">
+                      <div className="admin-thumb-wrap">
+                        {p.thumbUrl ? (
+                          <img src={p.thumbUrl} alt="" className="admin-thumb" loading="lazy" decoding="async" />
+                        ) : null}
+                      </div>
+                    </td>
+                    <td>
+                      <div className="admin-table-product">
+                        <span className="admin-table-product-name" title={p.displayName}>
+                          {p.displayName}
+                        </span>
+                        {p.featuredOnHomepage ? (
+                          <span className="admin-badge-homepage">Homepage</span>
+                        ) : null}
+                      </div>
+                    </td>
+                    <td className="admin-td-mono" title={p.sku || undefined}>
+                      {p.sku || "—"}
+                    </td>
+                    <td className="admin-td-right admin-td-mono">{p.priceLabel}</td>
+                    <td>
+                      <span className={STOCK_STATE_CLASS[p.stockState]} title={stockStateLabel(p.stockState)}>
+                        {stockDisplay(p)}
+                      </span>
+                    </td>
+                    <td className="admin-td-truncate" title={p.category}>
+                      {p.category || "—"}
+                    </td>
+                    <td>
+                      <StatusBadge status={p.productStatus} />
+                    </td>
+                    <td className="admin-td-truncate" title={p.brand}>
+                      {p.brand || "—"}
+                    </td>
+                    <td className="admin-td-right" onClick={(e) => e.stopPropagation()}>
+                      <Link
+                        href={`/admin/products/${p.id}`}
+                        className="admin-link-action"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        Bewerken
+                      </Link>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
@@ -248,7 +280,7 @@ export default function AdminProductsInteractiveList({ rows, exportHref, canWrit
               checked={selected.has(p.id)}
               onChange={() => toggleRow(p.id)}
               onClick={(e) => e.stopPropagation()}
-              aria-label={`Product ${p.id} selecteren`}
+              aria-label={`Product ${p.displayName} selecteren`}
             />
             <div className="admin-product-card">
               <div className="admin-thumb-wrap">
@@ -259,17 +291,18 @@ export default function AdminProductsInteractiveList({ rows, exportHref, canWrit
               <div className="min-w-0">
                 <div className="admin-product-card-title">
                   {p.displayName}
-                  {p.productStatus === "concept" ? (
-                    <span className="admin-badge-concept">Concept</span>
-                  ) : null}
+                  {p.featuredOnHomepage ? <span className="admin-badge-homepage">Homepage</span> : null}
                 </div>
                 <div className="admin-product-card-meta">
-                  {p.catalogLabel}
-                  {p.category ? ` · ${p.category}` : ""} · {p.priceLabel} ·{" "}
-                  {p.stockLabel === "—" ? stockStateLabel(p.stockState) : `${p.stockLabel} op voorraad`}
+                  {[p.sku || null, p.priceLabel, stockDisplay(p), p.category || null, p.brand || null]
+                    .filter(Boolean)
+                    .join(" · ")}
+                </div>
+                <div className="admin-product-card-status">
+                  <StatusBadge status={p.productStatus} />
                 </div>
               </div>
-              <span className="admin-link-action">→</span>
+              <span className="admin-link-action">Bewerken</span>
             </div>
           </div>
         ))}

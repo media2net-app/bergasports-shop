@@ -3,7 +3,6 @@ import Link from "next/link";
 
 import Footer from "@/components/layout/Footer";
 import Header from "@/components/layout/Header";
-import TrustBar from "@/components/layout/TrustBar";
 import { getMolliePayment } from "@/lib/mollie";
 import { getOrderByNumber, markMollieOrderPaid } from "@/lib/orders-db";
 import { formatProductPrice } from "@/lib/products";
@@ -45,7 +44,6 @@ export default async function CheckoutReturnPage({ searchParams }: PageProps) {
 
   return (
     <main className="min-h-screen bg-[#faf8f5]">
-      <TrustBar />
       <Header />
       <section className="mx-auto w-full max-w-lg px-4 py-12 md:py-16">
         {!order ? (

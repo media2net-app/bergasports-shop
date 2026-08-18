@@ -2,7 +2,6 @@ import LocalizedLink from "@/components/locale/LocalizedLink";
 
 import Footer from "@/components/layout/Footer";
 import Header from "@/components/layout/Header";
-import TrustBar from "@/components/layout/TrustBar";
 import RalexCategoryTree from "@/components/shop/RalexCategoryTree";
 import { loadRalexCategories } from "@/lib/categories-db";
 
@@ -19,7 +18,6 @@ export default async function CategoriiPage() {
 
   return (
     <main className="min-h-screen bg-[#faf8f5]">
-      <TrustBar />
       <Header />
 
       <section className="mx-auto w-full max-w-[1440px] px-4 py-6 md:py-10">

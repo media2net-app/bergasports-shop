@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 
 import Footer from "@/components/layout/Footer";
 import Header from "@/components/layout/Header";
-import TrustBar from "@/components/layout/TrustBar";
 import ContentPageLayout from "@/components/site/ContentPageLayout";
 import { buildPageMetadata } from "@/lib/seo";
 
@@ -28,7 +27,6 @@ const BODY = `
 export default function RetourenPage() {
   return (
     <main className="min-h-screen bg-[#faf8f5]/40">
-      <TrustBar />
       <Header />
       <ContentPageLayout path="/retouren" heading="Retourneren" bodyHtml={BODY} showCtas />
       <Footer />

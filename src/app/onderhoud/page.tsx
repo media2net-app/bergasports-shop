@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 
 import Footer from "@/components/layout/Footer";
 import Header from "@/components/layout/Header";
-import TrustBar from "@/components/layout/TrustBar";
 import CmsPageView from "@/components/site/CmsPageView";
 import ContactLeadForm from "@/components/site/ContactLeadForm";
 import { getSitePageSeedByPath } from "@/lib/legal-site-pages-content";
@@ -45,7 +44,6 @@ export default async function OnderhoudPage() {
 
   return (
     <main className="min-h-screen bg-[#faf8f5]/40">
-      <TrustBar />
       <Header />
       <CmsPageView page={view} aside={<ContactLeadForm kind="appointment" hours={hours} />} />
       <Footer />

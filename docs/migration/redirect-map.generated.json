@@ -1017,7 +1017,7 @@
       "kind": "static"
     },
     {
-      "source": "/brand/:slug",
+      "source": "/brand/:slug([^/.]+)",
       "destination": "/merken",
       "statusCode": 301,
       "kind": "static"

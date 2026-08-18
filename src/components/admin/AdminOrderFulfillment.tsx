@@ -19,6 +19,7 @@ import {
   paymentMethodLabel,
   paymentOpsStatus,
   paymentStatusLabel,
+  paymentStatusTone,
   type OrderBillingAddress,
   type OrderStatus,
   type OrderWithItems,
@@ -327,14 +328,8 @@ export default function AdminOrderFulfillment({
     setBusy(false);
   }
 
-  const paymentFact = [
-    paymentStatusLabel(order.payment_status),
-    paymentMethodLabel(order.payment_method),
-    formatProductPrice(order.total, order.currency),
-  ].join(" · ");
-
   return (
-    <aside className="admin-order-side">
+    <aside className="admin-product-editor-side" aria-label="Bestelling">
       {error ? <div className="admin-error-box">{error}</div> : null}
       {notice ? (
         <div className="admin-banner ok admin-m-0" role="status">
@@ -342,111 +337,105 @@ export default function AdminOrderFulfillment({
         </div>
       ) : null}
 
-      <section className="admin-order-block">
-        <div className="admin-order-block-head">
-          <p className="admin-order-label">Klant</p>
+      <section className="admin-panel admin-stack-tight">
+        <div className="admin-page-head">
+          <h2 className="admin-h2 admin-m-0">Klant</h2>
           {editingCustomer ? (
-            <button type="button" className="admin-order-text-btn" disabled={busy} onClick={cancelCustomerEdit}>
+            <button type="button" className="admin-link-action" disabled={busy} onClick={cancelCustomerEdit}>
               Annuleren
             </button>
           ) : (
-            <button type="button" className="admin-order-text-btn" onClick={() => setEditingCustomer(true)}>
-              Adressen bewerken
+            <button type="button" className="admin-link-action" onClick={() => setEditingCustomer(true)}>
+              Bewerken
             </button>
           )}
         </div>
 
         {editingCustomer ? (
-          <div className="admin-order-edit">
-            <label className="admin-order-field">
+          <>
+            <label className="admin-label">
               Naam
-              <input className="admin-order-input" value={customerName} onChange={(e) => setCustomerName(e.target.value)} />
+              <input className="admin-field admin-field--flush" value={customerName} onChange={(e) => setCustomerName(e.target.value)} />
             </label>
-            <label className="admin-order-field">
+            <label className="admin-label">
               E-mail
-              <input className="admin-order-input" value={customerEmail} onChange={(e) => setCustomerEmail(e.target.value)} />
+              <input className="admin-field admin-field--flush" value={customerEmail} onChange={(e) => setCustomerEmail(e.target.value)} />
             </label>
-            <label className="admin-order-field">
+            <label className="admin-label">
               Telefoon
-              <input className="admin-order-input" value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} />
+              <input className="admin-field admin-field--flush" value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} />
             </label>
-            <p className="admin-order-addr-kicker">Factuuradres</p>
-            <label className="admin-order-field">
+            <p className="admin-pill-row-label">Factuuradres</p>
+            <label className="admin-label">
               Adres
-              <input className="admin-order-input" value={billAddress} onChange={(e) => setBillAddress(e.target.value)} />
+              <input className="admin-field admin-field--flush" value={billAddress} onChange={(e) => setBillAddress(e.target.value)} />
             </label>
-            <div className="admin-order-edit-split">
-              <label className="admin-order-field">
+            <div className="admin-split">
+              <label className="admin-label">
                 Postcode
-                <input className="admin-order-input" value={billPostal} onChange={(e) => setBillPostal(e.target.value)} />
+                <input className="admin-field admin-field--flush" value={billPostal} onChange={(e) => setBillPostal(e.target.value)} />
               </label>
-              <label className="admin-order-field">
+              <label className="admin-label">
                 Plaats
-                <input className="admin-order-input" value={billCity} onChange={(e) => setBillCity(e.target.value)} />
+                <input className="admin-field admin-field--flush" value={billCity} onChange={(e) => setBillCity(e.target.value)} />
               </label>
             </div>
-            <label className="admin-order-field">
+            <label className="admin-label">
               Land / provincie
-              <input className="admin-order-input" value={billCounty} onChange={(e) => setBillCounty(e.target.value)} />
+              <input className="admin-field admin-field--flush" value={billCounty} onChange={(e) => setBillCounty(e.target.value)} />
             </label>
-            <p className="admin-order-addr-kicker">Verzendadres</p>
-            <label className="admin-order-field">
+            <p className="admin-pill-row-label">Verzendadres</p>
+            <label className="admin-label">
               Adres
-              <input className="admin-order-input" value={shipAddress} onChange={(e) => setShipAddress(e.target.value)} />
+              <input className="admin-field admin-field--flush" value={shipAddress} onChange={(e) => setShipAddress(e.target.value)} />
             </label>
-            <div className="admin-order-edit-split">
-              <label className="admin-order-field">
+            <div className="admin-split">
+              <label className="admin-label">
                 Postcode
-                <input className="admin-order-input" value={shipPostal} onChange={(e) => setShipPostal(e.target.value)} />
+                <input className="admin-field admin-field--flush" value={shipPostal} onChange={(e) => setShipPostal(e.target.value)} />
               </label>
-              <label className="admin-order-field">
+              <label className="admin-label">
                 Plaats
-                <input className="admin-order-input" value={shipCity} onChange={(e) => setShipCity(e.target.value)} />
+                <input className="admin-field admin-field--flush" value={shipCity} onChange={(e) => setShipCity(e.target.value)} />
               </label>
             </div>
-            <label className="admin-order-field">
+            <label className="admin-label">
               Land / provincie
-              <input className="admin-order-input" value={shipCounty} onChange={(e) => setShipCounty(e.target.value)} />
+              <input className="admin-field admin-field--flush" value={shipCounty} onChange={(e) => setShipCounty(e.target.value)} />
             </label>
-            <button type="button" className="admin-btn-primary" disabled={busy} onClick={() => void saveCustomer()}>
+            <button type="button" className="admin-btn-secondary" disabled={busy} onClick={() => void saveCustomer()}>
               {busy ? "Opslaan…" : "Opslaan"}
             </button>
-          </div>
+          </>
         ) : (
-          <div className="admin-order-block-body">
-            <p className="admin-order-customer">{order.customer_name}</p>
+          <div className="admin-table-customer">
+            <span className="admin-table-customer-name">{order.customer_name}</span>
             {order.customer_email ? (
-              <a className="admin-order-value-link" href={`mailto:${order.customer_email}`}>
-                {order.customer_email}
-              </a>
+              <a href={`mailto:${order.customer_email}`}>{order.customer_email}</a>
             ) : null}
             {order.customer_phone ? (
-              <a className="admin-order-value-link" href={`tel:${order.customer_phone}`}>
-                {order.customer_phone}
-              </a>
+              <a href={`tel:${order.customer_phone}`}>{order.customer_phone}</a>
             ) : null}
             {customerId ? (
-              <Link className="admin-order-value-link" href={`/admin/customers/${customerId}`}>
-                Klantkaart
-              </Link>
+              <Link href={`/admin/customers/${customerId}`}>Klantkaart</Link>
             ) : null}
             {showBilling ? (
               <>
-                <p className="admin-order-addr-kicker">Factuuradres</p>
+                <p className="admin-pill-row-label">Factuuradres</p>
                 {addressLines({
                   address: billing!.address,
                   postal_code: billing!.postal_code,
                   city: billing!.city,
                   county: billing!.county,
                 }).map((line) => (
-                  <p key={`b-${line}`} className="admin-order-value">
+                  <p key={`b-${line}`} className="admin-muted admin-m-0">
                     {line}
                   </p>
                 ))}
-                <p className="admin-order-addr-kicker">Verzendadres</p>
+                <p className="admin-pill-row-label">Verzendadres</p>
               </>
             ) : (
-              <p className="admin-order-addr-kicker">Adres</p>
+              <p className="admin-pill-row-label">Adres</p>
             )}
             {addressLines({
               address: order.shipping_address,
@@ -454,83 +443,109 @@ export default function AdminOrderFulfillment({
               city: order.shipping_city,
               county: order.shipping_county,
             }).map((line) => (
-              <p key={`s-${line}`} className="admin-order-value">
+              <p key={`s-${line}`} className="admin-muted admin-m-0">
                 {line}
               </p>
             ))}
           </div>
         )}
+
+        {customerNote ? (
+          <>
+            <p className="admin-pill-row-label">Klantopmerking</p>
+            <p className="admin-muted admin-m-0">{customerNote}</p>
+          </>
+        ) : (
+          <p className="admin-muted admin-m-0">Geen klantopmerking</p>
+        )}
+        <label className="admin-label">
+          Interne notitie
+          <textarea
+            className="admin-field admin-field--flush admin-field--tall"
+            value={staffNote}
+            onChange={(e) => setStaffNote(e.target.value)}
+          />
+        </label>
+        <button type="button" className="admin-link-action" disabled={busy} onClick={() => void saveInternalNote()}>
+          {busy ? "Opslaan…" : "Notitie opslaan"}
+        </button>
       </section>
 
-      <section className="admin-order-block">
-        <p className="admin-order-label">Bezorging</p>
-        <div className="admin-order-method" role="group" aria-label="Bezorgmethode">
-          <label>
-            <input
-              type="radio"
-              name="ship-method"
-              checked={!pickup}
-              disabled={busy}
-              onChange={() => void setMethod("standard")}
-            />
+      <section className="admin-panel admin-stack-tight">
+        <h2 className="admin-h2 admin-m-0">Bezorging</h2>
+        <div className="admin-pill-row" role="group" aria-label="Bezorgmethode">
+          <button
+            type="button"
+            className={`admin-pill${!pickup ? " active" : ""}`}
+            disabled={busy}
+            onClick={() => void setMethod("standard")}
+          >
             Verzenden
-          </label>
-          <label>
-            <input
-              type="radio"
-              name="ship-method"
-              checked={pickup}
-              disabled={busy}
-              onChange={() => void setMethod("pickup")}
-            />
-            Ophalen Dedemsvaart
-          </label>
+          </button>
+          <button
+            type="button"
+            className={`admin-pill${pickup ? " active" : ""}`}
+            disabled={busy}
+            onClick={() => void setMethod("pickup")}
+          >
+            Ophalen
+          </button>
         </div>
 
         {pickup ? (
-          <p className="admin-order-value">{pickupLocation}</p>
+          <p className="admin-muted admin-m-0">{pickupLocation}</p>
         ) : order.tracking_code || order.shipping_carrier ? (
-          <div className="admin-order-block-body">
-            {order.shipping_carrier ? <p className="admin-order-value">{order.shipping_carrier}</p> : null}
+          <>
+            {order.shipping_carrier ? <p className="admin-m-0">{order.shipping_carrier}</p> : null}
             {order.tracking_code ? (
-              <div className="admin-order-track">
+              <div className="admin-form-actions">
                 {order.tracking_url ? (
-                  <a href={order.tracking_url} target="_blank" rel="noreferrer" className="admin-order-track-code">
+                  <a href={order.tracking_url} target="_blank" rel="noreferrer" className="admin-td-mono">
                     {order.tracking_code}
                   </a>
                 ) : (
-                  <span className="admin-order-track-code">{order.tracking_code}</span>
+                  <span className="admin-td-mono">{order.tracking_code}</span>
                 )}
-                <button type="button" className="admin-order-text-btn" onClick={() => void copyTracking()}>
+                <button type="button" className="admin-link-action" onClick={() => void copyTracking()}>
                   {copied ? "Gekopieerd" : "Kopieer"}
                 </button>
                 {order.tracking_url ? (
-                  <a href={order.tracking_url} target="_blank" rel="noreferrer" className="admin-order-text-btn">
+                  <a href={order.tracking_url} target="_blank" rel="noreferrer" className="admin-link-action">
                     Volgen
                   </a>
                 ) : null}
               </div>
             ) : null}
-          </div>
+          </>
         ) : (
-          <p className="admin-order-value admin-order-value--mute">Nog geen tracking</p>
+          <p className="admin-muted admin-m-0">Nog geen tracking</p>
         )}
 
         {shipAsk && step?.needsTracking ? (
-          <div className="admin-order-edit">
-            <label className="admin-order-field">
+          <>
+            <label className="admin-label">
               Vervoerder
-              <input className="admin-order-input" value={carrier} onChange={(e) => setCarrier(e.target.value)} placeholder="PostNL, DHL…" />
+              <input
+                className="admin-field admin-field--flush"
+                value={carrier}
+                onChange={(e) => setCarrier(e.target.value)}
+                placeholder="PostNL, DHL…"
+              />
             </label>
-            <label className="admin-order-field">
+            <label className="admin-label">
               Trackingcode
-              <input className="admin-order-input" value={trackingCode} onChange={(e) => setTrackingCode(e.target.value)} />
+              <input className="admin-field admin-field--flush" value={trackingCode} onChange={(e) => setTrackingCode(e.target.value)} />
             </label>
-            <label className="admin-order-field">
+            <label className="admin-label">
               Track-URL
-              <input className="admin-order-input" value={trackingUrl} onChange={(e) => setTrackingUrl(e.target.value)} placeholder="https://" />
+              <input
+                className="admin-field admin-field--flush"
+                value={trackingUrl}
+                onChange={(e) => setTrackingUrl(e.target.value)}
+                placeholder="https://"
+              />
             </label>
-          </div>
+          </>
         ) : null}
 
         {step ? (
@@ -538,101 +553,84 @@ export default function AdminOrderFulfillment({
             {busy ? "Bezig…" : shipAsk && step.needsTracking ? "Bevestig verzonden" : step.label}
           </button>
         ) : null}
+
+        {order.customer_email ? (
+          <>
+            <label className="admin-label">
+              E-mail opnieuw sturen
+              <select
+                className="admin-field admin-field--flush"
+                value={emailKind}
+                disabled={busy}
+                onChange={(e) => setEmailKind(e.target.value as OrderStatusEmailKind)}
+              >
+                {ORDER_STATUS_EMAIL_KINDS.map((kind) => (
+                  <option key={kind} value={kind}>
+                    {ORDER_STATUS_EMAIL_KIND_LABEL[kind]}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <button type="button" className="admin-link-action" disabled={busy} onClick={() => void resendEmail()}>
+              Mail opnieuw sturen
+            </button>
+          </>
+        ) : null}
       </section>
 
-      <section className="admin-order-block">
-        <p className="admin-order-label">Betaling</p>
-        <p className="admin-order-value">{paymentFact}</p>
+      <section className="admin-panel admin-stack-tight">
+        <h2 className="admin-h2 admin-m-0">Betaling</h2>
+        <div className="admin-status-stack">
+          <span className={`admin-dash-status admin-dash-status--${paymentStatusTone(order.payment_status)}`}>
+            {paymentStatusLabel(order.payment_status)}
+          </span>
+          <span className="admin-muted">{paymentMethodLabel(order.payment_method)}</span>
+        </div>
+        <p className="admin-m-0 admin-td-mono">{formatProductPrice(order.total, order.currency)}</p>
         {order.refunded_at ? (
-          <p className="admin-order-value admin-order-value--mute">
+          <p className="admin-muted admin-m-0">
             Terugbetaald {formatProductPrice(order.refund_amount ?? 0, order.currency)}
           </p>
         ) : null}
-        <a className="admin-order-text-btn" href={`/admin/orders/${order.id}/invoice`} target="_blank" rel="noreferrer">
-          Factuur
-        </a>
-        {canRefund ? (
-          refundOpen ? (
-            <div className="admin-order-refund">
-              <AdminMoneyInput
-                className="admin-order-input admin-order-input--num"
-                min={0.01}
-                max={remaining}
-                value={refundAmount}
-                onChange={setRefundAmount}
-                aria-label="Terugbetalingsbedrag"
-              />
-              <button type="button" className="admin-order-text-btn" disabled={busy} onClick={() => void refund()}>
-                Bevestigen
-              </button>
-              <button type="button" className="admin-order-text-btn admin-order-text-btn--mute" onClick={() => setRefundOpen(false)}>
-                Sluiten
-              </button>
-            </div>
-          ) : (
-            <button type="button" className="admin-order-text-btn" disabled={busy} onClick={() => setRefundOpen(true)}>
+        <div className="admin-form-actions">
+          <a className="admin-link-action" href={`/admin/orders/${order.id}/invoice`} target="_blank" rel="noreferrer">
+            Factuur
+          </a>
+          {canRefund && !refundOpen ? (
+            <button type="button" className="admin-link-action" disabled={busy} onClick={() => setRefundOpen(true)}>
               Terugbetalen
             </button>
-          )
-        ) : null}
-        {canCancel ? (
-          <button type="button" className="admin-order-text-btn admin-order-text-btn--danger" disabled={busy} onClick={() => void cancel()}>
-            Annuleren
-          </button>
-        ) : null}
-        {canDelete ? (
-          <button type="button" className="admin-order-text-btn admin-order-text-btn--danger" disabled={busy} onClick={() => void remove()}>
-            Verwijderen
-          </button>
-        ) : null}
-      </section>
-
-      <section className="admin-order-block">
-        <p className="admin-order-label">Notities</p>
-        {customerNote ? (
-          <div className="admin-order-block-body">
-            <p className="admin-order-addr-kicker">Klantopmerking</p>
-            <p className="admin-order-note">{customerNote}</p>
+          ) : null}
+          {canCancel ? (
+            <button type="button" className="admin-link-action" disabled={busy} onClick={() => void cancel()}>
+              Annuleren
+            </button>
+          ) : null}
+          {canDelete ? (
+            <button type="button" className="admin-link-action" disabled={busy} onClick={() => void remove()}>
+              Verwijderen
+            </button>
+          ) : null}
+        </div>
+        {canRefund && refundOpen ? (
+          <div className="admin-form-actions">
+            <AdminMoneyInput
+              className="admin-field admin-field--flush admin-table-num"
+              min={0.01}
+              max={remaining}
+              value={refundAmount}
+              onChange={setRefundAmount}
+              aria-label="Terugbetalingsbedrag"
+            />
+            <button type="button" className="admin-link-action" disabled={busy} onClick={() => void refund()}>
+              Bevestigen
+            </button>
+            <button type="button" className="admin-link-action" onClick={() => setRefundOpen(false)}>
+              Sluiten
+            </button>
           </div>
-        ) : (
-          <p className="admin-order-value admin-order-value--mute">Geen klantopmerking</p>
-        )}
-        <label className="admin-order-field">
-          Interne notitie
-          <textarea
-            className="admin-order-input admin-order-input--area"
-            value={staffNote}
-            onChange={(e) => setStaffNote(e.target.value)}
-          />
-        </label>
-        <button type="button" className="admin-order-text-btn" disabled={busy} onClick={() => void saveInternalNote()}>
-          {busy ? "Opslaan…" : "Notitie opslaan"}
-        </button>
+        ) : null}
       </section>
-
-      {order.customer_email ? (
-        <section className="admin-order-block">
-          <p className="admin-order-label">E-mail</p>
-          <label className="admin-order-field">
-            Type
-            <select
-              className="admin-order-select admin-order-select--box"
-              value={emailKind}
-              disabled={busy}
-              onChange={(e) => setEmailKind(e.target.value as OrderStatusEmailKind)}
-            >
-              {ORDER_STATUS_EMAIL_KINDS.map((kind) => (
-                <option key={kind} value={kind}>
-                  {ORDER_STATUS_EMAIL_KIND_LABEL[kind]}
-                </option>
-              ))}
-            </select>
-          </label>
-          <button type="button" className="admin-order-text-btn" disabled={busy} onClick={() => void resendEmail()}>
-            Mail opnieuw sturen
-          </button>
-        </section>
-      ) : null}
     </aside>
   );
 }

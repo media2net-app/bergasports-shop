@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 
 import Footer from "@/components/layout/Footer";
 import Header from "@/components/layout/Header";
-import TrustBar from "@/components/layout/TrustBar";
 import ContentPageLayout from "@/components/site/ContentPageLayout";
 import { CONTENT_PHOTOS } from "@/lib/content-photos";
 import { formatProductPrice } from "@/lib/products";
@@ -50,7 +49,6 @@ export default async function VerzendingPage() {
 
   return (
     <main className="min-h-screen bg-[#faf8f5]/40">
-      <TrustBar />
       <Header />
       <ContentPageLayout
         path="/verzending"

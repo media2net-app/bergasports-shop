@@ -2,18 +2,18 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, type KeyboardEvent } from "react";
 
-import { stockStateLabel, type StockState } from "@/lib/stock";
+import type { StockState } from "@/lib/stock";
 
 export type AdminInventoryRow = {
   id: number;
   name: string;
+  sku: string;
   category: string;
   brand: string;
   stockQuantity: number | null;
   reservedStock: number | null;
-  available: number | null;
   state: StockState;
   thumbUrl: string;
   concept: boolean;
@@ -32,6 +32,113 @@ const STATE_CLASS: Record<StockState, string> = {
   unmanaged: "admin-badge-stock",
 };
 
+function inventoryStateLabel(state: StockState): string {
+  switch (state) {
+    case "in_stock":
+      return "Op voorraad";
+    case "low_stock":
+      return "Laag";
+    case "out_of_stock":
+      return "Uitverkocht";
+    default:
+      return "Geen aantal";
+  }
+}
+
+function sanitizeQty(raw: string): string {
+  return raw.replace(/\D/g, "");
+}
+
+function qtyString(value: number | null): string {
+  return value == null ? "" : String(value);
+}
+
+function StatusPill({ state }: { state: StockState }) {
+  return <span className={STATE_CLASS[state]}>{inventoryStateLabel(state)}</span>;
+}
+
+function QtyField({
+  row,
+  value,
+  canWrite,
+  busy,
+  saved,
+  onChange,
+  onCommit,
+  onStep,
+}: {
+  row: AdminInventoryRow;
+  value: string;
+  canWrite: boolean;
+  busy: boolean;
+  saved: boolean;
+  onChange: (next: string) => void;
+  onCommit: (raw: string) => void;
+  onStep: (delta: number) => void;
+}) {
+  function onKeyDown(event: KeyboardEvent<HTMLInputElement>) {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      onCommit(event.currentTarget.value);
+      event.currentTarget.blur();
+      return;
+    }
+    if (event.key === "ArrowUp") {
+      event.preventDefault();
+      onStep(1);
+      return;
+    }
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      onStep(-1);
+    }
+  }
+
+  return (
+    <div className={`admin-qty-field${saved ? " is-saved" : ""}`}>
+      <button
+        type="button"
+        className="admin-qty-step"
+        disabled={!canWrite || busy}
+        aria-label={`Een minder van ${row.name}`}
+        onClick={() => onStep(-1)}
+      >
+        −
+      </button>
+      <input
+        className="admin-qty-input"
+        type="text"
+        inputMode="numeric"
+        pattern="[0-9]*"
+        autoComplete="off"
+        spellCheck={false}
+        value={value}
+        disabled={!canWrite || busy}
+        placeholder="—"
+        aria-label={`Voorraad voor ${row.name}`}
+        onChange={(e) => onChange(sanitizeQty(e.target.value))}
+        onBlur={(e) => {
+          const next = e.relatedTarget as Node | null;
+          if (next && e.currentTarget.parentElement?.contains(next)) {
+            return;
+          }
+          onCommit(e.currentTarget.value);
+        }}
+        onKeyDown={onKeyDown}
+      />
+      <button
+        type="button"
+        className="admin-qty-step"
+        disabled={!canWrite || busy}
+        aria-label={`Een meer van ${row.name}`}
+        onClick={() => onStep(1)}
+      >
+        +
+      </button>
+    </div>
+  );
+}
+
 export default function AdminInventoryTable({ rows, canWrite, lowStockThreshold }: Props) {
   const router = useRouter();
   const [drafts, setDrafts] = useState<Record<number, string>>({});
@@ -39,8 +146,7 @@ export default function AdminInventoryTable({ rows, canWrite, lowStockThreshold 
   const [error, setError] = useState("");
   const [savedId, setSavedId] = useState<number | null>(null);
 
-  const draftValue = (row: AdminInventoryRow) =>
-    drafts[row.id] ?? (row.stockQuantity == null ? "" : String(row.stockQuantity));
+  const draftValue = (row: AdminInventoryRow) => drafts[row.id] ?? qtyString(row.stockQuantity);
 
   async function save(row: AdminInventoryRow, patch: { stockQuantity?: number | null; inStock?: boolean }) {
     setBusyId(row.id);
@@ -71,6 +177,83 @@ export default function AdminInventoryTable({ rows, canWrite, lowStockThreshold 
     }
   }
 
+  function commitQty(row: AdminInventoryRow, raw: string) {
+    const cleaned = sanitizeQty(raw);
+    const next = cleaned === "" ? null : Number(cleaned);
+    const original = row.stockQuantity;
+    if (next === original || (next == null && original == null)) {
+      setDrafts((prev) => {
+        const copy = { ...prev };
+        delete copy[row.id];
+        return copy;
+      });
+      return;
+    }
+    void save(row, { stockQuantity: next });
+  }
+
+  function stepQty(row: AdminInventoryRow, delta: number) {
+    const current = draftValue(row);
+    const base = current === "" ? 0 : Number(current);
+    const next = Math.max(0, (Number.isFinite(base) ? base : 0) + delta);
+    const asString = String(next);
+    setDrafts((prev) => ({ ...prev, [row.id]: asString }));
+    commitQty(row, asString);
+  }
+
+  function rowActions(row: AdminInventoryRow) {
+    const busy = busyId === row.id;
+    const value = draftValue(row);
+    const changed = value !== qtyString(row.stockQuantity);
+    const unmanaged = row.stockQuantity == null;
+    return (
+      <div className="admin-inventory-actions">
+        {changed ? (
+          <button
+            type="button"
+            className="admin-link-action"
+            disabled={!canWrite || busy}
+            onClick={() => commitQty(row, value)}
+          >
+            {busy ? "Bezig…" : "Opslaan"}
+          </button>
+        ) : savedId === row.id ? (
+          <span className="admin-muted">Opgeslagen</span>
+        ) : null}
+        {unmanaged ? (
+          <button
+            type="button"
+            className="admin-link-action"
+            disabled={!canWrite || busy}
+            onClick={() => void save(row, { inStock: row.state === "out_of_stock" })}
+          >
+            {row.state === "out_of_stock" ? "Op voorraad" : "Uitverkocht"}
+          </button>
+        ) : null}
+        <Link href={`/admin/products/${row.id}`} className="admin-link-action">
+          Bewerken
+        </Link>
+      </div>
+    );
+  }
+
+  function qtyFieldFor(row: AdminInventoryRow) {
+    const value = draftValue(row);
+    const changed = value !== qtyString(row.stockQuantity);
+    return (
+      <QtyField
+        row={row}
+        value={value}
+        canWrite={canWrite}
+        busy={busyId === row.id}
+        saved={savedId === row.id && !changed}
+        onChange={(next) => setDrafts((prev) => ({ ...prev, [row.id]: next }))}
+        onCommit={(raw) => commitQty(row, raw)}
+        onStep={(delta) => stepQty(row, delta)}
+      />
+    );
+  }
+
   return (
     <div className="admin-stack-tight">
       {error ? <p className="admin-error-box admin-m-0">{error}</p> : null}
@@ -80,25 +263,24 @@ export default function AdminInventoryTable({ rows, canWrite, lowStockThreshold 
         </p>
       ) : null}
 
-      <div className="admin-table-wrap">
-        <table className="admin-table">
-          <thead>
-            <tr>
-              <th scope="col">Foto</th>
-              <th scope="col">Product</th>
-              <th scope="col">Aantal</th>
-              <th scope="col">Gereserveerd</th>
-              <th scope="col">Beschikbaar</th>
-              <th scope="col">Status</th>
-              <th className="admin-td-right" scope="col" aria-label="Acties" />
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row) => {
-              const busy = busyId === row.id;
-              const value = draftValue(row);
-              const changed = value !== (row.stockQuantity == null ? "" : String(row.stockQuantity));
-              return (
+      <div className="admin-table-desktop-wrap">
+        <div className="admin-panel admin-table-wrap admin-inventory-table">
+          <table className="admin-table">
+            <thead>
+              <tr>
+                <th scope="col" className="admin-th-thumb">
+                  <span className="admin-sr-only">Foto</span>
+                </th>
+                <th scope="col">Naam</th>
+                <th scope="col">SKU</th>
+                <th scope="col">Aantal</th>
+                <th scope="col">Drempel</th>
+                <th scope="col">Status</th>
+                <th className="admin-td-right" scope="col" aria-label="Acties" />
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row) => (
                 <tr key={row.id}>
                   <td className="admin-thumb-cell">
                     <div className="admin-thumb-wrap">
@@ -114,70 +296,59 @@ export default function AdminInventoryTable({ rows, canWrite, lowStockThreshold 
                       ) : null}
                     </div>
                   </td>
-                  <td className="admin-td-truncate" title={row.name}>
-                    <Link href={`/admin/products/${row.id}`} className="admin-link-action">
-                      {row.name}
-                    </Link>
-                    {row.concept ? <span className="admin-badge-concept">Concept</span> : null}
-                    <div className="admin-muted" style={{ fontSize: "0.75rem" }}>
-                      {[row.brand, row.category].filter(Boolean).join(" · ") || "—"}
+                  <td>
+                    <div className="admin-table-product">
+                      <span className="admin-table-product-name" title={row.name}>
+                        {row.name}
+                      </span>
+                      {row.concept ? <span className="admin-badge-concept">Concept</span> : null}
                     </div>
                   </td>
-                  <td>
-                    <input
-                      className="admin-stock-input"
-                      type="number"
-                      min={0}
-                      step={1}
-                      inputMode="numeric"
-                      value={value}
-                      disabled={!canWrite || busy}
-                      placeholder="leeg"
-                      aria-label={`Voorraad voor ${row.name}`}
-                      onChange={(e) =>
-                        setDrafts((prev) => ({ ...prev, [row.id]: e.target.value }))
-                      }
-                    />
+                  <td className="admin-td-mono" title={row.sku || undefined}>
+                    {row.sku || "—"}
                   </td>
-                  <td className="admin-td-mono">{row.reservedStock ?? 0}</td>
-                  <td className="admin-td-mono">{row.available ?? "—"}</td>
                   <td>
-                    <span className={STATE_CLASS[row.state]}>{stockStateLabel(row.state)}</span>
-                    {row.state === "low_stock" ? (
-                      <div className="admin-muted" style={{ fontSize: "0.72rem" }}>
-                        {lowStockThreshold} of minder
+                    {qtyFieldFor(row)}
+                    {row.reservedStock ? (
+                      <div className="admin-muted admin-inventory-reserved">
+                        {row.reservedStock} gereserveerd
                       </div>
                     ) : null}
                   </td>
-                  <td className="admin-td-right">
-                    <div className="admin-tools-row" style={{ justifyContent: "flex-end" }}>
-                      <button
-                        type="button"
-                        className="admin-btn-primary"
-                        disabled={!canWrite || busy || !changed}
-                        onClick={() =>
-                          void save(row, {
-                            stockQuantity: value.trim() === "" ? null : Number(value),
-                          })
-                        }
-                      >
-                        {busy ? "Bezig…" : savedId === row.id ? "Opgeslagen" : "Opslaan"}
-                      </button>
-                      <button
-                        type="button"
-                        className="admin-btn-secondary"
-                        disabled={!canWrite || busy}
-                        onClick={() => void save(row, { inStock: row.state === "out_of_stock" })}
-                      >
-                        {row.state === "out_of_stock" ? "Op voorraad" : "Uitverkocht"}
-                      </button>
-                    </div>
+                  <td className="admin-td-mono">{lowStockThreshold}</td>
+                  <td>
+                    <StatusPill state={row.state} />
                   </td>
+                  <td className="admin-td-right">{rowActions(row)}</td>
                 </tr>
-              );
-            })}
-          </tbody>
-        </table>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div className="admin-product-cards-mobile" aria-label="Voorraad (mobiel)">
+        {rows.map((row) => (
+          <div key={row.id} className="admin-product-card admin-inventory-card">
+            <div className="admin-thumb-wrap">
+              {row.thumbUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={row.thumbUrl} alt="" className="admin-thumb" loading="lazy" decoding="async" />
+              ) : null}
+            </div>
+            <div className="min-w-0">
+              <div className="admin-product-card-title">{row.name}</div>
+              <div className="admin-product-card-meta">
+                {[row.sku || null, `drempel ${lowStockThreshold}`].filter(Boolean).join(" · ")}
+              </div>
+              <div className="admin-inventory-card-controls">
+                {qtyFieldFor(row)}
+                <StatusPill state={row.state} />
+              </div>
+              {rowActions(row)}
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );

@@ -77,11 +77,11 @@ export default function AdminOrderHeaderStatuses({
   }
 
   return (
-    <div className="admin-order-head-statuses">
-      <label className="admin-order-head-status">
+    <>
+      <label className="admin-product-editor-status">
         Betaling
         <select
-          className="admin-order-select admin-order-select--box"
+          className="admin-field admin-field--flush admin-toolbar-select"
           value={paymentValue}
           disabled={busy}
           aria-label="Betalingsstatus"
@@ -94,10 +94,10 @@ export default function AdminOrderHeaderStatuses({
           ))}
         </select>
       </label>
-      <label className="admin-order-head-status">
+      <label className="admin-product-editor-status">
         Verzending
         <select
-          className="admin-order-select admin-order-select--box"
+          className="admin-field admin-field--flush admin-toolbar-select"
           value={shippingValue}
           disabled={busy}
           aria-label="Verzendstatus"
@@ -110,7 +110,7 @@ export default function AdminOrderHeaderStatuses({
           ))}
         </select>
       </label>
-      {error ? <p className="admin-order-inline-error">{error}</p> : null}
-    </div>
+      {error ? <p className="admin-field-error">{error}</p> : null}
+    </>
   );
 }

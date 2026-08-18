@@ -2,7 +2,11 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 
 import { adminSessionCookieName, verifyAdminSessionToken } from "@/lib/admin-auth";
-import { adminProductListQuery } from "@/lib/admin-products-list";
+import {
+  adminProductListQuery,
+  parseAdminProductStatusFilter,
+  parseAdminProductStockFilter,
+} from "@/lib/admin-products-list";
 import { CATALOG_SOURCES, type CatalogSource } from "@/lib/products";
 import { readTrendyolDatabase } from "@/lib/trendyol-json-store";
 
@@ -26,6 +30,9 @@ export async function GET(request: Request) {
   const rawFilter = url.searchParams.get("source");
   const rawPage = url.searchParams.get("page");
   const qInput = url.searchParams.get("q") ?? "";
+  const category = url.searchParams.get("category")?.trim() ?? "";
+  const stock = parseAdminProductStockFilter(url.searchParams.get("stock"));
+  const status = parseAdminProductStatusFilter(url.searchParams.get("status"));
 
   const filter: CatalogSource | "all" =
     rawFilter && CATALOG_SOURCES.includes(rawFilter as CatalogSource) ? (rawFilter as CatalogSource) : "all";
@@ -38,12 +45,18 @@ export async function GET(request: Request) {
     q: qInput,
     page: requestedPage,
     pageSize: PAGE_SIZE,
+    category,
+    stock,
+    status,
   });
 
   const payload = {
     exportedAt: new Date().toISOString(),
     filter,
     q: qInput.trim(),
+    category: category || undefined,
+    stock: stock === "all" ? undefined : stock,
+    status: status === "all" ? undefined : status,
     page,
     pageSize: PAGE_SIZE,
     total,

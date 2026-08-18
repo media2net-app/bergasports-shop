@@ -11,7 +11,6 @@ import ProductTrustRow from "@/components/product/ProductTrustRow";
 import { ProductVariationProvider } from "@/components/product/ProductVariationContext";
 import Footer from "@/components/layout/Footer";
 import Header from "@/components/layout/Header";
-import TrustBar from "@/components/layout/TrustBar";
 import { SITE_DEFAULT_URL } from "@/lib/site-brand";
 import { isNumericProductPathSegment, productPath } from "@/lib/product-slug";
 import { loadRalexCategories } from "@/lib/categories-db";
@@ -254,10 +253,9 @@ export default async function ProductDetailPage({ params, searchParams }: Produc
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }}
       />
       <ProductTikTokView product={product} />
-      <TrustBar />
       <Header />
 
-      <section className="mx-auto w-full max-w-[1440px] px-4 py-5 md:py-8">
+      <section className="mx-auto w-full max-w-[1440px] px-4 py-5 md:py-8 lg:px-6">
         <nav className="text-sm" aria-label="Breadcrumb">
           <ol className="flex flex-wrap items-center gap-1.5 text-[var(--foreground)]/60">
             <li>
@@ -288,7 +286,7 @@ export default async function ProductDetailPage({ params, searchParams }: Produc
         <ProductVariationProvider product={product} initialVariationId={resolvedInitialVariationId}>
           <div className="mt-6 grid gap-8 lg:grid-cols-12 lg:gap-12">
             {/* Galerij blijft in beeld tijdens scrollen */}
-            <div className="lg:col-span-7 lg:sticky lg:top-24 lg:self-start">
+            <div className="lg:col-span-7 lg:sticky lg:top-28 lg:self-start">
               <ProductImageGallery
                 images={product.images}
                 name={product.name}

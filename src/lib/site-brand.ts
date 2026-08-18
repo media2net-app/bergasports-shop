@@ -12,8 +12,12 @@ export const SITE_DEFAULT_URL = "https://www.bergasports.com";
 /** Standaard valuta voor de Bergasports-webshop. */
 export const SITE_DEFAULT_CURRENCY = "EUR";
 
-/** Header / e-mail logo (400×39, wit op zwart — past op donkere topbar). */
-export const SITE_LOGO_SRC = "/brand/bergasports-logo.png";
+/**
+ * Header / favicon / e-mail (400×39, wit op zwart — past op donkere topbar).
+ * Niet onder `/brand/` — de WP-redirect `/brand/:slug` → `/merken` vangt `.png` daar af (lokaal
+ * werkt next/image via disk, op Vercel niet).
+ */
+export const SITE_LOGO_SRC = "/bergasports-logo.png";
 export const SITE_LOGO_WIDTH = 400;
 export const SITE_LOGO_HEIGHT = 39;
 
@@ -25,9 +29,22 @@ export function siteLogoAbsoluteUrl(): string {
   return `${base}${SITE_LOGO_SRC}`;
 }
 
+/** Skip localhost/file-URLs and rewrite the old `/brand/…` pad that Vercel redirected away. */
+export function usableEmailLogoUrl(url: string | undefined | null): string {
+  const raw = url?.trim() ?? "";
+  if (!raw) return "";
+  if (/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?\b/i.test(raw)) return "";
+  if (raw.startsWith("file:")) return "";
+  const path = raw.replace(/^https?:\/\/[^/]+/i, "");
+  if (/^\/brand\/bergasports-logo\.(png|svg)$/i.test(path)) {
+    return siteLogoAbsoluteUrl();
+  }
+  return raw;
+}
+
 /** Logo in transactional e-mail (env override, anders absolute URL). */
 export function resolveSiteEmailLogoUrl(): string {
   const fromEnv =
     process.env.NEXT_PUBLIC_EMAIL_LOGO_URL?.trim() || process.env.EMAIL_LOGO_URL?.trim();
-  return fromEnv || siteLogoAbsoluteUrl();
+  return usableEmailLogoUrl(fromEnv) || siteLogoAbsoluteUrl();
 }

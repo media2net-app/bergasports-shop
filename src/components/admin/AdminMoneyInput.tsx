@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type ClipboardEvent, type KeyboardEvent } from "react";
+import { useState, type ClipboardEvent, type KeyboardEvent } from "react";
 
 import { formatMoneyInput, sanitizeMoneyInput } from "@/lib/money-input";
 
@@ -31,12 +31,6 @@ export default function AdminMoneyInput({
   const [focused, setFocused] = useState(false);
   const [draft, setDraft] = useState(value);
   const formatOpts = { allowEmpty, min, max };
-
-  useEffect(() => {
-    if (!focused) {
-      setDraft(value);
-    }
-  }, [value, focused]);
 
   function updateDraft(raw: string) {
     const next = sanitizeMoneyInput(raw);

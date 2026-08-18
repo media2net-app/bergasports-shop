@@ -164,11 +164,11 @@ export function shopCategoryHrefsFromNav(): string[] {
 }
 
 export function isShopNavigationPath(pathname: string): boolean {
-  if (pathname === "/shop" || pathname.startsWith("/shop?")) {
+  if (pathname === "/shop" || pathname.startsWith("/shop?") || pathname.startsWith("/product/")) {
     return true;
   }
   return shopCategoryHrefsFromNav().some(
-    (href) => pathname === href || pathname.startsWith(`${href}?`),
+    (href) => pathname === href || pathname.startsWith(`${href}?`) || pathname.startsWith(`${href}/`),
   );
 }
 
@@ -181,7 +181,7 @@ export type HeaderNavItem =
 export const HEADER_NAV_LEFT: HeaderNavItem[] = [
   { type: "mega", label: "Webshop" },
   { type: "link", href: "/nieuws", label: "Nieuws" },
-  { type: "link", href: BERGASPORTS_CATEGORY_PATHS.lafugaWear, label: "LaFuga", badge: "NEW" },
+  { type: "link", href: BERGASPORTS_CATEGORY_PATHS.lafugaWear, label: "LaFuga", badge: "NIEUW" },
 ];
 
 /** Rechts van het logo. */
@@ -196,7 +196,7 @@ export const ABOUT_MENU_LINKS: ShopMenuLink[] = [
 export const HEADER_NAV_RIGHT: HeaderNavItem[] = [
   {
     type: "dropdown",
-    label: "Over Bergasports",
+    label: "Over ons",
     items: ABOUT_MENU_LINKS,
   },
 ];
@@ -205,16 +205,24 @@ export const HEADER_NAV_RIGHT: HeaderNavItem[] = [
 export const MOBILE_NAV_TREE: {
   label: string;
   href?: string;
+  badge?: string;
   children?: ShopMenuLink[];
 }[] = [
+  { label: "Alle producten", href: "/shop" },
   ...WEBSHOP_MEGA_MENU.columns.map((column) =>
     column.links.length > 0
-      ? { label: column.title, children: [...column.links] }
+      ? {
+          label: column.title,
+          children: [
+            ...(column.href ? [{ href: column.href, label: `Alles in ${column.title.toLowerCase()}` }] : []),
+            ...column.links,
+          ],
+        }
       : { label: column.title, href: column.href },
   ),
   { label: "Nieuws", href: "/nieuws" },
-  { label: "LaFuga", href: BERGASPORTS_CATEGORY_PATHS.lafugaWear },
-  { label: "Over Bergasports", children: ABOUT_MENU_LINKS },
+  { label: "LaFuga", href: BERGASPORTS_CATEGORY_PATHS.lafugaWear, badge: "NIEUW" },
+  { label: "Over ons", children: ABOUT_MENU_LINKS },
 ];
 
 /** Volledige lijst (legacy flat). */
