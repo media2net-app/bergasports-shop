@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { usePathname } from "next/navigation";
+
+import LocalizedLink from "@/components/locale/LocalizedLink";
 
 import { useCart } from "@/components/cart/CartProvider";
 import BrandWordmark from "@/components/layout/BrandWordmark";
@@ -18,6 +19,7 @@ import HeaderSimpleDropdown from "@/components/layout/HeaderSimpleDropdown";
 import MobileNavDrillDown from "@/components/layout/MobileNavDrillDown";
 import { useInstagramProfileUrl } from "@/components/layout/InstagramProfileProvider";
 import LanguageSwitcher from "@/components/locale/LanguageSwitcher";
+import { stripLocalePrefix } from "@/lib/i18n/locale-shared";
 
 const navLinkClass =
   "text-[11px] font-bold uppercase tracking-[0.14em] text-white/85 transition hover:text-white md:text-xs";
@@ -34,14 +36,14 @@ function HeaderNavLink({
   active?: boolean;
 }) {
   return (
-    <Link href={href} className={`${navLinkClass} inline-flex items-center gap-1.5 ${active ? "text-white" : ""}`}>
+    <LocalizedLink href={href} className={`${navLinkClass} inline-flex items-center gap-1.5 ${active ? "text-white" : ""}`}>
       {label}
       {badge ? (
         <span className="rounded bg-[var(--brand-mid)] px-1.5 py-0.5 text-[9px] font-bold tracking-normal text-[#1a1a1a]">
           {badge}
         </span>
       ) : null}
-    </Link>
+    </LocalizedLink>
   );
 }
 
@@ -103,14 +105,17 @@ function IconMenu() {
 }
 
 export default function Header() {
-  const pathname = usePathname();
+  const rawPathname = usePathname();
+  const pathname = stripLocalePrefix(rawPathname || "/").pathname;
   const { totalItems, openCart } = useCart();
   const instagramUrl = useInstagramProfileUrl();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
-  useEffect(() => {
+  const [searchForPath, setSearchForPath] = useState(rawPathname);
+  if (rawPathname !== searchForPath) {
+    setSearchForPath(rawPathname);
     setSearchOpen(false);
-  }, [pathname]);
+  }
 
   useEffect(() => {
     if (!searchOpen) {

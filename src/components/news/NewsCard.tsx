@@ -1,4 +1,4 @@
-import Link from "next/link";
+import LocalizedLink from "@/components/locale/LocalizedLink";
 
 import { formatNewsDate, type NewsCardPost } from "@/lib/news-format";
 
@@ -13,7 +13,7 @@ export default function NewsCard({ post, variant = "card" }: NewsCardProps) {
   const meta = [date, post.category].filter(Boolean).join(" · ");
 
   return (
-    <Link
+    <LocalizedLink
       href={`/nieuws/${post.slug}`}
       className={`card-lift group flex h-full overflow-hidden rounded-3xl border border-[var(--brand-border)] bg-white hover:border-[var(--brand)]/45 ${
         featured ? "flex-col md:grid md:grid-cols-[1.15fr_0.85fr] md:items-stretch" : "flex-col"
@@ -61,6 +61,6 @@ export default function NewsCard({ post, variant = "card" }: NewsCardProps) {
           </span>
         </span>
       </div>
-    </Link>
+    </LocalizedLink>
   );
 }

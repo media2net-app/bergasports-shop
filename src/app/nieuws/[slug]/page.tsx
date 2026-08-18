@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import LocalizedLink from "@/components/locale/LocalizedLink";
 import { notFound } from "next/navigation";
 
 import Footer from "@/components/layout/Footer";
@@ -8,6 +8,8 @@ import TrustBar from "@/components/layout/TrustBar";
 import NewsCard from "@/components/news/NewsCard";
 import ContentCtaCard from "@/components/site/ContentCtaCard";
 import { loadNewsPostBySlug, loadNewsPosts } from "@/lib/news-db";
+import { getRequestLocale, localizedPublicPath } from "@/lib/i18n/locale";
+import { pickTranslation, type NewsLocaleFields } from "@/lib/i18n/translations";
 import { formatNewsDate } from "@/lib/news-format";
 import { buildPageMetadata, newsArticleJsonLd } from "@/lib/seo";
 
@@ -19,20 +21,25 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const post = await loadNewsPostBySlug(slug);
   if (!post) return { title: "Nieuws" };
+  const locale = await getRequestLocale();
+  const overlay = pickTranslation<NewsLocaleFields>(post.translations, locale);
+  const title = overlay?.title || post.title;
   return buildPageMetadata({
-    title: post.seoTitle?.trim() || post.title,
+    title: overlay?.seoTitle?.trim() || post.seoTitle?.trim() || title,
     description:
+      overlay?.seoDescription?.trim() ||
       post.seoDescription?.trim() ||
+      overlay?.excerpt?.trim() ||
       post.excerpt?.trim() ||
-      `${post.title} — nieuws van Bergasports in Dedemsvaart.`,
-    path: `/nieuws/${post.slug}`,
+      `${title} — nieuws van Bergasports in Dedemsvaart.`,
+    path: await localizedPublicPath(`/nieuws/${overlay?.slug || post.slug}`),
     image: post.socialImage || post.coverImage,
-    imageAlt: post.imageAlt || post.title,
+    imageAlt: overlay?.imageAlt || post.imageAlt || title,
     type: "article",
     publishedTime: post.publishedAt ? new Date(post.publishedAt).toISOString() : undefined,
     noindex: post.noindex,
-    ogTitle: post.ogTitle,
-    ogDescription: post.ogDescription,
+    ogTitle: overlay?.ogTitle || post.ogTitle,
+    ogDescription: overlay?.ogDescription || post.ogDescription,
   });
 }
 
@@ -40,6 +47,11 @@ export default async function NieuwsArticlePage({ params }: Props) {
   const { slug } = await params;
   const post = await loadNewsPostBySlug(slug);
   if (!post) notFound();
+  const locale = await getRequestLocale();
+  const overlay = pickTranslation<NewsLocaleFields>(post.translations, locale);
+  const title = overlay?.title || post.title;
+  const excerpt = overlay?.excerpt || post.excerpt;
+  const bodyHtml = overlay?.bodyHtml || post.bodyHtml;
   const related = (await loadNewsPosts({ limit: 6 })).filter((p) => p.id !== post.id).slice(0, 3);
   const date = formatNewsDate(post.publishedAt);
   const meta = [date, post.category].filter(Boolean).join(" · ");
@@ -56,17 +68,17 @@ export default async function NieuwsArticlePage({ params }: Props) {
         <div className="grid items-start gap-10 lg:grid-cols-[minmax(0,1fr)_21rem] lg:gap-14">
           <article className="min-w-0">
             <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[var(--brand)]">
-              <Link href="/nieuws" className="transition hover:text-[var(--foreground)]">
+              <LocalizedLink href="/nieuws" className="transition hover:text-[var(--foreground)]">
                 Nieuws
-              </Link>
+              </LocalizedLink>
               {meta ? ` · ${meta}` : ""}
             </p>
             <h1 className="section-rule mt-3 font-[family-name:var(--font-heading)] text-3xl font-semibold tracking-tight text-[var(--foreground)] md:text-4xl lg:text-[2.6rem]">
-              {post.title}
+              {title}
             </h1>
-            {post.excerpt ? (
+            {excerpt ? (
               <p className="mt-5 max-w-[720px] text-lg leading-relaxed text-[var(--foreground)]/75">
-                {post.excerpt}
+                {excerpt}
               </p>
             ) : null}
             {post.coverImage ? (
@@ -74,14 +86,14 @@ export default async function NieuwsArticlePage({ params }: Props) {
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={post.coverImage}
-                  alt={post.imageAlt || post.title}
+                  alt={overlay?.imageAlt || post.imageAlt || title}
                   className="max-h-[min(70vh,540px)] w-full object-cover object-center"
                 />
               </figure>
             ) : null}
             <div
               className="cms-html cms-page-body mt-8 max-w-[720px] text-[var(--foreground)]/85"
-              dangerouslySetInnerHTML={{ __html: post.bodyHtml }}
+              dangerouslySetInnerHTML={{ __html: bodyHtml }}
             />
           </article>
 

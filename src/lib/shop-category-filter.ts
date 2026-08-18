@@ -1,5 +1,6 @@
 import { categoryMatchLabels, dutchLabelFromImportedName } from "@/lib/category-meta";
 import { publicCategoryPath, toCanonicalWcSlug, toPublicCategorySlug } from "@/lib/category-slugs";
+import { parseLocaleMap, type CategoryLocaleFields } from "@/lib/i18n/translations";
 import { decodeImportedProductTitle, formatProductCardPrice, type Product } from "@/lib/products";
 import {
   flattenRalexCategoryTree,
@@ -29,6 +30,10 @@ export function findRalexCategoryNodeBySlug(
   const target = toCanonicalWcSlug(raw);
   for (const node of flattenRalexCategoryTree(tree)) {
     if (node.slug.toLowerCase() === target || node.slug.toLowerCase() === raw) {
+      return node;
+    }
+    const map = parseLocaleMap<CategoryLocaleFields>(node.translations);
+    if (Object.values(map).some((fields) => fields.slug?.trim().toLowerCase() === raw)) {
       return node;
     }
   }

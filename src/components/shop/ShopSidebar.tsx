@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import LocalizedLink from "@/components/locale/LocalizedLink";
 import { useState } from "react";
 import { useCategories } from "@/components/categories/CategoriesProvider";
 import { flattenRalexCategoryTree, formatRalexCategoryName } from "@/lib/ralex-categories";
@@ -108,7 +108,7 @@ function SizeFacetSection({
           const active = selectedSizes.includes(f.id);
           const next = toggle(selectedSizes, f.id);
           return (
-            <Link
+            <LocalizedLink
               key={f.id}
               href={buildShopListingUrl({
                 cat: activeCategorySlug,
@@ -122,7 +122,7 @@ function SizeFacetSection({
               }`}
             >
               {f.label}
-            </Link>
+            </LocalizedLink>
           );
         })}
       </div>
@@ -211,7 +211,7 @@ export default function ShopSidebar({
             Categorieën
           </p>
           <nav className="mt-0 space-y-0.5 pr-1 lg:mt-2" aria-label="Webshop categorieën">
-            <Link
+            <LocalizedLink
               href={buildShopListingUrl({
                 cat: null,
                 ...listingBase,
@@ -222,12 +222,12 @@ export default function ShopSidebar({
               className={`${linkBase} ${!activeCategorySlug ? linkActive : linkInactive}`}
             >
               Alle producten
-            </Link>
+            </LocalizedLink>
             {visibleCategoryRoots.map((root) => {
               const active =
                 (activeCategorySlug ?? "").toLowerCase() === root.slug.toLowerCase();
               return (
-                <Link
+                <LocalizedLink
                   key={root.id}
                   href={buildShopListingUrl({
                     cat: root.slug,
@@ -239,7 +239,7 @@ export default function ShopSidebar({
                   className={`${linkBase} ${active ? linkActive : linkInactive}`}
                 >
                   {formatRalexCategoryName(root.name, root.slug)}
-                </Link>
+                </LocalizedLink>
               );
             })}
             {hasMoreCategories ? (
@@ -292,7 +292,7 @@ export default function ShopSidebar({
                   const active = selectedColors.includes(f.id);
                   const next = toggle(selectedColors, f.id);
                   return (
-                    <Link
+                    <LocalizedLink
                       key={f.id}
                       href={buildShopListingUrl({
                         cat: activeCategorySlug,
@@ -306,7 +306,7 @@ export default function ShopSidebar({
                       }`}
                     >
                       {f.label}
-                    </Link>
+                    </LocalizedLink>
                   );
                 })}
               </div>
@@ -325,7 +325,7 @@ export default function ShopSidebar({
             ))}
 
             {hasFacetSelection ? (
-              <Link
+              <LocalizedLink
                 href={buildShopListingUrl({
                   cat: activeCategorySlug,
                   ...listingBase,
@@ -335,7 +335,7 @@ export default function ShopSidebar({
                 className="block text-center text-xs font-semibold text-[#96741f] underline underline-offset-2"
               >
                 Wis kleur- en maatfilters
-              </Link>
+              </LocalizedLink>
             ) : null}
           </div>
         </>

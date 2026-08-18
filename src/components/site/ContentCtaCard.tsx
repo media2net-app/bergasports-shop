@@ -1,4 +1,4 @@
-import Link from "next/link";
+import LocalizedLink from "@/components/locale/LocalizedLink";
 
 import { shopPhoneTelHref, whatsappHref } from "@/lib/site-contact";
 import { getShopPublicContact } from "@/lib/shop-runtime";
@@ -26,12 +26,12 @@ export default async function ContentCtaCard() {
         Nieuwe fiets, Nimbl passen, onderhoud of een upgrade: we kijken naar jouw rijstijl — niet naar een standaardpakket.
       </p>
       <div className="mt-5 flex flex-col gap-2.5">
-        <Link href="/afspraak#formulier" className={btnGold}>
+        <LocalizedLink href="/afspraak#formulier" className={btnGold}>
           Plan afspraak
-        </Link>
-        <Link href="/shop" className={btnPrimary}>
+        </LocalizedLink>
+        <LocalizedLink href="/shop" className={btnPrimary}>
           Naar de shop
-        </Link>
+        </LocalizedLink>
         <a href={shopPhoneTelHref(contact.phone)} className={btnGhost}>
           Bel {contact.phone}
         </a>

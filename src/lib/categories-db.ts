@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 
 import categoriesJson from "@/data/ralex-categories.json";
 import { isBergasportsCatalogSource } from "@/lib/bergasports-catalog";
+import { parseLocaleMap, pickTranslation, type CategoryLocaleFields } from "@/lib/i18n/translations";
 import { requirePrisma, isDatabaseConfigured } from "@/lib/database";
 import { normalizeCategoryShopLink } from "@/lib/category-shop-link";
 import type { RalexCategoriesFile, RalexCategoryNode, RalexCategoryRecord } from "@/lib/ralex-categories";
@@ -29,6 +30,7 @@ type CategoryRow = {
   seo_footer_html?: string | null;
   seo_meta_title?: string | null;
   seo_meta_description?: string | null;
+  translations?: unknown;
 };
 
 function rowToRecord(row: CategoryRow): RalexCategoryRecord {
@@ -46,6 +48,9 @@ function rowToRecord(row: CategoryRow): RalexCategoryRecord {
   if (row.imported_product_count != null) {
     rec.importedProductCount = row.imported_product_count;
   }
+  if (row.translations && typeof row.translations === "object") {
+    rec.translations = row.translations as RalexCategoryRecord["translations"];
+  }
   return rec;
 }
 
@@ -58,6 +63,7 @@ function prismaRowToCategoryRow(row: {
   link: string | null;
   importCompletedAt: Date | null;
   importedProductCount: number | null;
+  translations?: unknown;
 }): CategoryRow {
   return {
     id: row.id,
@@ -68,6 +74,7 @@ function prismaRowToCategoryRow(row: {
     link: row.link,
     import_completed_at: row.importCompletedAt?.toISOString() ?? null,
     imported_product_count: row.importedProductCount,
+    translations: row.translations,
   };
 }
 
@@ -336,15 +343,24 @@ export async function loadCategorySeoOverrides(slug: string): Promise<CategorySe
       seoFooterHtml: true,
       seoMetaTitle: true,
       seoMetaDescription: true,
+      translations: true,
     },
   });
   if (!data) {
     return null;
   }
+  let locale = "nl";
+  try {
+    const { getRequestLocale } = await import("@/lib/i18n/locale");
+    locale = await getRequestLocale();
+  } catch {
+    locale = "nl";
+  }
+  const overlay = pickTranslation(parseLocaleMap<CategoryLocaleFields>(data.translations), locale);
   return {
-    seoIntro: data.seoIntro,
-    seoFooterHtml: data.seoFooterHtml,
-    seoMetaTitle: data.seoMetaTitle,
-    seoMetaDescription: data.seoMetaDescription,
+    seoIntro: overlay?.description?.trim() || data.seoIntro,
+    seoFooterHtml: overlay?.seoFooterHtml?.trim() || data.seoFooterHtml,
+    seoMetaTitle: overlay?.seoTitle?.trim() || data.seoMetaTitle,
+    seoMetaDescription: overlay?.seoDescription?.trim() || data.seoMetaDescription,
   };
 }

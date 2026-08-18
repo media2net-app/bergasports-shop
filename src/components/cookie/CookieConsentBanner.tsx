@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import LocalizedLink from "@/components/locale/LocalizedLink";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -110,13 +110,13 @@ export default function CookieConsentBanner() {
             </p>
             <p className="mt-2 text-xs text-[#f0ead8]/70">
               Meer in{" "}
-              <Link href={LEGAL_PAGE_PATHS.cookies} className="underline hover:text-[#faf8f5]">
+              <LocalizedLink href={LEGAL_PAGE_PATHS.cookies} className="underline hover:text-[#faf8f5]">
                 cookiebeleid
-              </Link>{" "}
+              </LocalizedLink>{" "}
               en{" "}
-              <Link href={LEGAL_PAGE_PATHS.privacy} className="underline hover:text-[#faf8f5]">
+              <LocalizedLink href={LEGAL_PAGE_PATHS.privacy} className="underline hover:text-[#faf8f5]">
                 privacybeleid
-              </Link>
+              </LocalizedLink>
               .
             </p>
             <div className="mt-4 flex flex-wrap gap-2">

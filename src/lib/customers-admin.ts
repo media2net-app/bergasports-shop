@@ -222,6 +222,17 @@ export async function getAdminCustomer(id: string): Promise<AdminCustomerDetail 
   };
 }
 
+export async function findAdminCustomerIdByEmail(email: string | null | undefined): Promise<string | null> {
+  const normalized = email?.trim().toLowerCase();
+  if (!normalized) return null;
+  const prisma = requirePrisma();
+  const row = await prisma.customer.findFirst({
+    where: { email: { equals: normalized, mode: "insensitive" } },
+    select: { id: true },
+  });
+  return row?.id ?? null;
+}
+
 export async function createAdminCustomer(input: {
   email: string;
   name?: string | null;

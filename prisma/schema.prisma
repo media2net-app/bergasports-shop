@@ -53,11 +53,26 @@ model Category {
   seoFooterHtml        String?   @map("seo_footer_html")
   seoMetaTitle         String?   @map("seo_meta_title")
   seoMetaDescription   String?   @map("seo_meta_description")
+  translations         Json      @default("{}") @db.JsonB
   updatedAt            DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   @@unique([slug])
   @@index([parentId])
   @@map("categories")
+}
+
+model ShopLanguage {
+  code       String   @id
+  name       String
+  nativeName String   @map("native_name")
+  enabled    Boolean  @default(true)
+  isDefault  Boolean  @default(false) @map("is_default")
+  sortOrder  Int      @default(0) @map("sort_order")
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([enabled, sortOrder])
+  @@map("shop_languages")
 }
 
 model CatalogMeta {
@@ -152,6 +167,7 @@ model SitePage {
   noindex         Boolean  @default(false)
   isPublished     Boolean  @default(true) @map("is_published")
   sortOrder       Int      @default(0) @map("sort_order")
+  translations    Json     @default("{}") @db.JsonB
   updatedAt       DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   @@index([path])
@@ -329,6 +345,7 @@ model NewsPost {
   socialImage     String?   @map("social_image")
   imageAlt        String?   @map("image_alt")
   noindex         Boolean   @default(false)
+  translations    Json      @default("{}") @db.JsonB
   createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt       DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
@@ -437,6 +454,7 @@ model EmailTemplate {
   subject     String
   title       String
   bodyHtml    String   @map("body_html")
+  translations Json    @default("{}") @db.JsonB
   updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
   createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 

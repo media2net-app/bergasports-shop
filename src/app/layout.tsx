@@ -15,7 +15,10 @@ import {
 } from "@/lib/site-brand";
 import { SITE_META_DESCRIPTION } from "@/lib/site-content";
 import { InstagramProfileProvider } from "@/components/layout/InstagramProfileProvider";
+import { ShopLanguagesProvider } from "@/components/locale/ShopLanguagesProvider";
 import { getInstagramPublicUrl } from "@/lib/instagram";
+import { getRequestLocale } from "@/lib/i18n/locale";
+import { listEnabledShopLanguages } from "@/lib/i18n/shop-languages";
 import { DEFAULT_OG_IMAGE } from "@/lib/seo";
 import { INSTAGRAM_URL } from "@/lib/site-content";
 import { DEFAULT_FREE_SHIPPING_THRESHOLD_EUR } from "@/lib/shop-delivery-trust";
@@ -88,25 +91,29 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const [ga4, gtm, metaPixel, googleAds, tiktokPixel, freeShippingThreshold, instagramUrl] = await Promise.all([
-    getRuntimeSetting("NEXT_PUBLIC_GA4_ID"),
-    getRuntimeSetting("NEXT_PUBLIC_GTM_ID"),
-    getRuntimeSetting("NEXT_PUBLIC_META_PIXEL_ID"),
-    getRuntimeSetting("NEXT_PUBLIC_GOOGLE_ADS_ID"),
-    getRuntimeSetting("NEXT_PUBLIC_TIKTOK_PIXEL_ID"),
-    getFreeShippingThresholdSetting().catch(() => DEFAULT_FREE_SHIPPING_THRESHOLD_EUR),
-    getInstagramPublicUrl().catch(() => INSTAGRAM_URL),
-  ]);
+  const [ga4, gtm, metaPixel, googleAds, tiktokPixel, freeShippingThreshold, instagramUrl, locale, languages] =
+    await Promise.all([
+      getRuntimeSetting("NEXT_PUBLIC_GA4_ID"),
+      getRuntimeSetting("NEXT_PUBLIC_GTM_ID"),
+      getRuntimeSetting("NEXT_PUBLIC_META_PIXEL_ID"),
+      getRuntimeSetting("NEXT_PUBLIC_GOOGLE_ADS_ID"),
+      getRuntimeSetting("NEXT_PUBLIC_TIKTOK_PIXEL_ID"),
+      getFreeShippingThresholdSetting().catch(() => DEFAULT_FREE_SHIPPING_THRESHOLD_EUR),
+      getInstagramPublicUrl().catch(() => INSTAGRAM_URL),
+      getRequestLocale(),
+      listEnabledShopLanguages(),
+    ]);
 
   return (
     <html
-      lang="nl"
+      lang={locale}
       className={`${ubuntu.variable} h-full font-sans antialiased`}
     >
       <head />
       <body className="min-h-full flex flex-col">
         <AnalyticsScripts ga4={ga4} gtm={gtm} />
         <CookieConsentProvider>
+          <ShopLanguagesProvider languages={languages} locale={locale}>
           <CategoriesProviderRoot>
             <ProductLookupProvider>
               <CartProvider freeShippingThreshold={freeShippingThreshold}>
@@ -123,6 +130,7 @@ export default async function RootLayout({
               </CartProvider>
             </ProductLookupProvider>
           </CategoriesProviderRoot>
+          </ShopLanguagesProvider>
         </CookieConsentProvider>
       </body>
     </html>

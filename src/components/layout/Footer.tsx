@@ -1,4 +1,4 @@
-import Link from "next/link";
+import LocalizedLink from "@/components/locale/LocalizedLink";
 
 import CookiePreferencesLink from "@/components/cookie/CookiePreferencesLink";
 import { SITE_BRAND_NAME, SITE_BRAND_SHORT, SITE_EMAIL, SITE_SLOGAN, SITE_TAGLINE } from "@/lib/site-brand";
@@ -54,44 +54,44 @@ export default async function Footer() {
           </h4>
           <ul className="mt-3 space-y-2 text-sm">
             <li>
-              <Link href="/over-ons" className={footerLink}>
+              <LocalizedLink href="/over-ons" className={footerLink}>
                 Over ons
-              </Link>
+              </LocalizedLink>
             </li>
             <li>
-              <Link href="/merken" className={footerLink}>
+              <LocalizedLink href="/merken" className={footerLink}>
                 Merken
-              </Link>
+              </LocalizedLink>
             </li>
             <li>
-              <Link href="/onderhoud" className={footerLink}>
+              <LocalizedLink href="/onderhoud" className={footerLink}>
                 Onderhoud
-              </Link>
+              </LocalizedLink>
             </li>
             <li>
-              <Link href="/afspraak" className={footerLink}>
+              <LocalizedLink href="/afspraak" className={footerLink}>
                 Afspraak
-              </Link>
+              </LocalizedLink>
             </li>
             <li>
-              <Link href="/contact" className={footerLink}>
+              <LocalizedLink href="/contact" className={footerLink}>
                 Contact
-              </Link>
+              </LocalizedLink>
             </li>
             <li>
-              <Link href="/verzending" className={footerLink}>
+              <LocalizedLink href="/verzending" className={footerLink}>
                 Verzending
-              </Link>
+              </LocalizedLink>
             </li>
             <li>
-              <Link href="/retouren" className={footerLink}>
+              <LocalizedLink href="/retouren" className={footerLink}>
                 Retouren
-              </Link>
+              </LocalizedLink>
             </li>
             <li>
-              <Link href="/nieuws" className={footerLink}>
+              <LocalizedLink href="/nieuws" className={footerLink}>
                 Nieuws
-              </Link>
+              </LocalizedLink>
             </li>
             <li>
               <a
@@ -111,19 +111,19 @@ export default async function Footer() {
           </h4>
           <ul className="mt-3 space-y-2 text-sm">
             <li>
-              <Link href={LEGAL_PAGE_PATHS.terms} className={footerLink}>
+              <LocalizedLink href={LEGAL_PAGE_PATHS.terms} className={footerLink}>
                 Algemene voorwaarden
-              </Link>
+              </LocalizedLink>
             </li>
             <li>
-              <Link href={LEGAL_PAGE_PATHS.privacy} className={footerLink}>
+              <LocalizedLink href={LEGAL_PAGE_PATHS.privacy} className={footerLink}>
                 Privacybeleid (AVG)
-              </Link>
+              </LocalizedLink>
             </li>
             <li>
-              <Link href={LEGAL_PAGE_PATHS.cookies} className={footerLink}>
+              <LocalizedLink href={LEGAL_PAGE_PATHS.cookies} className={footerLink}>
                 Cookiebeleid
-              </Link>
+              </LocalizedLink>
             </li>
             <li>
               <CookiePreferencesLink className={footerLink} />

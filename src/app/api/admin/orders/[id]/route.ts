@@ -76,6 +76,7 @@ export async function PATCH(request: Request, context: RouteContext) {
 
   let body: {
     status?: string;
+    payment_status?: string | null;
     items?: AdminOrderItemWrite[];
     customer_name?: string;
     customer_email?: string | null;
@@ -85,6 +86,12 @@ export async function PATCH(request: Request, context: RouteContext) {
     shipping_county?: string | null;
     shipping_postal_code?: string | null;
     notes?: string | null;
+    internal_note?: string | null;
+    billing_address?: string | null;
+    billing_city?: string | null;
+    billing_county?: string | null;
+    billing_postal_code?: string | null;
+    shipping_method?: "pickup" | "standard";
     tracking_code?: string | null;
     tracking_url?: string | null;
     shipping_carrier?: string | null;
@@ -100,14 +107,23 @@ export async function PATCH(request: Request, context: RouteContext) {
       const order = await updateOrderItems(id, body.items);
       return NextResponse.json(order);
     }
-    if (body.status) {
-      if (!ORDER_STATUSES.includes(body.status as OrderStatus)) {
+    const { status, items: unusedItems, ...fulfillment } = body;
+    void unusedItems;
+    const hasFulfillment = Object.values(fulfillment).some((value) => value !== undefined);
+    if (hasFulfillment) {
+      await updateOrderFulfillment(id, fulfillment);
+    }
+    if (status) {
+      if (!ORDER_STATUSES.includes(status as OrderStatus)) {
         return NextResponse.json({ error: "Ongeldige status" }, { status: 400 });
       }
-      const order = await updateOrderStatus(id, body.status as OrderStatus);
+      const order = await updateOrderStatus(id, status as OrderStatus);
       return NextResponse.json(order);
     }
-    const order = await updateOrderFulfillment(id, body);
+    const order = await getOrderById(id);
+    if (!order) {
+      return NextResponse.json({ error: "Niet gevonden" }, { status: 404 });
+    }
     return NextResponse.json(order);
   } catch (e) {
     const message = e instanceof Error ? e.message : "Bijwerken mislukt";

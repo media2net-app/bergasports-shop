@@ -5,6 +5,9 @@ import { cache } from "react";
 import { revalidatePath, revalidateTag } from "next/cache";
 
 import { requirePrisma } from "@/lib/database";
+import { hydratePageTranslations } from "@/lib/i18n/hydrate";
+import { compactLocaleMap } from "@/lib/i18n/translations";
+import { DEFAULT_LOCALE } from "@/lib/i18n/locale-codes";
 import type { HomepageBlocks, SitePageRow, SitePageUpdateInput } from "@/lib/site-pages";
 
 function rowToPage(row: {
@@ -25,6 +28,7 @@ function rowToPage(row: {
   isPublished: boolean;
   sortOrder: number;
   updatedAt: Date;
+  translations?: Prisma.JsonValue | null;
 }): SitePageRow {
   return {
     id: row.id,
@@ -44,6 +48,20 @@ function rowToPage(row: {
     is_published: row.isPublished,
     sort_order: row.sortOrder,
     updated_at: row.updatedAt.toISOString(),
+    translations: hydratePageTranslations({
+      title: row.title,
+      heading: row.heading,
+      slug: row.slug,
+      path: row.path,
+      body_html: row.bodyHtml,
+      blocks: (row.blocks as HomepageBlocks | null) ?? null,
+      meta_title: row.metaTitle,
+      meta_description: row.metaDescription,
+      og_title: row.ogTitle,
+      og_description: row.ogDescription,
+      image_alt: row.imageAlt,
+      translations: row.translations,
+    }),
   };
 }
 
@@ -80,21 +98,39 @@ export async function updateSitePage(id: number, input: SitePageUpdateInput): Pr
     throw new Error("Page not found.");
   }
 
+  const translations = compactLocaleMap(
+    hydratePageTranslations({
+      ...existing,
+      title: input.title,
+      heading: input.heading,
+      body_html: input.body_html ?? existing.body_html,
+      blocks: input.blocks ?? existing.blocks,
+      meta_title: input.meta_title,
+      meta_description: input.meta_description,
+      og_title: input.og_title,
+      og_description: input.og_description,
+      image_alt: input.image_alt,
+      translations: input.translations ?? existing.translations,
+    }),
+  );
+  const nl = translations[DEFAULT_LOCALE] ?? {};
+
   const data = await prisma.sitePage.update({
     where: { id },
     data: {
-      title: input.title.trim(),
-      heading: input.heading?.trim() || null,
-      bodyHtml: input.body_html ?? "",
-      blocks: (input.blocks ?? null) as Prisma.InputJsonValue,
-      metaTitle: input.meta_title?.trim() || null,
-      metaDescription: input.meta_description?.trim() || null,
-      ogTitle: input.og_title?.trim() || null,
-      ogDescription: input.og_description?.trim() || null,
+      title: (nl.title || input.title).trim(),
+      heading: (nl.heading || input.heading)?.trim() || null,
+      bodyHtml: nl.bodyHtml ?? input.body_html ?? "",
+      blocks: (nl.blocks ?? input.blocks ?? null) as Prisma.InputJsonValue,
+      metaTitle: (nl.metaTitle || input.meta_title)?.trim() || null,
+      metaDescription: (nl.metaDescription || input.meta_description)?.trim() || null,
+      ogTitle: (nl.ogTitle || input.og_title)?.trim() || null,
+      ogDescription: (nl.ogDescription || input.og_description)?.trim() || null,
       socialImage: input.social_image?.trim() || null,
-      imageAlt: input.image_alt?.trim() || null,
+      imageAlt: (nl.imageAlt || input.image_alt)?.trim() || null,
       noindex: Boolean(input.noindex),
       isPublished: input.is_published ?? true,
+      translations: translations as Prisma.InputJsonValue,
     },
   });
 

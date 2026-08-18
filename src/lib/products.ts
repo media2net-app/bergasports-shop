@@ -1,4 +1,6 @@
 import { resolveProductSlug } from "@/lib/product-slug";
+import type { LocaleMap, ProductLocaleFields } from "@/lib/i18n/translations";
+import { overlayTranslation, parseLocaleMap, pickTranslation } from "@/lib/i18n/translations";
 
 export const CATALOG_SOURCES = ["trendyol", "ralex", "manual"] as const;
 export type CatalogSource = (typeof CATALOG_SOURCES)[number];
@@ -118,6 +120,7 @@ export type TrendyolJsonProduct = {
   socialImage?: string;
   imageAlt?: string;
   noindex?: boolean;
+  translations?: LocaleMap<ProductLocaleFields>;
 };
 
 type TrendyolRawProduct = TrendyolJsonProduct;
@@ -198,8 +201,8 @@ export type Product = {
   socialImage?: string;
   imageAlt?: string;
   noindex?: boolean;
-  /** Admin: homepage „Produse populare”. */
   featuredOnHomepage?: boolean;
+  translations?: LocaleMap<ProductLocaleFields>;
 };
 
 function wcLayerFromRaw(p: TrendyolJsonProduct): Partial<Product> {
@@ -305,8 +308,71 @@ export function mapTrendyolJsonToProduct(product: TrendyolJsonProduct): Product 
     easySalesProductId: product.easySalesProductId,
     stockSyncedAt: product.stockSyncedAt,
     featuredOnHomepage: Boolean(product.featuredOnHomepage),
+    translations: parseLocaleMap<ProductLocaleFields>(product.translations),
     ...wcLayerFromRaw(product),
     ...variationPriceOverlay(product),
+  };
+}
+
+export function hydrateProductTranslations(product: TrendyolJsonProduct): LocaleMap<ProductLocaleFields> {
+  const existing = parseLocaleMap<ProductLocaleFields>(product.translations);
+  const fromColumns: ProductLocaleFields = {
+    name: product.name ?? "",
+    slug: product.slug ?? "",
+    shortDescriptionHtml: product.wcShortDescriptionHtml ?? "",
+    descriptionHtml: product.wcDescriptionHtml ?? "",
+    specsText: product.specsText ?? "",
+    seoTitle: product.seoTitle ?? "",
+    seoDescription: product.seoDescription ?? "",
+    ogTitle: product.ogTitle ?? "",
+    ogDescription: product.ogDescription ?? "",
+    imageAlt: product.imageAlt ?? "",
+  };
+  return { ...existing, nl: { ...fromColumns, ...existing.nl } };
+}
+
+export function productMatchesSlug(
+  product: Pick<TrendyolJsonProduct, "slug" | "wcSlug" | "translations">,
+  slug: string,
+): boolean {
+  const wanted = slug.trim().toLowerCase();
+  if (!wanted) return false;
+  if (product.slug?.trim().toLowerCase() === wanted) return true;
+  if (product.wcSlug?.trim().toLowerCase() === wanted) return true;
+  const map = parseLocaleMap<ProductLocaleFields>(product.translations);
+  return Object.values(map).some((fields) => fields.slug?.trim().toLowerCase() === wanted);
+}
+
+export function localizeProduct(product: Product, locale: string): Product {
+  const overlay = pickTranslation(product.translations, locale);
+  if (!overlay) return product;
+  const merged = overlayTranslation(
+    {
+      name: product.name,
+      slug: product.slug,
+      shortDescriptionHtml: product.wcShortDescriptionHtml ?? "",
+      descriptionHtml: product.wcDescriptionHtml ?? "",
+      specsText: product.specsText ?? "",
+      seoTitle: product.seoTitle ?? "",
+      seoDescription: product.seoDescription ?? "",
+      ogTitle: product.ogTitle ?? "",
+      ogDescription: product.ogDescription ?? "",
+      imageAlt: product.imageAlt ?? "",
+    },
+    overlay,
+  );
+  return {
+    ...product,
+    name: decodeImportedProductTitle(merged.name || product.name),
+    slug: merged.slug?.trim() || product.slug,
+    wcShortDescriptionHtml: merged.shortDescriptionHtml || product.wcShortDescriptionHtml,
+    wcDescriptionHtml: merged.descriptionHtml || product.wcDescriptionHtml,
+    specsText: merged.specsText || product.specsText,
+    seoTitle: merged.seoTitle || product.seoTitle,
+    seoDescription: merged.seoDescription || product.seoDescription,
+    ogTitle: merged.ogTitle || product.ogTitle,
+    ogDescription: merged.ogDescription || product.ogDescription,
+    imageAlt: merged.imageAlt || product.imageAlt,
   };
 }
 

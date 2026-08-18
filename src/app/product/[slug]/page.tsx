@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import LocalizedLink from "@/components/locale/LocalizedLink";
 import { notFound, permanentRedirect } from "next/navigation";
 import ProductTikTokView from "@/components/analytics/ProductTikTokView";
 import ShopProductCard from "@/components/shop/ShopProductCard";
@@ -17,6 +17,7 @@ import { isNumericProductPathSegment, productPath } from "@/lib/product-slug";
 import { loadRalexCategories } from "@/lib/categories-db";
 import { loadCatalogProducts, loadProductFromPathSegment } from "@/lib/products-db";
 import { followSeoRedirect } from "@/lib/seo-redirects";
+import { localizedPublicPath } from "@/lib/i18n/locale";
 import {
   productMatchesShopCategory,
   resolveProductShopCategory,
@@ -120,7 +121,7 @@ export async function generateMetadata({ params }: ProductDetailPageProps): Prom
   return buildPageMetadata({
     absoluteTitle: productSeoTitle(product),
     description: productMetaDescription(product),
-    path: productPath(product),
+    path: await localizedPublicPath(productPath(product)),
     image: product.socialImage?.trim() || product.image,
     imageAlt: product.imageAlt?.trim() || product.name,
     noindex: Boolean(product.noindex),
@@ -138,7 +139,7 @@ export default async function ProductDetailPage({ params, searchParams }: Produc
     if (!legacy) {
       notFound();
     }
-    permanentRedirect(`${productPath(legacy)}${variationQuery(sp)}`);
+    permanentRedirect(await localizedPublicPath(`${productPath(legacy)}${variationQuery(sp)}`));
   }
 
   const product = await loadProductFromPathSegment(segment);
@@ -209,10 +210,22 @@ export default async function ProductDetailPage({ params, searchParams }: Produc
     Boolean(product.wcDescriptionHtml?.trim());
 
   const origin = siteOrigin();
-  const jsonLd = productJsonLd(product, origin, { variationId: resolvedInitialVariationId });
+  const [publicProductPath, publicShopPath, publicHomePath, publicCategoryPath] = await Promise.all([
+    localizedPublicPath(productPath(product)),
+    localizedPublicPath("/shop"),
+    localizedPublicPath("/"),
+    productCategory ? localizedPublicPath(productCategory.href) : Promise.resolve(undefined),
+  ]);
+  const jsonLd = productJsonLd(product, origin, {
+    variationId: resolvedInitialVariationId,
+    path: publicProductPath,
+  });
   const breadcrumbLd = productBreadcrumbJsonLd(product, origin, {
     categoryName: productCategory?.label,
-    categoryPath: productCategory?.href,
+    categoryPath: publicCategoryPath,
+    productPath: publicProductPath,
+    shopPath: publicShopPath,
+    homePath: publicHomePath,
   });
   const inStock = isProductInStock(product);
   const contentTier = resolveProductContentTier(product);
@@ -220,9 +233,9 @@ export default async function ProductDetailPage({ params, searchParams }: Produc
   const catalogSpecsFallback = (
     <p className="mt-2 text-sm text-[var(--foreground)]/85">
       Voor maten, materiaal of andere technische details kun je contact opnemen via de{" "}
-      <Link href="/contact" className="font-semibold text-[#96741f] underline underline-offset-2">
+      <LocalizedLink href="/contact" className="font-semibold text-[#96741f] underline underline-offset-2">
         contact
-      </Link>
+      </LocalizedLink>
       .
     </p>
   );
@@ -248,20 +261,20 @@ export default async function ProductDetailPage({ params, searchParams }: Produc
         <nav className="text-sm" aria-label="Breadcrumb">
           <ol className="flex flex-wrap items-center gap-1.5 text-[var(--foreground)]/60">
             <li>
-              <Link href="/shop" className="transition-colors hover:text-[var(--brand)]">
+              <LocalizedLink href="/shop" className="transition-colors hover:text-[var(--brand)]">
                 Webshop
-              </Link>
+              </LocalizedLink>
             </li>
             {productCategory ? (
               <>
                 <li aria-hidden>/</li>
                 <li>
-                  <Link
+                  <LocalizedLink
                     href={productCategory.href}
                     className="transition-colors hover:text-[var(--brand)]"
                   >
                     {productCategory.label}
-                  </Link>
+                  </LocalizedLink>
                 </li>
               </>
             ) : null}
@@ -358,7 +371,7 @@ export default async function ProductDetailPage({ params, searchParams }: Produc
                   Ingmar denkt met je mee — bel, mail of kom langs in Dedemsvaart voor persoonlijk
                   advies.
                 </p>
-                <Link
+                <LocalizedLink
                   href="/afspraak#formulier"
                   className="arrow-link mt-3 inline-flex min-h-11 items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[#96741f]"
                 >
@@ -366,7 +379,7 @@ export default async function ProductDetailPage({ params, searchParams }: Produc
                   <span aria-hidden className="arrow-link-icon">
                     →
                   </span>
-                </Link>
+                </LocalizedLink>
               </div>
             </div>
           </div>
@@ -499,7 +512,7 @@ export default async function ProductDetailPage({ params, searchParams }: Produc
               <h2 className="section-rule font-[family-name:var(--font-heading)] text-xl font-semibold tracking-tight text-[var(--foreground)] md:text-2xl">
                 Vergelijkbare producten
               </h2>
-              <Link
+              <LocalizedLink
                 href={productCategory?.href ?? "/shop"}
                 className="arrow-link inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[#96741f]"
               >
@@ -507,7 +520,7 @@ export default async function ProductDetailPage({ params, searchParams }: Produc
                 <span aria-hidden className="arrow-link-icon">
                   →
                 </span>
-              </Link>
+              </LocalizedLink>
             </div>
             <div className="mt-5 grid grid-cols-2 gap-3 md:gap-5 lg:grid-cols-4">
               {similarProducts.map((item) => (

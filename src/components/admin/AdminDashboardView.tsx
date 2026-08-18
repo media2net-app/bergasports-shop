@@ -33,8 +33,9 @@ const ORDER_PIPELINE = [
   { key: "pending", label: "Open", status: "pending" },
   { key: "confirmed", label: "Bevestigd", status: "confirmed" },
   { key: "processing", label: "In behandeling", status: "processing" },
+  { key: "ready_for_pickup", label: "Klaar voor ophalen", status: "ready_for_pickup" },
   { key: "shipped", label: "Verzonden", status: "shipped" },
-  { key: "delivered", label: "Afgeleverd", status: "delivered" },
+  { key: "delivered", label: "Opgehaald", status: "delivered" },
   { key: "cancelled", label: "Geannuleerd", status: "cancelled" },
 ] as const;
 
@@ -43,6 +44,7 @@ const STATUS_TONE: Record<string, string> = {
   pending: "warn",
   confirmed: "brand",
   processing: "brand",
+  ready_for_pickup: "brand",
   shipped: "ok",
   delivered: "ok",
   cancelled: "mute",

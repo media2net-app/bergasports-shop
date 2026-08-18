@@ -1,4 +1,4 @@
-import Link from "next/link";
+import LocalizedLink from "@/components/locale/LocalizedLink";
 
 import type { CategorySeoContent } from "@/lib/category-seo";
 
@@ -47,12 +47,12 @@ export function CategorySeoFooter({ seo, showProductLinks = true }: Props) {
           <ul className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
             {seo.productLinks.map((link) => (
               <li key={link.href}>
-                <Link
+                <LocalizedLink
                   href={link.href}
                   className="text-sm font-medium text-[#96741f] underline decoration-[#e5dcc8] underline-offset-2 hover:text-[var(--foreground)]"
                 >
                   {link.label}
-                </Link>
+                </LocalizedLink>
               </li>
             ))}
           </ul>
@@ -65,12 +65,12 @@ export function CategorySeoFooter({ seo, showProductLinks = true }: Props) {
           <ul className="mt-3 flex flex-wrap gap-2">
             {seo.relatedCategoryLinks.map((link) => (
               <li key={link.href}>
-                <Link
+                <LocalizedLink
                   href={link.href}
                   className="inline-block rounded-full border border-[#e5dcc8] bg-[#faf8f4] px-3 py-1.5 text-xs font-semibold text-[var(--foreground)] transition hover:border-[#B38F27]/30"
                 >
                   {link.label}
-                </Link>
+                </LocalizedLink>
               </li>
             ))}
           </ul>
@@ -78,13 +78,13 @@ export function CategorySeoFooter({ seo, showProductLinks = true }: Props) {
       ) : null}
 
       <p className="mt-8 text-sm text-[var(--foreground)]/75">
-        <Link href="/shop" className="font-semibold text-[#96741f] underline underline-offset-2">
+        <LocalizedLink href="/shop" className="font-semibold text-[#96741f] underline underline-offset-2">
           Bekijk de volledige Bergasports-webshop
-        </Link>
+        </LocalizedLink>
         {" · "}
-        <Link href="/contact" className="font-semibold text-[#96741f] underline underline-offset-2">
+        <LocalizedLink href="/contact" className="font-semibold text-[#96741f] underline underline-offset-2">
           Contact
-        </Link>
+        </LocalizedLink>
       </p>
     </article>
   );

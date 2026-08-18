@@ -5,9 +5,17 @@ import { revalidatePath } from "next/cache";
 import type { Prisma } from "@/generated/prisma/client";
 
 import { canWriteProductsToDatabase, requirePrisma } from "@/lib/database";
+import { DEFAULT_LOCALE } from "@/lib/i18n/locale-codes";
+import { getRequestLocale } from "@/lib/i18n/locale";
 import type { TrendyolJsonProduct } from "@/lib/products";
 import { isProductVisibleOnShop } from "@/lib/product-status";
-import { mapTrendyolJsonToProduct, normalizeCatalogSource, type Product } from "@/lib/products";
+import {
+  localizeProduct,
+  mapTrendyolJsonToProduct,
+  normalizeCatalogSource,
+  productMatchesSlug,
+  type Product,
+} from "@/lib/products";
 import {
   productSlugBase,
   resolveProductSlug,
@@ -230,13 +238,22 @@ export async function nextProductId(): Promise<number> {
 
 export { canWriteProductsToDatabase as isDatabaseWritable };
 
+async function localeForCatalog(): Promise<string> {
+  try {
+    return await getRequestLocale();
+  } catch {
+    return DEFAULT_LOCALE;
+  }
+}
+
 const loadCatalogProductsCached = cache(async (): Promise<Product[]> => {
   const raw = await fetchAllProductsRaw();
   return raw.filter(isProductVisibleOnShop).map(mapTrendyolJsonToProduct);
 });
 
 export async function loadCatalogProducts(): Promise<Product[]> {
-  return loadCatalogProductsCached();
+  const [products, locale] = await Promise.all([loadCatalogProductsCached(), localeForCatalog()]);
+  return products.map((product) => localizeProduct(product, locale));
 }
 
 export async function loadFeaturedProducts(limit = 8): Promise<Product[]> {
@@ -253,8 +270,9 @@ export async function loadFeaturedProducts(limit = 8): Promise<Product[]> {
     .filter(isProductVisibleOnShop)
     .map(mapTrendyolJsonToProduct);
 
+  const locale = await localeForCatalog();
   if (featured.length >= limit) {
-    return featured.slice(0, limit);
+    return featured.slice(0, limit).map((product) => localizeProduct(product, locale));
   }
 
   const need = limit - featured.length;
@@ -280,12 +298,13 @@ export async function loadFeaturedProducts(limit = 8): Promise<Product[]> {
     .slice(0, need)
     .map(mapTrendyolJsonToProduct);
 
-  return [...featured, ...fallback];
+  return [...featured, ...fallback].map((product) => localizeProduct(product, locale));
 }
 
 export async function loadProductById(id: number): Promise<Product | null> {
   const raw = await getProductRawById(id);
-  return raw ? mapTrendyolJsonToProduct(raw) : null;
+  if (!raw) return null;
+  return localizeProduct(mapTrendyolJsonToProduct(raw), await localeForCatalog());
 }
 
 export async function loadProductBySlug(slug: string): Promise<Product | null> {
@@ -300,23 +319,20 @@ export async function loadProductBySlug(slug: string): Promise<Product | null> {
     select: productSelect,
   });
 
+  const locale = await localeForCatalog();
   if (row) {
     const raw = rowToProduct(row);
     if (!isProductVisibleOnShop(raw)) {
       return null;
     }
-    return mapTrendyolJsonToProduct(raw);
+    return localizeProduct(mapTrendyolJsonToProduct(raw), locale);
   }
 
-  const catalog = await loadCatalogProducts();
-  const matches = catalog.filter((p) => p.slug === normalized);
-  if (matches.length === 1) {
-    return matches[0]!;
-  }
-  if (matches.length > 1) {
-    return matches.sort((a, b) => a.id - b.id)[0]!;
-  }
-  return null;
+  const all = await fetchAllProductsRaw();
+  const matches = all.filter((p) => isProductVisibleOnShop(p) && productMatchesSlug(p, normalized));
+  if (!matches.length) return null;
+  const picked = matches.sort((a, b) => a.id - b.id)[0]!;
+  return localizeProduct(mapTrendyolJsonToProduct(picked), locale);
 }
 
 export async function loadProductFromPathSegment(segment: string): Promise<Product | null> {

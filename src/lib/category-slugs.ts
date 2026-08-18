@@ -3,7 +3,9 @@
  * DB/import blijft WC-slug; storefront-links gebruiken locale-publieke slugs.
  */
 
-export type AppLocale = "nl" | "en";
+import { DEFAULT_LOCALE, type AppLocale } from "@/lib/i18n/locale-shared";
+
+export type { AppLocale };
 
 /** WC slug → NL public slug */
 export const WC_TO_NL_SLUG: Record<string, string> = {
@@ -88,7 +90,7 @@ export function normalizeCategorySlug(slug: string): string {
 }
 
 /** Resolve any public or WC slug to the canonieke WC slug used in DB. */
-export function toCanonicalWcSlug(slug: string, locale: AppLocale = "nl"): string {
+export function toCanonicalWcSlug(slug: string, locale: AppLocale = DEFAULT_LOCALE): string {
   const s = normalizeCategorySlug(slug);
   if (!s) return s;
   if (locale === "en") {
@@ -98,7 +100,7 @@ export function toCanonicalWcSlug(slug: string, locale: AppLocale = "nl"): strin
 }
 
 /** Public path slug for links. */
-export function toPublicCategorySlug(wcOrAnySlug: string, locale: AppLocale = "nl"): string {
+export function toPublicCategorySlug(wcOrAnySlug: string, locale: AppLocale = DEFAULT_LOCALE): string {
   const canonical = toCanonicalWcSlug(wcOrAnySlug, locale);
   if (locale === "en") {
     return WC_TO_EN_SLUG[canonical] ?? canonical;
@@ -106,7 +108,7 @@ export function toPublicCategorySlug(wcOrAnySlug: string, locale: AppLocale = "n
   return WC_TO_NL_SLUG[canonical] ?? canonical;
 }
 
-export function publicCategoryPath(wcOrAnySlug: string, locale: AppLocale = "nl"): string {
+export function publicCategoryPath(wcOrAnySlug: string, locale: AppLocale = DEFAULT_LOCALE): string {
   const pub = toPublicCategorySlug(wcOrAnySlug, locale);
   return pub ? `/${pub}` : "/shop";
 }

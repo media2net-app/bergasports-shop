@@ -102,11 +102,12 @@ export function productMetaDescription(product: Product): string {
 export type ProductJsonLdOptions = {
   variationId?: number;
   categoryName?: string;
+  path?: string;
 };
 
 export function productJsonLd(product: Product, siteUrl: string, options?: ProductJsonLdOptions) {
   const base = siteUrl.replace(/\/$/, "");
-  const url = `${base}${productPath(product)}`;
+  const url = `${base}${options?.path ?? productPath(product)}`;
   const images =
     product.images.length > 0 ? product.images : product.image ? [product.image] : [];
 
@@ -145,12 +146,21 @@ export function productJsonLd(product: Product, siteUrl: string, options?: Produ
 export function productBreadcrumbJsonLd(
   product: Product,
   siteUrl: string,
-  options?: { categoryName?: string; categoryPath?: string },
+  options?: {
+    categoryName?: string;
+    categoryPath?: string;
+    productPath?: string;
+    shopPath?: string;
+    homePath?: string;
+  },
 ) {
   const base = siteUrl.replace(/\/$/, "");
+  const productHref = options?.productPath ?? productPath(product);
+  const shopHref = options?.shopPath ?? "/shop";
+  const homeHref = options?.homePath ?? "/";
   const items: { "@type": string; position: number; name: string; item?: string }[] = [
-    { "@type": "ListItem", position: 1, name: "Home", item: `${base}/` },
-    { "@type": "ListItem", position: 2, name: "Webshop", item: `${base}/shop` },
+    { "@type": "ListItem", position: 1, name: "Home", item: `${base}${homeHref}` },
+    { "@type": "ListItem", position: 2, name: "Webshop", item: `${base}${shopHref}` },
   ];
 
   if (options?.categoryName && options.categoryPath) {
@@ -164,14 +174,14 @@ export function productBreadcrumbJsonLd(
       "@type": "ListItem",
       position: 4,
       name: product.name,
-      item: `${base}${productPath(product)}`,
+      item: `${base}${productHref}`,
     });
   } else {
     items.push({
       "@type": "ListItem",
       position: 3,
       name: product.name,
-      item: `${base}${productPath(product)}`,
+      item: `${base}${productHref}`,
     });
   }
 

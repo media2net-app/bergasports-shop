@@ -11,6 +11,8 @@ export type EmailTemplateKey =
   | "marketing.post_purchase"
   | "marketing.win_back";
 
+import type { EmailLocaleFields, LocaleMap } from "@/lib/i18n/translations";
+
 export type EmailTemplateDraft = {
   key: EmailTemplateKey;
   category: EmailTemplateCategory;
@@ -19,6 +21,7 @@ export type EmailTemplateDraft = {
   subject: string;
   title: string;
   bodyHtml: string;
+  translations?: LocaleMap<EmailLocaleFields>;
 };
 
 export type EmailPlaceholder = {

@@ -1,4 +1,4 @@
-import Link from "next/link";
+import LocalizedLink from "@/components/locale/LocalizedLink";
 
 import { categoryShopHref } from "@/lib/category-shop-link";
 import { formatRalexCategoryName, type RalexCategoryNode } from "@/lib/ralex-categories";
@@ -12,12 +12,12 @@ function CategoryBranch({ nodes, depth }: { nodes: RalexCategoryNode[]; depth: n
       {nodes.map((node) => (
         <li key={node.id}>
           <div className="flex flex-wrap items-baseline gap-2">
-            <Link
+            <LocalizedLink
               href={categoryShopHref(node.slug)}
               className="font-semibold text-[var(--foreground)] underline decoration-[#e5dcc8] underline-offset-2 hover:text-[#96741f]"
             >
               {formatRalexCategoryName(node.name, node.slug)}
-            </Link>
+            </LocalizedLink>
             <span className="text-xs text-[var(--foreground)]/50">{node.count} prod.</span>
           </div>
           {node.children?.length ? <CategoryBranch nodes={node.children} depth={depth + 1} /> : null}

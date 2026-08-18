@@ -7,8 +7,9 @@ import {
   renderEmailTemplate,
   type AdminOrderLike,
 } from "@/lib/email-template-render";
+import type { OrderStatusEmailKind } from "@/lib/order-email-kinds";
 
-export type OrderStatusEmailKind = "received" | "confirmed" | "shipped" | "delivered" | "cancelled";
+export type { OrderStatusEmailKind } from "@/lib/order-email-kinds";
 export type AdminNewOrderEmailInput = AdminOrderLike;
 
 const KIND_TO_KEY = {

@@ -1,9 +1,11 @@
 import { notFound } from "next/navigation";
 
 import AdminOrderDetail from "@/components/admin/AdminOrderDetail";
+import { findAdminCustomerIdByEmail } from "@/lib/customers-admin";
 import { getMolliePayment } from "@/lib/mollie";
 import { parseOrderCheckoutNotes } from "@/lib/orders";
 import { getOrderById } from "@/lib/orders-db";
+import { getShopPublicContact } from "@/lib/shop-runtime";
 
 export const dynamic = "force-dynamic";
 
@@ -33,6 +35,10 @@ export default async function AdminOrderDetailPage({ params }: PageProps) {
   }
 
   const checkoutMeta = parseOrderCheckoutNotes(order.notes);
+  const [customerId, contact] = await Promise.all([
+    findAdminCustomerIdByEmail(order.customer_email),
+    getShopPublicContact(),
+  ]);
 
   return (
     <AdminOrderDetail
@@ -40,6 +46,10 @@ export default async function AdminOrderDetailPage({ params }: PageProps) {
       shippingLabel={checkoutMeta.shippingLabel}
       couponCode={checkoutMeta.couponCode}
       customerNote={checkoutMeta.customerNote}
+      internalNote={checkoutMeta.internalNote}
+      billing={checkoutMeta.billing}
+      customerId={customerId}
+      pickupLocation={contact.address}
     />
   );
 }

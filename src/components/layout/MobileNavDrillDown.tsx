@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import LocalizedLink from "@/components/locale/LocalizedLink";
 import { useState } from "react";
 
 import LanguageSwitcher from "@/components/locale/LanguageSwitcher";
@@ -38,7 +38,7 @@ export default function MobileNavDrillDown({ onNavigate, isActive }: Props) {
                     <ul className="mb-2 ml-2 space-y-0.5 border-l border-white/10 pl-3">
                       {item.children.map((child) => (
                         <li key={child.href}>
-                          <Link
+                          <LocalizedLink
                             href={child.href}
                             className={`block rounded-lg px-3 py-2.5 text-sm ${
                               isActive(child.href)
@@ -48,7 +48,7 @@ export default function MobileNavDrillDown({ onNavigate, isActive }: Props) {
                             onClick={onNavigate}
                           >
                             {child.label}
-                          </Link>
+                          </LocalizedLink>
                         </li>
                       ))}
                     </ul>
@@ -59,7 +59,7 @@ export default function MobileNavDrillDown({ onNavigate, isActive }: Props) {
             if (!item.href) return null;
             return (
               <li key={item.label}>
-                <Link
+                <LocalizedLink
                   href={item.href}
                   className={`block rounded-lg px-3 py-3 text-sm font-bold uppercase tracking-wider ${
                     isActive(item.href) ? "bg-white/10 text-white" : "text-white/80 hover:bg-white/5"
@@ -67,7 +67,7 @@ export default function MobileNavDrillDown({ onNavigate, isActive }: Props) {
                   onClick={onNavigate}
                 >
                   {item.label}
-                </Link>
+                </LocalizedLink>
               </li>
             );
           })}
@@ -83,13 +83,13 @@ export default function MobileNavDrillDown({ onNavigate, isActive }: Props) {
         >
           Instagram
         </a>
-        <Link
+        <LocalizedLink
           href="/afspraak#formulier"
           onClick={onNavigate}
           className="flex min-h-11 items-center justify-center rounded-md bg-[var(--brand-mid)] px-4 text-sm font-bold uppercase tracking-wide text-[#1a1a1a]"
         >
           Plan een afspraak
-        </Link>
+        </LocalizedLink>
       </div>
     </div>
   );

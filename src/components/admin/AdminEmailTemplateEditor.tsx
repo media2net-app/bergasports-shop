@@ -4,14 +4,28 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
 import AdminHtmlEditor from "@/components/admin/AdminHtmlEditor";
+import AdminLocaleTabs from "@/components/admin/AdminLocaleTabs";
+import { useLocaleDraft } from "@/components/admin/useLocaleDraft";
 import { EMAIL_PLACEHOLDERS, tokenMarkup, type EmailTemplateDraft } from "@/lib/email-template-defs";
+import { hydrateEmailTranslations } from "@/lib/i18n/hydrate";
+import type { EmailLocaleFields } from "@/lib/i18n/translations";
 
 type Props = { template: EmailTemplateDraft };
 
 export default function AdminEmailTemplateEditor({ template }: Props) {
-  const [subject, setSubject] = useState(template.subject);
-  const [title, setTitle] = useState(template.title);
-  const [bodyHtml, setBodyHtml] = useState(template.bodyHtml);
+  const {
+    locale: editLocale,
+    setLocale: setEditLocale,
+    languages,
+    fields: loc,
+    setField: setLoc,
+    compact,
+    filled,
+    setMap,
+  } = useLocaleDraft<EmailLocaleFields>(hydrateEmailTranslations(template));
+  const subject = loc.subject ?? "";
+  const title = loc.title ?? "";
+  const bodyHtml = loc.bodyHtml ?? "";
   const [error, setError] = useState("");
   const [saveOk, setSaveOk] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -54,7 +68,7 @@ export default function AdminEmailTemplateEditor({ template }: Props) {
       const res = await fetch(`/api/admin/email-templates/${encodeURIComponent(template.key)}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ subject, title, bodyHtml }),
+        body: JSON.stringify({ subject, title, bodyHtml, translations: compact() }),
       });
       const data = (await res.json()) as { error?: string };
       if (!res.ok) {
@@ -80,9 +94,7 @@ export default function AdminEmailTemplateEditor({ template }: Props) {
       if (!res.ok || !data.template) {
         setError(data.error ?? "Reset mislukt");
       } else {
-        setSubject(data.template.subject);
-        setTitle(data.template.title);
-        setBodyHtml(data.template.bodyHtml);
+        setMap(hydrateEmailTranslations(data.template));
         setSaveOk(true);
       }
     } catch {
@@ -93,7 +105,7 @@ export default function AdminEmailTemplateEditor({ template }: Props) {
 
   function insertToken(token: string, block?: boolean) {
     const markup = tokenMarkup(token);
-    setBodyHtml((prev) => `${prev.trim()}${block ? `\n<p>${markup}</p>` : ` ${markup}`}`);
+    setLoc("bodyHtml", `${bodyHtml.trim()}${block ? `\n<p>${markup}</p>` : ` ${markup}`}`);
   }
 
   return (
@@ -116,6 +128,14 @@ export default function AdminEmailTemplateEditor({ template }: Props) {
         </div>
       </div>
 
+      <AdminLocaleTabs
+        languages={languages}
+        value={editLocale}
+        onChange={setEditLocale}
+        filledLocales={filled}
+        hint="Onderwerp en HTML per taal. Lege vertalingen vallen terug op Nederlands bij verzenden."
+      />
+
       {saveOk ? (
         <div className="admin-banner ok admin-m-0" role="status">
           Template opgeslagen. Nieuwe mails gebruiken deze tekst.
@@ -135,7 +155,7 @@ export default function AdminEmailTemplateEditor({ template }: Props) {
                 id="email-subject"
                 className="admin-field admin-field--flush"
                 value={subject}
-                onChange={(e) => setSubject(e.target.value)}
+                onChange={(e) => setLoc("subject", e.target.value)}
               />
             </div>
             <div>
@@ -146,7 +166,7 @@ export default function AdminEmailTemplateEditor({ template }: Props) {
                 id="email-title"
                 className="admin-field admin-field--flush"
                 value={title}
-                onChange={(e) => setTitle(e.target.value)}
+                onChange={(e) => setLoc("title", e.target.value)}
               />
             </div>
           </div>
@@ -161,7 +181,7 @@ export default function AdminEmailTemplateEditor({ template }: Props) {
               minHeight="tall"
               placeholder="Schrijf de mail…"
               value={bodyHtml}
-              onChange={setBodyHtml}
+              onChange={(html) => setLoc("bodyHtml", html)}
               imageFolder="uploads"
               onImageError={setError}
             />

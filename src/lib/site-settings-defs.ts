@@ -19,7 +19,8 @@ export type SiteSettingGroupId =
   | "woocommerce"
   | "analytics"
   | "pixels"
-  | "seo";
+  | "seo"
+  | "languages";
 
 export type SiteSettingDef = {
   key: string;
@@ -74,6 +75,13 @@ export const SITE_SETTING_GROUPS: {
     title: "Shop & verzending",
     navLabel: "URL & verzending",
     intro: "Canonieke shop-URL en drempel voor gratis verzending.",
+  },
+  {
+    id: "languages",
+    section: "shop",
+    title: "Talen",
+    navLabel: "Talen",
+    intro: "Voeg talen toe voor de shop. Nederlands blijft de standaardtaal zonder URL-prefix.",
   },
   {
     id: "products",

@@ -1,4 +1,4 @@
-import Link from "next/link";
+import LocalizedLink from "@/components/locale/LocalizedLink";
 
 import { productPath } from "@/lib/product-slug";
 import type { Product } from "@/lib/products";
@@ -22,14 +22,14 @@ export default function ShopProductCardVariationChips({ product }: Props) {
       aria-label="Variante produs"
     >
       {variations.map((v) => (
-        <Link
+        <LocalizedLink
           key={v.id}
           href={`${baseHref}?variation=${v.id}`}
           scroll
           className="shrink-0 rounded-full border border-[#e5dcc8] bg-white px-2.5 py-1 text-xs font-semibold text-[var(--foreground)] transition hover:border-[#B38F27]/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B38F27] focus-visible:ring-offset-1"
         >
           {shortVariationLabel(v.label)}
-        </Link>
+        </LocalizedLink>
       ))}
     </div>
   );

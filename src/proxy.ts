@@ -2,30 +2,53 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 import { adminSessionCookieName, verifyAdminSessionToken } from "@/lib/admin-auth";
-import { localeFromHost } from "@/lib/i18n/locale-shared";
+import { DEFAULT_LOCALE, localeFromHost, stripLocalePrefix, withLocalePrefix } from "@/lib/i18n/locale-shared";
 import { matchStaticSeoRedirect, normalizeRedirectPath } from "@/lib/seo-redirects-static";
 
 /** Next.js 16+: `middleware` heet `proxy` (zelfde gedrag). */
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const host = request.headers.get("x-forwarded-host") || request.headers.get("host");
-  const locale = localeFromHost(host);
+  const { locale: prefixLocale, pathname: stripped } = stripLocalePrefix(pathname);
+  const skipLocale =
+    stripped.startsWith("/admin") ||
+    stripped.startsWith("/api") ||
+    stripped.startsWith("/_next") ||
+    pathname.startsWith("/admin") ||
+    pathname.startsWith("/api");
+
+  let locale = localeFromHost(host);
+  if (!skipLocale && prefixLocale) {
+    locale = prefixLocale;
+  }
 
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("x-bergasports-locale", locale);
+
+  if (!skipLocale && prefixLocale === DEFAULT_LOCALE) {
+    const url = request.nextUrl.clone();
+    url.pathname = stripped;
+    return NextResponse.redirect(url, 301);
+  }
 
   if (
     !pathname.startsWith("/admin") &&
     !pathname.startsWith("/api") &&
     !pathname.startsWith("/_next")
   ) {
-    const dest = matchStaticSeoRedirect(pathname);
-    const from = normalizeRedirectPath(pathname);
+    const dest = matchStaticSeoRedirect(stripped);
+    const from = normalizeRedirectPath(stripped);
     if (dest && dest !== from) {
       const url = request.nextUrl.clone();
-      url.pathname = dest;
+      url.pathname = prefixLocale && prefixLocale !== DEFAULT_LOCALE ? withLocalePrefix(dest, prefixLocale) : dest;
       return NextResponse.redirect(url, 301);
     }
+  }
+
+  if (!skipLocale && prefixLocale && prefixLocale !== DEFAULT_LOCALE) {
+    const url = request.nextUrl.clone();
+    url.pathname = stripped;
+    return NextResponse.rewrite(url, { request: { headers: requestHeaders } });
   }
 
   if (!pathname.startsWith("/admin") && !pathname.startsWith("/api/admin")) {

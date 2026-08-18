@@ -8,6 +8,10 @@ import {
   type EmailTemplateDraft,
   type EmailTemplateKey,
 } from "@/lib/email-template-defs";
+import { hydrateEmailTranslations } from "@/lib/i18n/hydrate";
+import { compactLocaleMap } from "@/lib/i18n/translations";
+import { DEFAULT_LOCALE } from "@/lib/i18n/locale-codes";
+import type { Prisma } from "@/generated/prisma/client";
 import { getPrisma } from "@/lib/prisma";
 
 export type EmailTemplateRow = EmailTemplateDraft & {
@@ -27,6 +31,7 @@ function fromRow(row: {
   title: string;
   bodyHtml: string;
   updatedAt: Date;
+  translations?: unknown;
 }): EmailTemplateRow | null {
   if (!isEmailTemplateKey(row.key)) return null;
   return {
@@ -38,6 +43,7 @@ function fromRow(row: {
     title: row.title,
     bodyHtml: row.bodyHtml,
     updatedAt: row.updatedAt,
+    translations: hydrateEmailTranslations(row),
   };
 }
 
@@ -106,14 +112,23 @@ export async function getEmailTemplate(key: EmailTemplateKey): Promise<EmailTemp
 
 export async function saveEmailTemplate(
   key: EmailTemplateKey,
-  input: { subject: string; title: string; bodyHtml: string },
+  input: { subject: string; title: string; bodyHtml: string; translations?: EmailTemplateDraft["translations"] },
 ): Promise<EmailTemplateRow> {
   const prisma = prismaClient();
   if (!prisma) throw new Error("DATABASE_URL ontbreekt");
   const def = DEFAULT_EMAIL_TEMPLATES[key];
-  const subject = input.subject.trim();
-  const title = input.title.trim();
-  const bodyHtml = sanitizeAdminHtml(input.bodyHtml);
+  const translations = compactLocaleMap(
+    hydrateEmailTranslations({
+      subject: input.subject,
+      title: input.title,
+      bodyHtml: input.bodyHtml,
+      translations: input.translations,
+    }),
+  );
+  const nl = translations[DEFAULT_LOCALE] ?? {};
+  const subject = (nl.subject || input.subject).trim();
+  const title = (nl.title || input.title).trim();
+  const bodyHtml = sanitizeAdminHtml(nl.bodyHtml || input.bodyHtml);
   if (!subject || !title || !bodyHtml.trim()) {
     throw new Error("Onderwerp, titel en inhoud zijn verplicht.");
   }
@@ -127,8 +142,17 @@ export async function saveEmailTemplate(
       subject,
       title,
       bodyHtml,
+      translations: translations as Prisma.InputJsonValue,
     },
-    update: { subject, title, bodyHtml, name: def.name, description: def.description, category: def.category },
+    update: {
+      subject,
+      title,
+      bodyHtml,
+      name: def.name,
+      description: def.description,
+      category: def.category,
+      translations: translations as Prisma.InputJsonValue,
+    },
   });
   return fromRow(row) ?? { ...def, subject, title, bodyHtml, updatedAt: row.updatedAt };
 }

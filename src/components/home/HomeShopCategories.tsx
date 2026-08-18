@@ -1,4 +1,4 @@
-import Link from "next/link";
+import LocalizedLink from "@/components/locale/LocalizedLink";
 
 import { WEBSHOP_MENU_LINKS } from "@/lib/site-content";
 
@@ -17,19 +17,19 @@ export default function HomeShopCategories() {
       <ul className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {WEBSHOP_MENU_LINKS.map((item) => (
           <li key={item.href}>
-            <Link
+            <LocalizedLink
               href={item.href}
               className="flex h-full items-center rounded-xl border border-[#e5dcc8] bg-white px-4 py-3 text-sm font-semibold text-[var(--foreground)] transition hover:border-[var(--brand)]/40 hover:shadow-sm"
             >
               {item.label}
-            </Link>
+            </LocalizedLink>
           </li>
         ))}
       </ul>
       <p className="mt-4">
-        <Link href="/shop" className="text-sm font-semibold text-[var(--brand-hover)] underline underline-offset-2">
+        <LocalizedLink href="/shop" className="text-sm font-semibold text-[var(--brand-hover)] underline underline-offset-2">
           Naar de volledige webshop →
-        </Link>
+        </LocalizedLink>
       </p>
     </section>
   );

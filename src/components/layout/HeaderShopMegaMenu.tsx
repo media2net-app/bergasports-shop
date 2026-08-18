@@ -1,10 +1,11 @@
 "use client";
 
-import Link from "next/link";
+import LocalizedLink from "@/components/locale/LocalizedLink";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { isShopNavigationPath, WEBSHOP_MEGA_MENU } from "@/lib/site-content";
+import { stripLocalePrefix } from "@/lib/i18n/locale-shared";
 
 const navLinkClass =
   "text-[11px] font-bold uppercase tracking-[0.14em] text-white/85 transition hover:text-white md:text-xs";
@@ -21,7 +22,7 @@ type Props = {
 };
 
 export default function HeaderShopMegaMenu({ label = "Webshop" }: Props) {
-  const pathname = usePathname();
+  const pathname = stripLocalePrefix(usePathname() || "/").pathname;
   const shopActive = isShopNavigationPath(pathname);
   const [open, setOpen] = useState(false);
   const [panelTop, setPanelTop] = useState(0);
@@ -100,7 +101,7 @@ export default function HeaderShopMegaMenu({ label = "Webshop" }: Props) {
         onMouseEnter={handleEnter}
         onMouseLeave={scheduleClose}
       >
-        <Link
+        <LocalizedLink
           href="/shop"
           className={`${navLinkClass} inline-flex items-center gap-1 ${shopActive || open ? "text-white" : ""}`}
           aria-haspopup="true"
@@ -116,7 +117,7 @@ export default function HeaderShopMegaMenu({ label = "Webshop" }: Props) {
           >
             <path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
           </svg>
-        </Link>
+        </LocalizedLink>
       </div>
 
       {/* Panel + hover-brug (fixed, los van trigger-box voor betrouwbare hover) */}
@@ -140,13 +141,13 @@ export default function HeaderShopMegaMenu({ label = "Webshop" }: Props) {
               {WEBSHOP_MEGA_MENU.columns.map((column) => (
                 <div key={column.title}>
                   {column.href ? (
-                    <Link
+                    <LocalizedLink
                       href={column.href}
                       className="text-sm font-bold text-white transition hover:text-[var(--brand-mid)]"
                       onClick={() => setOpen(false)}
                     >
                       {column.title}
-                    </Link>
+                    </LocalizedLink>
                   ) : (
                     <p className="text-sm font-bold text-white">{column.title}</p>
                   )}
@@ -154,9 +155,9 @@ export default function HeaderShopMegaMenu({ label = "Webshop" }: Props) {
                     <ul className="mt-3 space-y-0.5">
                       {column.links.map((link) => (
                         <li key={link.href}>
-                          <Link href={link.href} className={columnLinkClass} onClick={() => setOpen(false)}>
+                          <LocalizedLink href={link.href} className={columnLinkClass} onClick={() => setOpen(false)}>
                             {link.label}
-                          </Link>
+                          </LocalizedLink>
                         </li>
                       ))}
                     </ul>
@@ -173,20 +174,20 @@ export default function HeaderShopMegaMenu({ label = "Webshop" }: Props) {
                   {WEBSHOP_MEGA_MENU.promo.text}
                 </p>
                 <div className="mt-4 flex flex-col gap-2">
-                  <Link
+                  <LocalizedLink
                     href={WEBSHOP_MEGA_MENU.promo.ctaHref}
                     className="inline-flex w-fit rounded-full bg-[var(--topbar)] px-4 py-2 text-xs font-bold text-white transition hover:bg-[#333]"
                     onClick={() => setOpen(false)}
                   >
                     {WEBSHOP_MEGA_MENU.promo.cta}
-                  </Link>
-                  <Link
+                  </LocalizedLink>
+                  <LocalizedLink
                     href={WEBSHOP_MEGA_MENU.promo.shopHref}
                     className="text-xs font-semibold text-[var(--brand-hover)] underline underline-offset-2"
                     onClick={() => setOpen(false)}
                   >
                     {WEBSHOP_MEGA_MENU.promo.shopCta} →
-                  </Link>
+                  </LocalizedLink>
                 </div>
               </div>
             </div>

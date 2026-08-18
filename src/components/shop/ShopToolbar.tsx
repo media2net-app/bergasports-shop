@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import LocalizedLink from "@/components/locale/LocalizedLink";
 
 import type { ShopMerchView } from "@/lib/shop-merchandising-views";
 import { shopMerchViewLabel } from "@/lib/shop-merchandising-views";
@@ -105,7 +105,7 @@ export default function ShopToolbar({
       {chips.length > 0 ? (
         <div className="flex flex-wrap items-center gap-2">
           {chips.map((chip) => (
-            <Link
+            <LocalizedLink
               key={chip.key}
               href={chip.href}
               className="inline-flex max-w-full items-center gap-1 rounded-full border border-[#e5dcc8] bg-white px-2.5 py-1 text-xs font-semibold text-[var(--foreground)] transition hover:border-[#B38F27]/30"
@@ -114,14 +114,14 @@ export default function ShopToolbar({
               <span aria-hidden className="text-[var(--foreground)]/50">
                 ×
               </span>
-            </Link>
+            </LocalizedLink>
           ))}
-          <Link
+          <LocalizedLink
             href={clearAllHref}
             className="text-xs font-semibold text-[#96741f] underline underline-offset-2"
           >
             Wis alle filters
-          </Link>
+          </LocalizedLink>
         </div>
       ) : (
         <span className="text-sm text-[var(--foreground)]/65">Geen actieve filters</span>

@@ -6,6 +6,10 @@ import { useMemo, useState } from "react";
 
 import AdminFeaturedImagePanel from "@/components/admin/AdminFeaturedImagePanel";
 import AdminHtmlEditor from "@/components/admin/AdminHtmlEditor";
+import AdminLocaleTabs from "@/components/admin/AdminLocaleTabs";
+import { useLocaleDraft } from "@/components/admin/useLocaleDraft";
+import { hydratePageTranslations } from "@/lib/i18n/hydrate";
+import type { PageLocaleFields } from "@/lib/i18n/translations";
 import type { HomepageBlocks, SitePageRow } from "@/lib/site-pages";
 import { DEFAULT_HOMEPAGE_BLOCKS } from "@/lib/site-pages";
 import { slugifyNl } from "@/lib/slugify";
@@ -17,26 +21,30 @@ export default function AdminPageEditor({ page }: Props) {
   const isNew = !page;
   const isHome = page?.slug === "home";
 
-  const [title, setTitle] = useState(page?.title || page?.heading || "");
   const [slug, setSlug] = useState(page?.slug ?? "");
-  const [bodyHtml, setBodyHtml] = useState(page?.body_html ?? "");
-  const [metaTitle, setMetaTitle] = useState(page?.meta_title ?? "");
-  const [metaDescription, setMetaDescription] = useState(page?.meta_description ?? "");
-  const [ogTitle, setOgTitle] = useState(page?.og_title ?? "");
-  const [ogDescription, setOgDescription] = useState(page?.og_description ?? "");
+  const {
+    locale: editLocale,
+    setLocale: setEditLocale,
+    languages,
+    fields: loc,
+    setField: setLoc,
+    patchFields,
+    compact,
+    filled,
+  } = useLocaleDraft<PageLocaleFields>(
+    page
+      ? page.translations
+      : hydratePageTranslations({ title: "", slug: "", path: "", body_html: "" }),
+  );
   const [socialImage, setSocialImage] = useState(page?.social_image ?? "");
-  const [imageAlt, setImageAlt] = useState(page?.image_alt ?? "");
   const [noindex, setNoindex] = useState(page?.noindex ?? false);
   const [isPublished, setIsPublished] = useState(page?.is_published ?? false);
-  const [hero, setHero] = useState<NonNullable<HomepageBlocks["hero"]>>({
-    ...DEFAULT_HOMEPAGE_BLOCKS.hero,
-    ...page?.blocks?.hero,
-  });
 
   const [error, setError] = useState("");
   const [saveOk, setSaveOk] = useState(false);
   const [saving, setSaving] = useState(false);
 
+  const title = loc.title ?? "";
   const titlePreview = title.trim() || (isNew ? "Nieuwe pagina" : "Pagina");
   const slugPreview = useMemo(() => {
     if (page) return page.slug;
@@ -44,28 +52,35 @@ export default function AdminPageEditor({ page }: Props) {
   }, [page, slug, title]);
   const publicPath = page?.path ?? (slugPreview ? `/${slugPreview}` : "");
   const statusLabel = isPublished ? "Gepubliceerd" : "Concept";
+  const hero: NonNullable<HomepageBlocks["hero"]> = {
+    ...DEFAULT_HOMEPAGE_BLOCKS.hero,
+    ...loc.blocks?.hero,
+  };
 
   function heroField<K extends keyof NonNullable<HomepageBlocks["hero"]>>(key: K, value: string) {
-    setHero((h) => ({ ...h, [key]: value }));
+    patchFields({ blocks: { hero: { ...hero, [key]: value } } });
   }
 
   async function save() {
     setError("");
     setSaveOk(false);
     setSaving(true);
+    const translations = compact();
+    const nl = translations.nl ?? loc;
     const payload = {
-      title,
-      heading: title.trim() || null,
-      body_html: isHome ? page?.body_html ?? "" : bodyHtml,
-      blocks: isHome ? { hero } : null,
-      meta_title: metaTitle || null,
-      meta_description: metaDescription || null,
-      og_title: ogTitle || null,
-      og_description: ogDescription || null,
+      title: nl.title || title,
+      heading: (nl.heading || nl.title || title).trim() || null,
+      body_html: isHome ? page?.body_html ?? "" : nl.bodyHtml ?? loc.bodyHtml ?? "",
+      blocks: isHome ? { hero: nl.blocks?.hero ?? hero } : null,
+      meta_title: nl.metaTitle || null,
+      meta_description: nl.metaDescription || null,
+      og_title: nl.ogTitle || null,
+      og_description: nl.ogDescription || null,
       social_image: socialImage || null,
-      image_alt: imageAlt || null,
+      image_alt: nl.imageAlt || null,
       noindex,
       is_published: isPublished,
+      translations,
       ...(isNew ? { slug: slugPreview || undefined } : {}),
     };
     try {
@@ -134,6 +149,14 @@ export default function AdminPageEditor({ page }: Props) {
         {renderSaveActions()}
       </div>
 
+      <AdminLocaleTabs
+        languages={languages}
+        value={editLocale}
+        onChange={setEditLocale}
+        filledLocales={filled}
+        hint="Titel, inhoud, hero en SEO per taal. Het Nederlandse pad blijft de canonieke URL."
+      />
+
       {saveOk ? (
         <div className="admin-banner ok admin-m-0" role="status">
           Pagina opgeslagen.
@@ -153,7 +176,7 @@ export default function AdminPageEditor({ page }: Props) {
                 id="page-title"
                 className="admin-field admin-field--flush"
                 value={title}
-                onChange={(e) => setTitle(e.target.value)}
+                onChange={(e) => setLoc("title", e.target.value)}
                 placeholder={isHome ? "Naam van de homepage" : "Titel bovenaan de pagina"}
               />
               <p className="admin-muted admin-m-0 admin-mt-05">
@@ -283,8 +306,8 @@ export default function AdminPageEditor({ page }: Props) {
               <AdminHtmlEditor
                 minHeight="tall"
                 placeholder="Schrijf de paginatekst…"
-                value={bodyHtml}
-                onChange={setBodyHtml}
+                value={loc.bodyHtml ?? ""}
+                onChange={(html) => setLoc("bodyHtml", html)}
                 imageFolder="pages"
                 onImageError={setError}
               />
@@ -350,9 +373,9 @@ export default function AdminPageEditor({ page }: Props) {
 
           <AdminFeaturedImagePanel
             image={socialImage}
-            alt={imageAlt}
+            alt={loc.imageAlt ?? ""}
             onImageChange={setSocialImage}
-            onAltChange={setImageAlt}
+            onAltChange={(alt) => setLoc("imageAlt", alt)}
             onError={setError}
             folder="pages"
             urlId="page-social-image"
@@ -374,8 +397,8 @@ export default function AdminPageEditor({ page }: Props) {
               <input
                 id="page-seo-title"
                 className="admin-field admin-field--flush"
-                value={metaTitle}
-                onChange={(e) => setMetaTitle(e.target.value)}
+                value={loc.metaTitle ?? ""}
+                onChange={(e) => setLoc("metaTitle", e.target.value)}
               />
             </div>
             <div>
@@ -386,8 +409,8 @@ export default function AdminPageEditor({ page }: Props) {
                 id="page-seo-desc"
                 className="admin-field admin-field--flush"
                 rows={3}
-                value={metaDescription}
-                onChange={(e) => setMetaDescription(e.target.value)}
+                value={loc.metaDescription ?? ""}
+                onChange={(e) => setLoc("metaDescription", e.target.value)}
               />
             </div>
             <div>
@@ -397,8 +420,8 @@ export default function AdminPageEditor({ page }: Props) {
               <input
                 id="page-og-title"
                 className="admin-field admin-field--flush"
-                value={ogTitle}
-                onChange={(e) => setOgTitle(e.target.value)}
+                value={loc.ogTitle ?? ""}
+                onChange={(e) => setLoc("ogTitle", e.target.value)}
               />
             </div>
             <div>
@@ -409,8 +432,8 @@ export default function AdminPageEditor({ page }: Props) {
                 id="page-og-desc"
                 className="admin-field admin-field--flush"
                 rows={2}
-                value={ogDescription}
-                onChange={(e) => setOgDescription(e.target.value)}
+                value={loc.ogDescription ?? ""}
+                onChange={(e) => setLoc("ogDescription", e.target.value)}
               />
             </div>
             <label className="admin-check-highlight">

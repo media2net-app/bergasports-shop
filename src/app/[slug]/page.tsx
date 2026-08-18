@@ -19,6 +19,9 @@ import {
   shopCategoryPath,
 } from "@/lib/shop-category-filter";
 import { getPublishedPageByPath } from "@/lib/site-pages-db";
+import { isKnownLocalePrefix } from "@/lib/i18n/locale-codes";
+import { getRequestLocale, localizedPublicPath } from "@/lib/i18n/locale";
+import { parseLocaleMap, pickTranslation, type CategoryLocaleFields, type PageLocaleFields } from "@/lib/i18n/translations";
 import { followSeoRedirect } from "@/lib/seo-redirects";
 
 export const dynamic = "force-dynamic";
@@ -58,7 +61,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   if (!slug) {
     return {};
   }
-  if (RESERVED.has(slug)) {
+  if (RESERVED.has(slug) || isKnownLocalePrefix(slug)) {
     await followSeoRedirect(`/${slug}`);
     return {};
   }
@@ -69,8 +72,11 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     const defaults = categorySeoDefaults(category.slug);
     const name = categoryDisplayName(category.slug, formatRalexCategoryName(category.name));
     const canonical = shopCategoryPath(category.slug);
-    if (canonical !== `/${slug}`) {
-      permanentRedirect(canonical);
+    const translatedSlug = Object.values(parseLocaleMap<CategoryLocaleFields>(category.translations)).some(
+      (fields) => fields.slug?.trim().toLowerCase() === slug,
+    );
+    if (canonical !== `/${slug}` && !translatedSlug) {
+      permanentRedirect(await localizedPublicPath(canonical));
     }
 
     const [catalog, overrides] = await Promise.all([
@@ -94,7 +100,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       absoluteTitle: seoTitle || undefined,
       title: seoTitle ? undefined : name,
       description: overrides?.seoMetaDescription?.trim() || seo.metaDescription,
-      path: canonical,
+      path: await localizedPublicPath(translatedSlug ? `/${slug}` : canonical),
       image: filteredProducts[0]?.image ?? null,
       imageAlt: name,
     });
@@ -107,7 +113,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       absoluteTitle: adminTitle || undefined,
       title: adminTitle ? undefined : page.title,
       description: page.meta_description?.trim() || SITE_META_DESCRIPTION,
-      path: `/${slug}`,
+      path: await localizedPublicPath(`/${slug}`),
       image: page.social_image,
       imageAlt: page.image_alt || page.title,
       noindex: page.noindex,
@@ -125,7 +131,7 @@ export default async function SlugPage({ params, searchParams }: PageProps) {
   if (!slug) {
     notFound();
   }
-  if (RESERVED.has(slug)) {
+  if (RESERVED.has(slug) || isKnownLocalePrefix(slug)) {
     await followSeoRedirect(`/${slug}`);
     notFound();
   }
@@ -136,8 +142,11 @@ export default async function SlugPage({ params, searchParams }: PageProps) {
 
   if (category) {
     const canonical = shopCategoryPath(category.slug);
-    if (canonical !== `/${slug}`) {
-      permanentRedirect(canonical);
+    const translatedSlug = Object.values(parseLocaleMap<CategoryLocaleFields>(category.translations)).some(
+      (fields) => fields.slug?.trim().toLowerCase() === slug,
+    );
+    if (canonical !== `/${slug}` && !translatedSlug) {
+      permanentRedirect(await localizedPublicPath(canonical));
     }
     return <ShopListingPage pathCategorySlug={category.slug} searchParams={sp} />;
   }
@@ -148,12 +157,22 @@ export default async function SlugPage({ params, searchParams }: PageProps) {
     await followSeoRedirect(path);
     notFound();
   }
+  const locale = await getRequestLocale();
+  const overlay = pickTranslation<PageLocaleFields>(page.translations, locale);
 
   return (
     <main className="min-h-screen bg-[#faf8f5]/40">
       <TrustBar />
       <Header />
-      <CmsPageView page={page} />
+      <CmsPageView
+        page={{
+          ...page,
+          title: overlay?.title || page.title,
+          heading: overlay?.heading || page.heading,
+          body_html: overlay?.bodyHtml || page.body_html,
+          image_alt: overlay?.imageAlt || page.image_alt,
+        }}
+      />
       <Footer />
     </main>
   );

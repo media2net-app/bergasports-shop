@@ -40,13 +40,16 @@ export default function AdminNewProductPage() {
       <Link href="/admin/products" className="admin-breadcrumb">
         ← Alle producten
       </Link>
-      <h1 className="admin-h1">Nieuw product</h1>
-      <div className="admin-panel-surface admin-stack-tight">
+      <header>
+        <p className="admin-product-editor-kicker">Catalogus</p>
+        <h1 className="admin-h1 admin-m-0">Nieuw product</h1>
+      </header>
+      <div className="admin-panel admin-stack-tight">
         <p className="admin-muted admin-m-0">
-          Er wordt een leeg product aangemaakt. Vul daarna alle velden in op de bewerkpagina.
+          Er wordt een leeg product aangemaakt. Vul daarna naam, prijs, media en de rest in op de bewerkpagina.
         </p>
         {error ? <p className="admin-error-box admin-m-0">{error}</p> : null}
-        <button type="button" disabled={loading} onClick={create} className="admin-btn-primary admin-w-fit">
+        <button type="button" disabled={loading} onClick={() => void create()} className="admin-btn-primary admin-w-fit">
           {loading ? "Bezig…" : "Product aanmaken"}
         </button>
       </div>

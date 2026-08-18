@@ -1,6 +1,7 @@
 "use client";
 
-import Link from "next/link";
+import LocalizedLink from "@/components/locale/LocalizedLink";
+import { stripLocalePrefix } from "@/lib/i18n/locale-shared";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
@@ -15,7 +16,7 @@ type Props = {
 };
 
 export default function HeaderSimpleDropdown({ label, items }: Props) {
-  const pathname = usePathname();
+  const pathname = stripLocalePrefix(usePathname() || "/").pathname;
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -47,13 +48,13 @@ export default function HeaderSimpleDropdown({ label, items }: Props) {
           <ul className="rounded-md border border-white/10 bg-[#1a1a1a] py-2 shadow-xl">
             {items.map((item) => (
               <li key={item.href}>
-                <Link
+                <LocalizedLink
                   href={item.href}
                   className="block px-4 py-2 text-sm text-white/80 transition hover:bg-white/5 hover:text-white"
                   onClick={() => setOpen(false)}
                 >
                   {item.label}
-                </Link>
+                </LocalizedLink>
               </li>
             ))}
           </ul>

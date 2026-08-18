@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import LocalizedLink from "@/components/locale/LocalizedLink";
 
 import Footer from "@/components/layout/Footer";
 import Header from "@/components/layout/Header";
@@ -63,9 +63,9 @@ export default async function NieuwsPage() {
             <ContentCtaCard />
             <p className="px-1 text-sm text-[var(--foreground)]/60">
               Liever meteen kijken?{" "}
-              <Link href="/shop" className="font-semibold text-[var(--brand)] underline-offset-4 hover:underline">
+              <LocalizedLink href="/shop" className="font-semibold text-[var(--brand)] underline-offset-4 hover:underline">
                 Naar de shop
-              </Link>
+              </LocalizedLink>
               .
             </p>
           </aside>

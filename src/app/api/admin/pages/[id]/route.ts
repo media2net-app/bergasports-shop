@@ -52,6 +52,9 @@ export async function PATCH(request: Request, context: RouteContext) {
     image_alt?: string | null;
     noindex?: boolean;
     is_published?: boolean;
+    translations?: import("@/lib/i18n/translations").LocaleMap<
+      import("@/lib/i18n/translations").PageLocaleFields
+    >;
   };
   try {
     body = (await request.json()) as typeof body;
@@ -75,6 +78,7 @@ export async function PATCH(request: Request, context: RouteContext) {
       image_alt: body.image_alt,
       noindex: body.noindex,
       is_published: body.is_published,
+      translations: body.translations,
     });
     return NextResponse.json(page);
   } catch (e) {

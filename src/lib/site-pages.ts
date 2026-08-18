@@ -1,3 +1,5 @@
+import type { LocaleMap, PageLocaleFields } from "@/lib/i18n/translations";
+
 export type HomepageBlocks = {
   hero?: {
     eyebrow?: string;
@@ -29,6 +31,7 @@ export type SitePageRow = {
   is_published: boolean;
   sort_order: number;
   updated_at: string;
+  translations: LocaleMap<PageLocaleFields>;
 };
 
 export type SitePageUpdateInput = {
@@ -44,6 +47,7 @@ export type SitePageUpdateInput = {
   image_alt?: string | null;
   noindex?: boolean;
   is_published?: boolean;
+  translations?: LocaleMap<PageLocaleFields>;
 };
 
 export const DEFAULT_HOMEPAGE_BLOCKS: HomepageBlocks = {

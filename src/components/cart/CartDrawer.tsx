@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import LocalizedLink from "@/components/locale/LocalizedLink";
 import { useEffect, useId, useState } from "react";
 
 import CartBundlePromoPanel from "@/components/cart/CartBundlePromoPanel";
@@ -201,7 +201,7 @@ function CartLineRow({
                     );
                   }
                   return (
-                    <Link
+                    <LocalizedLink
                       key={v.id}
                       href={`${rowProduct ? productPath(rowProduct) : `/product/${item.productId}`}?variation=${v.id}`}
                       onClick={onClose}
@@ -209,7 +209,7 @@ function CartLineRow({
                       className="rounded-full border border-[var(--brand-border)] bg-white px-2.5 py-1 text-[11px] font-semibold text-[var(--foreground)] transition hover:border-[var(--brand)] hover:text-[var(--brand)]"
                     >
                       {label}
-                    </Link>
+                    </LocalizedLink>
                   );
                 })}
               </div>
@@ -395,12 +395,12 @@ export default function CartDrawer({
                 Ontdek fietsen, kleding en accessoires — of kom langs in Dedemsvaart.
               </p>
               <div className="mt-6 flex w-full max-w-xs flex-col gap-2.5">
-                <Link href="/shop" className={btnGold} onClick={onClose}>
+                <LocalizedLink href="/shop" className={btnGold} onClick={onClose}>
                   Naar de shop
-                </Link>
-                <Link href="/fietsen" className={btnGhost} onClick={onClose}>
+                </LocalizedLink>
+                <LocalizedLink href="/fietsen" className={btnGhost} onClick={onClose}>
                   Bekijk fietsen
-                </Link>
+                </LocalizedLink>
               </div>
             </div>
           ) : showBundlePromos && singleItem && bundleProduct ? (

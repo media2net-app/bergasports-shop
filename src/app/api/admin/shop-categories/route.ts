@@ -35,6 +35,9 @@ export async function POST(request: Request) {
     seoFooterHtml?: string | null;
     seoMetaTitle?: string | null;
     seoMetaDescription?: string | null;
+    translations?: import("@/lib/i18n/translations").LocaleMap<
+      import("@/lib/i18n/translations").CategoryLocaleFields
+    >;
   };
   try {
     body = (await request.json()) as typeof body;
@@ -50,6 +53,7 @@ export async function POST(request: Request) {
       seoFooterHtml: body.seoFooterHtml,
       seoMetaTitle: body.seoMetaTitle,
       seoMetaDescription: body.seoMetaDescription,
+      translations: body.translations,
     });
     return NextResponse.json({ category });
   } catch (e) {

@@ -5,39 +5,25 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 
 import AdminHtmlEditor from "@/components/admin/AdminHtmlEditor";
+import AdminLocaleTabs from "@/components/admin/AdminLocaleTabs";
+import { useLocaleDraft } from "@/components/admin/useLocaleDraft";
 import type { AdminCategory } from "@/lib/categories-admin";
+import { hydrateCategoryTranslations } from "@/lib/i18n/hydrate";
+import type { CategoryLocaleFields } from "@/lib/i18n/translations";
 import { shopCategoryPath } from "@/lib/shop-category-filter";
 import { slugifyNl } from "@/lib/slugify";
 
 type FormState = {
-  name: string;
-  slug: string;
   parentId: string;
-  seoIntro: string;
-  seoFooterHtml: string;
-  seoMetaTitle: string;
-  seoMetaDescription: string;
 };
 
 const EMPTY_FORM: FormState = {
-  name: "",
-  slug: "",
   parentId: "0",
-  seoIntro: "",
-  seoFooterHtml: "",
-  seoMetaTitle: "",
-  seoMetaDescription: "",
 };
 
 function formFromCategory(category: AdminCategory): FormState {
   return {
-    name: category.name,
-    slug: category.slug,
     parentId: String(category.parentId),
-    seoIntro: category.seoIntro,
-    seoFooterHtml: category.seoFooterHtml,
-    seoMetaTitle: category.seoMetaTitle,
-    seoMetaDescription: category.seoMetaDescription,
   };
 }
 
@@ -96,6 +82,18 @@ export default function AdminCategoriesPanel({ category, categories }: Props) {
   const router = useRouter();
   const isNew = !category;
   const [form, setForm] = useState<FormState>(category ? formFromCategory(category) : EMPTY_FORM);
+  const {
+    locale: editLocale,
+    setLocale: setEditLocale,
+    languages,
+    fields: loc,
+    setField: setLoc,
+    compact,
+    filled,
+    setMap,
+  } = useLocaleDraft<CategoryLocaleFields>(
+    category ? category.translations : hydrateCategoryTranslations({ name: "", slug: "" }),
+  );
   const [slugTouched, setSlugTouched] = useState(!isNew);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
@@ -110,8 +108,11 @@ export default function AdminCategoriesPanel({ category, categories }: Props) {
     return blocked;
   }, [categories, category]);
 
-  const titlePreview = form.name.trim() || (isNew ? "Nieuwe categorie" : "Categorie");
-  const slugPreview = useMemo(() => form.slug.trim() || slugifyNl(form.name) || "", [form.slug, form.name]);
+  const titlePreview = (loc.name ?? "").trim() || (isNew ? "Nieuwe categorie" : "Categorie");
+  const slugPreview = useMemo(
+    () => (loc.slug ?? "").trim() || slugifyNl(loc.name ?? "") || "",
+    [loc.slug, loc.name],
+  );
   const publicPath = slugPreview ? shopCategoryPath(slugPreview) : "";
   const busy = saving || deleting;
 
@@ -120,14 +121,17 @@ export default function AdminCategoriesPanel({ category, categories }: Props) {
   }
 
   function payload() {
+    const translations = compact();
+    const nl = translations.nl ?? loc;
     return {
-      name: form.name,
-      slug: form.slug,
+      name: nl.name ?? loc.name ?? "",
+      slug: nl.slug ?? loc.slug ?? "",
       parentId: Number.parseInt(form.parentId, 10) || 0,
-      seoIntro: form.seoIntro,
-      seoFooterHtml: form.seoFooterHtml,
-      seoMetaTitle: form.seoMetaTitle,
-      seoMetaDescription: form.seoMetaDescription,
+      seoIntro: nl.description ?? "",
+      seoFooterHtml: nl.seoFooterHtml ?? "",
+      seoMetaTitle: nl.seoTitle ?? "",
+      seoMetaDescription: nl.seoDescription ?? "",
+      translations,
     };
   }
 
@@ -148,6 +152,7 @@ export default function AdminCategoriesPanel({ category, categories }: Props) {
         return;
       }
       setForm(formFromCategory(data.category));
+      setMap(data.category.translations);
       setSlugTouched(true);
       setMessage(isNew ? "Categorie aangemaakt." : "Categorie opgeslagen.");
       if (isNew) {
@@ -248,6 +253,14 @@ export default function AdminCategoriesPanel({ category, categories }: Props) {
         <div className="admin-page-head-actions">{renderSaveActions()}</div>
       </div>
 
+      <AdminLocaleTabs
+        languages={languages}
+        value={editLocale}
+        onChange={setEditLocale}
+        filledLocales={filled}
+        hint="Naam, slug en SEO per taal. De Nederlandse slug blijft de canonieke URL; andere talen krijgen /en/… plus hun eigen slug."
+      />
+
       {message ? (
         <div className="admin-banner ok admin-m-0" role="status">
           {message}
@@ -266,14 +279,11 @@ export default function AdminCategoriesPanel({ category, categories }: Props) {
               <input
                 id="cat-name"
                 className="admin-field admin-field--flush"
-                value={form.name}
+                value={loc.name ?? ""}
                 onChange={(e) => {
                   const name = e.target.value;
-                  setForm((prev) => ({
-                    ...prev,
-                    name,
-                    slug: slugTouched ? prev.slug : slugifyNl(name),
-                  }));
+                  setLoc("name", name);
+                  if (!slugTouched) setLoc("slug", slugifyNl(name));
                 }}
                 placeholder="Naam in de shop"
               />
@@ -285,10 +295,10 @@ export default function AdminCategoriesPanel({ category, categories }: Props) {
               <input
                 id="cat-slug"
                 className="admin-field admin-field--flush"
-                value={form.slug}
+                value={loc.slug ?? ""}
                 onChange={(e) => {
                   setSlugTouched(true);
-                  setField("slug", slugifyNl(e.target.value) || e.target.value);
+                  setLoc("slug", slugifyNl(e.target.value) || e.target.value);
                 }}
                 placeholder="wordt automatisch uit de naam gezet"
               />
@@ -335,8 +345,8 @@ export default function AdminCategoriesPanel({ category, categories }: Props) {
                 id="cat-intro"
                 className="admin-field admin-field--flush"
                 rows={4}
-                value={form.seoIntro}
-                onChange={(e) => setField("seoIntro", e.target.value)}
+                value={loc.description ?? ""}
+                onChange={(e) => setLoc("description", e.target.value)}
                 placeholder="Korte tekst boven de productlijst"
               />
               <p className="admin-muted admin-m-0 admin-mt-05">
@@ -357,8 +367,8 @@ export default function AdminCategoriesPanel({ category, categories }: Props) {
               <input
                 id="cat-seo-title"
                 className="admin-field admin-field--flush"
-                value={form.seoMetaTitle}
-                onChange={(e) => setField("seoMetaTitle", e.target.value)}
+                value={loc.seoTitle ?? ""}
+                onChange={(e) => setLoc("seoTitle", e.target.value)}
                 maxLength={120}
                 placeholder="SEO-titel in Google"
               />
@@ -371,8 +381,8 @@ export default function AdminCategoriesPanel({ category, categories }: Props) {
                 id="cat-seo-desc"
                 className="admin-field admin-field--flush"
                 rows={3}
-                value={form.seoMetaDescription}
-                onChange={(e) => setField("seoMetaDescription", e.target.value)}
+                value={loc.seoDescription ?? ""}
+                onChange={(e) => setLoc("seoDescription", e.target.value)}
                 maxLength={320}
                 placeholder="Korte beschrijving voor zoekresultaten"
               />
@@ -389,8 +399,8 @@ export default function AdminCategoriesPanel({ category, categories }: Props) {
               id="cat-footer"
               minHeight="compact"
               placeholder="Optioneel: extra uitleg, links of een korte lijst onderaan de categorie."
-              value={form.seoFooterHtml}
-              onChange={(html) => setField("seoFooterHtml", html)}
+              value={loc.seoFooterHtml ?? ""}
+              onChange={(html) => setLoc("seoFooterHtml", html)}
               imageFolder="uploads"
               onImageError={setError}
             />

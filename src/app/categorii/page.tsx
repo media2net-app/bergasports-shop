@@ -1,4 +1,4 @@
-import Link from "next/link";
+import LocalizedLink from "@/components/locale/LocalizedLink";
 
 import Footer from "@/components/layout/Footer";
 import Header from "@/components/layout/Header";
@@ -23,9 +23,9 @@ export default async function CategoriiPage() {
       <Header />
 
       <section className="mx-auto w-full max-w-[1440px] px-4 py-6 md:py-10">
-        <Link href="/shop" className="text-sm font-semibold text-[var(--foreground)] hover:underline">
+        <LocalizedLink href="/shop" className="text-sm font-semibold text-[var(--foreground)] hover:underline">
           ← Terug naar webshop
-        </Link>
+        </LocalizedLink>
 
         <h1 className="mt-4 font-[family-name:var(--font-heading)] text-3xl font-semibold text-[var(--foreground)] md:text-4xl">
           Webshopcategorieën

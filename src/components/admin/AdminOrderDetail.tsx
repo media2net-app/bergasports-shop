@@ -1,14 +1,12 @@
 import Link from "next/link";
 
 import AdminOrderFulfillment from "@/components/admin/AdminOrderFulfillment";
+import AdminOrderHeaderStatuses from "@/components/admin/AdminOrderHeaderStatuses";
 import AdminOrderLineItems from "@/components/admin/AdminOrderLineItems";
 import type { OrderLineCatalogInfo } from "@/lib/admin-product-search-types";
 import {
-  ORDER_STATUS_LABEL,
   orderShippingTotal,
-  orderStatusTone,
-  paymentStatusLabel,
-  paymentStatusTone,
+  type OrderBillingAddress,
   type OrderWithItems,
 } from "@/lib/orders";
 import { catalogSku } from "@/lib/products";
@@ -29,11 +27,19 @@ export default async function AdminOrderDetail({
   shippingLabel,
   couponCode,
   customerNote,
+  internalNote,
+  billing,
+  customerId,
+  pickupLocation,
 }: {
   order: OrderWithItems;
   shippingLabel: string | null;
   couponCode: string | null;
   customerNote: string | null;
+  internalNote: string | null;
+  billing: OrderBillingAddress | null;
+  customerId: string | null;
+  pickupLocation: string;
 }) {
   const shippingTotal = orderShippingTotal(order);
   const productIds = [
@@ -58,20 +64,16 @@ export default async function AdminOrderDetail({
         <div>
           <p className="admin-order-kicker">Bestelling</p>
           <h1 className="admin-order-number">{order.order_number}</h1>
-        </div>
-        <div className="admin-order-head-meta">
           <time className="admin-order-when" dateTime={order.created_at}>
             {formatWhen(order.created_at)}
           </time>
-          <div className="admin-order-pills">
-            <span className={`admin-dash-status admin-dash-status--${orderStatusTone(order.status)}`}>
-              {ORDER_STATUS_LABEL[order.status]}
-            </span>
-            <span className={`admin-dash-status admin-dash-status--${paymentStatusTone(order.payment_status)}`}>
-              {paymentStatusLabel(order.payment_status)}
-            </span>
-          </div>
         </div>
+        <AdminOrderHeaderStatuses
+          key={`status-${order.updated_at}`}
+          orderId={order.id}
+          paymentStatus={order.payment_status}
+          fulfillmentStatus={order.status}
+        />
       </header>
 
       <div className="admin-order-layout">
@@ -90,8 +92,11 @@ export default async function AdminOrderDetail({
           key={`fulfill-${order.updated_at}`}
           order={order}
           shippingLabel={shippingLabel}
-          couponCode={couponCode}
           customerNote={customerNote}
+          internalNote={internalNote}
+          billing={billing}
+          customerId={customerId}
+          pickupLocation={pickupLocation}
         />
       </div>
     </div>

@@ -1,5 +1,5 @@
 import Image from "next/image";
-import Link from "next/link";
+import LocalizedLink from "@/components/locale/LocalizedLink";
 
 import type { HomepageBlocks } from "@/lib/site-pages";
 import { DEFAULT_HOMEPAGE_BLOCKS } from "@/lib/site-pages";
@@ -49,7 +49,7 @@ export default function HomeHeroBanner({ blocks }: Props) {
             {hero.subtitle ?? SITE_TAGLINE}
           </p>
           <div className="fade-up fade-up-3 mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-            <Link
+            <LocalizedLink
               href="/shop"
               className="group inline-flex items-center justify-center gap-2 rounded-full bg-[var(--brand-mid)] px-7 py-3.5 text-sm font-bold text-[#1a1a1a] transition duration-300 hover:bg-[#f2d680]"
             >
@@ -57,13 +57,13 @@ export default function HomeHeroBanner({ blocks }: Props) {
               <span aria-hidden className="transition duration-300 group-hover:translate-x-1">
                 →
               </span>
-            </Link>
-            <Link
+            </LocalizedLink>
+            <LocalizedLink
               href="/over-ons"
               className="inline-flex items-center justify-center rounded-full border border-white/40 bg-white/10 px-7 py-3.5 text-sm font-semibold text-white backdrop-blur-md transition duration-300 hover:-translate-y-0.5 hover:border-white hover:bg-white/20"
             >
               {hero.ctaOffers ?? "Mijn verhaal"}
-            </Link>
+            </LocalizedLink>
           </div>
         </div>
       </div>

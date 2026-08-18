@@ -2,18 +2,25 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 
 import AdminHtmlEditor from "@/components/admin/AdminHtmlEditor";
 import AdminImageUploadButton from "@/components/admin/AdminImageUploadButton";
+import AdminLocaleTabs from "@/components/admin/AdminLocaleTabs";
+import { useLocaleDraft } from "@/components/admin/useLocaleDraft";
 import { dutchLabelFromImportedName } from "@/lib/category-meta";
+import { DEFAULT_LOCALE } from "@/lib/i18n/locale-codes";
+import type { ProductLocaleFields } from "@/lib/i18n/translations";
 import { productPath, slugifyProductTitle } from "@/lib/product-slug";
 import {
   CATALOG_SOURCES,
   decodeImportedProductTitle,
+  formatProductPrice,
+  hydrateProductTranslations,
   normalizeCatalogSource,
   type CatalogSource,
   type TrendyolJsonProduct,
+  type WcVariationJson,
 } from "@/lib/products";
 import { PRODUCT_STATUSES, PRODUCT_STATUS_LABEL, normalizeProductStatus, type ProductStatus } from "@/lib/product-status";
 import { productAvailableStock } from "@/lib/stock";
@@ -44,40 +51,107 @@ function parseOptionalJson<T>(raw: string): T | undefined {
   return JSON.parse(t) as T;
 }
 
-function imagesToText(images: string[] | undefined): string {
-  return (images ?? []).join("\n");
+function uniqueImages(main: string, extras: string[] | undefined): string[] {
+  const out: string[] = [];
+  const seen = new Set<string>();
+  for (const raw of [main, ...(extras ?? [])]) {
+    const url = raw.trim();
+    if (!url) continue;
+    const key = url.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(url);
+  }
+  return out;
 }
 
-function textToImages(text: string): string[] {
+function mergeImageUrls(existing: string[], rawPaste: string): string[] {
+  const set = new Set(existing.map((x) => x.trim().toLowerCase()));
+  const merged = [...existing];
+  for (const part of rawPaste.split(/[\n\r,]+/).map((s) => s.trim()).filter(Boolean)) {
+    if (!isPreviewableImageUrl(part)) continue;
+    const key = part.toLowerCase();
+    if (set.has(key)) continue;
+    set.add(key);
+    merged.push(part);
+  }
+  return merged;
+}
+
+type SpecRow = { key: string; name: string; value: string };
+
+function parseSpecRows(text: string): SpecRow[] {
   return text
     .split(/\r?\n/)
-    .map((s) => s.trim())
-    .filter(Boolean);
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line, index) => {
+      const sep = line.indexOf(":");
+      if (sep === -1) {
+        return { key: `spec-${index}`, name: line, value: "" };
+      }
+      return {
+        key: `spec-${index}`,
+        name: line.slice(0, sep).trim(),
+        value: line.slice(sep + 1).trim(),
+      };
+    });
 }
 
-function appendImageUrls(existingText: string, rawPaste: string): string {
-  const current = textToImages(existingText);
-  const set = new Set(current.map((x) => x.trim().toLowerCase()));
-  const merged = [...current];
-  const parts = rawPaste
-    .split(/[\n\r,]+/)
-    .map((s) => s.trim())
-    .filter(Boolean);
-  for (const p of parts) {
-    if (!isPreviewableImageUrl(p)) {
-      continue;
-    }
-    const k = p.toLowerCase();
-    if (set.has(k)) {
-      continue;
-    }
-    set.add(k);
-    merged.push(p);
+function specRowsToText(rows: SpecRow[]): string {
+  return rows
+    .map((row) => {
+      const name = row.name.trim();
+      const value = row.value.trim();
+      if (!name && !value) return "";
+      if (!value) return name;
+      if (!name) return value;
+      return `${name}: ${value}`;
+    })
+    .filter(Boolean)
+    .join("\n");
+}
+
+function splitVariantLabel(label: string): { maat: string; kleur: string } {
+  const parts = label.split(" / ").map((s) => s.trim()).filter(Boolean);
+  if (parts.length >= 2) {
+    return { maat: parts[0] ?? "", kleur: parts.slice(1).join(" / ") };
   }
-  return merged.join("\n");
+  return { maat: parts[0] ?? "", kleur: "" };
+}
+
+function joinVariantLabel(maat: string, kleur: string): string {
+  const size = maat.trim();
+  const color = kleur.trim();
+  if (size && color) return `${size} / ${color}`;
+  return size || color;
+}
+
+function nextVariationId(rows: WcVariationJson[]): number {
+  return rows.reduce((max, row) => Math.max(max, row.id), 0) + 1;
 }
 
 type CategoryOption = { slug: string; name: string; group?: string };
+
+function Section({ title, hint, children }: { title: string; hint?: string; children: ReactNode }) {
+  return (
+    <section className="admin-panel admin-stack-tight">
+      <h2 className="admin-h2 admin-m-0">{title}</h2>
+      {hint ? <p className="admin-muted admin-m-0">{hint}</p> : null}
+      {children}
+    </section>
+  );
+}
+
+function Fold({ title, hint, children }: { title: string; hint?: string; children: ReactNode }) {
+  return (
+    <details className="admin-panel admin-stack-tight">
+      <summary className="admin-section-summary">{title}</summary>
+      {hint ? <p className="admin-muted admin-m-0">{hint}</p> : null}
+      {children}
+    </details>
+  );
+}
 
 type ProductEditorFormProps = {
   initial: TrendyolJsonProduct;
@@ -92,13 +166,22 @@ export default function ProductEditorForm({ initial, categoryOptions = [] }: Pro
   const [deleting, setDeleting] = useState(false);
 
   const [id] = useState(initial.id);
-  const [name, setName] = useState(initial.name);
-  const shopSlugPreview = slugifyProductTitle(name) || initial.slug || `product-${id}`;
+  const {
+    locale: editLocale,
+    setLocale: setEditLocale,
+    languages,
+    defaultLocale,
+    fields: loc,
+    setField: setLoc,
+    compact: compactTranslations,
+    filled,
+  } = useLocaleDraft<ProductLocaleFields>(hydrateProductTranslations(initial));
+  const name = loc.name ?? "";
+  const shopSlugPreview = (loc.slug || "").trim() || slugifyProductTitle(name) || initial.slug || `product-${id}`;
   const [brand, setBrand] = useState(initial.brand ?? "");
   const [category, setCategory] = useState(initial.category ?? "");
   const [url, setUrl] = useState(initial.url);
-  const [image, setImage] = useState(initial.image);
-  const [imagesText, setImagesText] = useState(imagesToText(initial.images));
+  const [images, setImages] = useState<string[]>(() => uniqueImages(initial.image, initial.images));
   const [currency, setCurrency] = useState(initial.currency ?? "EUR");
   const [priceCurrent, setPriceCurrent] = useState(String(initial.priceCurrent ?? 0));
   const [priceDiscounted, setPriceDiscounted] = useState(String(initial.priceDiscounted ?? 0));
@@ -117,9 +200,9 @@ export default function ProductEditorForm({ initial, categoryOptions = [] }: Pro
   );
   const [landingJson, setLandingJson] = useState(stringifyOptionalJson(initial.landingPromo));
   const [bundleJson, setBundleJson] = useState(stringifyOptionalJson(initial.cartBundlePromos));
-  const [variationsJson, setVariationsJson] = useState(stringifyOptionalJson(initial.wcVariations));
-  const [wcShortHtml, setWcShortHtml] = useState(initial.wcShortDescriptionHtml ?? "");
-  const [wcDescHtml, setWcDescHtml] = useState(initial.wcDescriptionHtml ?? "");
+  const [variations, setVariations] = useState<WcVariationJson[]>(() =>
+    Array.isArray(initial.wcVariations) ? initial.wcVariations : [],
+  );
   const [catalogSource, setCatalogSource] = useState<CatalogSource>(normalizeCatalogSource(initial.catalogSource));
   const [productStatus, setProductStatus] = useState<ProductStatus>(normalizeProductStatus(initial.productStatus));
   const [featuredOnHomepage, setFeaturedOnHomepage] = useState(Boolean(initial.featuredOnHomepage));
@@ -134,13 +217,8 @@ export default function ProductEditorForm({ initial, categoryOptions = [] }: Pro
   );
   const [inStockManual, setInStockManual] = useState(initial.inStock !== false);
   const [sku, setSku] = useState(initial.wcSku ?? "");
-  const [specsText, setSpecsText] = useState(initial.specsText ?? "");
-  const [seoTitle, setSeoTitle] = useState(initial.seoTitle ?? "");
-  const [seoDescription, setSeoDescription] = useState(initial.seoDescription ?? "");
-  const [ogTitle, setOgTitle] = useState(initial.ogTitle ?? "");
-  const [ogDescription, setOgDescription] = useState(initial.ogDescription ?? "");
+  const specRows = useMemo(() => parseSpecRows(loc.specsText ?? ""), [loc.specsText]);
   const [socialImage, setSocialImage] = useState(initial.socialImage ?? "");
-  const [imageAlt, setImageAlt] = useState(initial.imageAlt ?? "");
   const [noindex, setNoindex] = useState(Boolean(initial.noindex));
 
   const parsedStockQty = stockQty.trim() === "" ? null : Number(stockQty);
@@ -156,9 +234,7 @@ export default function ProductEditorForm({ initial, categoryOptions = [] }: Pro
       )
     : null;
 
-  const mainImageInputRef = useRef<HTMLInputElement>(null);
-
-  const labelClass = "admin-label";
+  const image = images[0] ?? "";
   const fieldClass = "admin-field";
 
   const payload = useMemo((): TrendyolJsonProduct | null => {
@@ -169,7 +245,6 @@ export default function ProductEditorForm({ initial, categoryOptions = [] }: Pro
       if (Number.isNaN(pc) || Number.isNaN(pd) || Number.isNaN(po)) {
         return null;
       }
-      const images = textToImages(imagesText);
       let landingPromo: TrendyolJsonProduct["landingPromo"];
       try {
         landingPromo = parseOptionalJson(landingJson);
@@ -182,17 +257,15 @@ export default function ProductEditorForm({ initial, categoryOptions = [] }: Pro
       } catch {
         return null;
       }
-      let wcVariations: TrendyolJsonProduct["wcVariations"];
-      try {
-        wcVariations = parseOptionalJson(variationsJson);
-      } catch {
-        return null;
-      }
       const socialProof = socialProofText.trim() ? socialProofText.trim() : [];
+      const translations = compactTranslations();
+      const nlCopy = translations[defaultLocale] ?? translations[DEFAULT_LOCALE] ?? {};
+      const nlName = (nlCopy.name ?? name).trim();
       const next: TrendyolJsonProduct = {
         ...initial,
         id,
-        name: name.trim(),
+        name: nlName,
+        slug: (nlCopy.slug ?? "").trim() || slugifyProductTitle(nlName) || `product-${id}`,
         brand: brand.trim() || undefined,
         category: category.trim() || undefined,
         url:
@@ -248,19 +321,39 @@ export default function ProductEditorForm({ initial, categoryOptions = [] }: Pro
       } else {
         delete next.cartBundlePromos;
       }
-      if (wcVariations !== undefined) {
-        next.wcVariations = wcVariations;
+      const cleanedVariations = variations
+        .map((row) => {
+          const parts = splitVariantLabel(row.label);
+          const label = joinVariantLabel(parts.maat, parts.kleur) || row.label.trim() || `Variatie #${row.id}`;
+          const price = Number(row.price);
+          const regular = Number(row.regularPrice);
+          if (!Number.isFinite(price)) return null;
+          const nextRow: WcVariationJson = {
+            id: row.id,
+            label,
+            price,
+            regularPrice: Number.isFinite(regular) ? regular : price,
+            onSale: Boolean(row.onSale && (Number.isFinite(regular) ? regular : price) > price),
+            url: row.url ?? "",
+          };
+          if (row.sku?.trim()) nextRow.sku = row.sku.trim();
+          if (row.image?.trim()) nextRow.image = row.image.trim();
+          return nextRow;
+        })
+        .filter((row): row is WcVariationJson => row != null);
+      if (cleanedVariations.length) {
+        next.wcVariations = cleanedVariations;
       } else {
         delete next.wcVariations;
       }
 
-      const shortTrim = wcShortHtml.trim();
+      const shortTrim = (nlCopy.shortDescriptionHtml ?? "").trim();
       if (shortTrim) {
         next.wcShortDescriptionHtml = shortTrim;
       } else {
         delete next.wcShortDescriptionHtml;
       }
-      const descTrim = wcDescHtml.trim();
+      const descTrim = (nlCopy.descriptionHtml ?? "").trim();
       if (descTrim) {
         next.wcDescriptionHtml = descTrim;
       } else {
@@ -269,28 +362,29 @@ export default function ProductEditorForm({ initial, categoryOptions = [] }: Pro
       const skuTrim = sku.trim();
       if (skuTrim) next.wcSku = skuTrim;
       else delete next.wcSku;
-      const specsTrim = specsText.trim();
+      const specsTrim = (nlCopy.specsText ?? "").trim();
       if (specsTrim) next.specsText = specsTrim;
       else delete next.specsText;
-      const seoTitleTrim = seoTitle.trim();
+      const seoTitleTrim = (nlCopy.seoTitle ?? "").trim();
       if (seoTitleTrim) next.seoTitle = seoTitleTrim;
       else delete next.seoTitle;
-      const seoDescTrim = seoDescription.trim();
+      const seoDescTrim = (nlCopy.seoDescription ?? "").trim();
       if (seoDescTrim) next.seoDescription = seoDescTrim;
       else delete next.seoDescription;
-      const ogTitleTrim = ogTitle.trim();
+      const ogTitleTrim = (nlCopy.ogTitle ?? "").trim();
       if (ogTitleTrim) next.ogTitle = ogTitleTrim;
       else delete next.ogTitle;
-      const ogDescTrim = ogDescription.trim();
+      const ogDescTrim = (nlCopy.ogDescription ?? "").trim();
       if (ogDescTrim) next.ogDescription = ogDescTrim;
       else delete next.ogDescription;
       const socialTrim = socialImage.trim();
       if (socialTrim) next.socialImage = socialTrim;
       else delete next.socialImage;
-      const altTrim = imageAlt.trim();
+      const altTrim = (nlCopy.imageAlt ?? "").trim();
       if (altTrim) next.imageAlt = altTrim;
       else delete next.imageAlt;
       next.noindex = noindex;
+      next.translations = translations;
 
       return next;
     } catch {
@@ -304,7 +398,7 @@ export default function ProductEditorForm({ initial, categoryOptions = [] }: Pro
     category,
     url,
     image,
-    imagesText,
+    images,
     currency,
     priceCurrent,
     priceDiscounted,
@@ -316,26 +410,20 @@ export default function ProductEditorForm({ initial, categoryOptions = [] }: Pro
     hasFlashSaleTag,
     productStatus,
     featuredOnHomepage,
-    stockQty,
-    reservedQty,
-    easySalesId,
+    parsedStockQty,
+    parsedReservedQty,
+    parsedEasySalesId,
     inStockManual,
     socialProofText,
     landingJson,
     bundleJson,
-    variationsJson,
-    wcShortHtml,
-    wcDescHtml,
+    variations,
     catalogSource,
     sku,
-    specsText,
-    seoTitle,
-    seoDescription,
-    ogTitle,
-    ogDescription,
     socialImage,
-    imageAlt,
     noindex,
+    compactTranslations,
+    defaultLocale,
   ]);
 
   useEffect(() => {
@@ -350,7 +438,7 @@ export default function ProductEditorForm({ initial, categoryOptions = [] }: Pro
     setError("");
     const body = payload;
     if (!body) {
-      setError("Controleer prijzen en JSON (variaties / landing / bundles).");
+      setError("Controleer prijzen en JSON onder Technisch.");
       return;
     }
     setSaving(true);
@@ -397,28 +485,8 @@ export default function ProductEditorForm({ initial, categoryOptions = [] }: Pro
   }
 
   const titlePreview = decodeImportedProductTitle(name.trim() || "—");
-  const imageTrim = image.trim();
-  const imagePreviewOk = isPreviewableImageUrl(imageTrim);
-
-  const extraImageUrls = useMemo(() => {
-    const mainKey = image.trim().toLowerCase();
-    const seen = new Set<string>();
-    return textToImages(imagesText).filter((u) => {
-      const t = u.trim();
-      if (!t || !isPreviewableImageUrl(t)) {
-        return false;
-      }
-      const k = t.toLowerCase();
-      if (k === mainKey) {
-        return false;
-      }
-      if (seen.has(k)) {
-        return false;
-      }
-      seen.add(k);
-      return true;
-    });
-  }, [imagesText, image]);
+  const imagePreviewOk = isPreviewableImageUrl(image.trim());
+  const extraImages = images.slice(1).filter((u) => isPreviewableImageUrl(u));
 
   const categoryOptionGroups = useMemo(() => {
     const groups = new Map<string, CategoryOption[]>();
@@ -439,80 +507,111 @@ export default function ProductEditorForm({ initial, categoryOptions = [] }: Pro
     return mapped?.name ?? category;
   }, [category, categoryOptions]);
 
-  function handleAddImages() {
+  function addUploadedImage(uploadedUrl: string, alt?: string | null, asMain = false) {
+    setError("");
+    if (asMain && alt?.trim() && !(loc.imageAlt ?? "").trim()) {
+      setLoc("imageAlt", alt.trim());
+    }
+    setImages((prev) => {
+      const without = prev.filter((u) => u.trim().toLowerCase() !== uploadedUrl.toLowerCase());
+      return asMain ? [uploadedUrl, ...without] : mergeImageUrls(without, uploadedUrl);
+    });
+  }
+
+  function promoteImage(urlToPromote: string) {
+    setImages((prev) => {
+      const next = urlToPromote.trim();
+      if (!next) return prev;
+      const without = prev.filter((u) => u.trim().toLowerCase() !== next.toLowerCase());
+      return [next, ...without];
+    });
+  }
+
+  function removeImage(urlToRemove: string) {
+    setImages((prev) => prev.filter((u) => u.trim().toLowerCase() !== urlToRemove.trim().toLowerCase()));
+  }
+
+  function handlePasteImageUrls() {
     const raw = window.prompt(
       "Plak één of meer foto-URL’s (https…). Meerdere URL’s scheiden met komma’s of nieuwe regels.",
       "",
     );
-    if (raw == null || !raw.trim()) {
-      return;
-    }
-    setImagesText((prev) => appendImageUrls(prev, raw));
+    if (raw == null || !raw.trim()) return;
+    setImages((prev) => mergeImageUrls(prev, raw));
   }
 
-  function handleChangeMainPhoto() {
-    const el = mainImageInputRef.current;
-    if (!el) {
-      return;
-    }
-    el.focus();
-    el.select();
-    el.scrollIntoView({ behavior: "smooth", block: "center" });
+  function updateSpec(key: string, patch: Partial<SpecRow>) {
+    const next = specRows.map((row) => (row.key === key ? { ...row, ...patch } : row));
+    setLoc("specsText", specRowsToText(next));
   }
 
-  function handlePromoteExtraToMain(url: string) {
-    const nextMain = url.trim();
-    if (!nextMain) {
-      return;
+  function addSpecRow() {
+    setLoc("specsText", specRowsToText([...specRows, { key: `spec-${Date.now()}`, name: "", value: "" }]));
+  }
+
+  function updateVariation(variationId: number, patch: Partial<WcVariationJson>) {
+    setVariations((prev) => prev.map((row) => (row.id === variationId ? { ...row, ...patch } : row)));
+  }
+
+  function addVariation() {
+    setVariations((prev) => [
+      ...prev,
+      {
+        id: nextVariationId(prev),
+        label: "",
+        price: Number(priceDiscounted) || Number(priceCurrent) || 0,
+        regularPrice: Number(priceCurrent) || 0,
+        onSale: false,
+        url: "",
+      },
+    ]);
+  }
+
+  const priceLabel = (() => {
+    const n = Number(priceDiscounted || priceCurrent);
+    if (!Number.isFinite(n)) return "";
+    try {
+      return formatProductPrice(n, currency.trim() || "EUR");
+    } catch {
+      return `${n} ${currency}`;
     }
-    const prevMain = image.trim();
-    setImage(nextMain);
-    setImagesText((prev) => {
-      let lines = textToImages(prev).filter((l) => l.trim().toLowerCase() !== nextMain.toLowerCase());
-      if (
-        prevMain &&
-        /^https?:\/\//i.test(prevMain) &&
-        prevMain.toLowerCase() !== nextMain.toLowerCase()
-      ) {
-        const hasOld = lines.some((l) => l.trim().toLowerCase() === prevMain.toLowerCase());
-        if (!hasOld) {
-          lines = [prevMain, ...lines];
-        }
-      }
-      return lines.join("\n");
-    });
+  })();
+
+  function renderSaveActions() {
+    return (
+      <div className="admin-form-actions">
+        <button type="button" onClick={() => void save()} disabled={saving} className="admin-btn-primary">
+          {saving ? "Opslaan…" : "Opslaan"}
+        </button>
+        <button type="button" onClick={() => void remove()} disabled={deleting} className="admin-btn-danger">
+          {deleting ? "…" : "Verwijderen"}
+        </button>
+      </div>
+    );
   }
 
   return (
     <div className="admin-product-editor-root admin-stack">
-      <div className="admin-page-head">
+      <Link href="/admin/products" className="admin-breadcrumb">
+        ← Alle producten
+      </Link>
+
+      <header className="admin-product-editor-head">
         <div>
-          <Link href="/admin/products" className="admin-breadcrumb">
-            ← Alle producten
-          </Link>
-          <h1 className="admin-h1">{titlePreview}</h1>
-          <p className="admin-muted admin-m-0 admin-mt-05">Product bewerken · ID {id}</p>
-          <p className="admin-muted admin-m-0 admin-mt-05">
-            <Link
-              href={productPath(shopSlugPreview)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="admin-link-action"
-            >
-              Bekijk in de shop
-            </Link>
-            <span> · {productPath(shopSlugPreview)}</span>
-          </p>
+          <p className="admin-product-editor-kicker">Product</p>
+          <h1 className="admin-h1 admin-m-0">{titlePreview}</h1>
+          <p className="admin-muted admin-m-0 admin-mt-05">ID {id}</p>
         </div>
-        <div className="admin-form-actions">
-          <button type="button" onClick={save} disabled={saving} className="admin-btn-primary">
-            {saving ? "Opslaan…" : "Opslaan"}
-          </button>
-          <button type="button" onClick={remove} disabled={deleting} className="admin-btn-danger">
-            {deleting ? "…" : "Verwijderen"}
-          </button>
-        </div>
-      </div>
+        <div className="admin-product-editor-head-meta">{renderSaveActions()}</div>
+      </header>
+
+      <AdminLocaleTabs
+        languages={languages}
+        value={editLocale}
+        onChange={setEditLocale}
+        filledLocales={filled}
+        hint="Teksten hieronder gelden voor de geselecteerde taal. Lege velden vallen in de shop terug op Nederlands."
+      />
 
       {saveOk ? (
         <div className="admin-banner ok admin-m-0" role="status">
@@ -523,11 +622,495 @@ export default function ProductEditorForm({ initial, categoryOptions = [] }: Pro
 
       <div className="admin-product-editor-grid">
         <div className="admin-product-editor-main">
-          <div className="admin-panel-surface">
-            <h2 className="admin-section-title">Catalogus</h2>
-            <label className={labelClass}>Bron</label>
+          <Section title="Product" hint="Naam en teksten op de productpagina.">
+            <label className="admin-label">
+              Naam
+              <input className={fieldClass} value={name} onChange={(e) => setLoc("name", e.target.value)} />
+            </label>
+            <div>
+              <p className="admin-label">Korte omschrijving</p>
+              <AdminHtmlEditor
+                minHeight="compact"
+                placeholder="Korte tekst bovenaan de productpagina…"
+                value={loc.shortDescriptionHtml ?? ""}
+                onChange={(html) => setLoc("shortDescriptionHtml", html)}
+                imageFolder="products"
+                onImageError={setError}
+              />
+            </div>
+            <div>
+              <p className="admin-label">Omschrijving</p>
+              <AdminHtmlEditor
+                minHeight="tall"
+                placeholder="Uitgebreide producttekst…"
+                value={loc.descriptionHtml ?? ""}
+                onChange={(html) => setLoc("descriptionHtml", html)}
+                imageFolder="products"
+                onImageError={setError}
+              />
+            </div>
+          </Section>
+
+          <Section title="Media">
+            <div className="admin-product-media">
+              {imagePreviewOk ? (
+                <div className="admin-product-hero">
+                  <img src={image.trim()} alt="" />
+                  <span className="admin-product-hero-badge">Hoofdfoto</span>
+                </div>
+              ) : (
+                <div className="admin-product-hero admin-product-hero--empty">Geen hoofdfoto</div>
+              )}
+              <div className="admin-product-media-tools">
+                {extraImages.length > 0 ? (
+                  <div className="admin-product-gallery" role="list">
+                    {extraImages.map((src) => (
+                      <div key={src} className="admin-product-gallery-item" role="listitem">
+                        <button
+                          type="button"
+                          className="admin-product-gallery-thumb"
+                          title="Als hoofdfoto instellen"
+                          onClick={() => promoteImage(src)}
+                        >
+                          <img src={src} alt="" loading="lazy" decoding="async" />
+                        </button>
+                        <button
+                          type="button"
+                          className="admin-product-gallery-remove"
+                          title="Foto verwijderen"
+                          onClick={() => removeImage(src)}
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
+                <div className="admin-media-actions">
+                  <AdminImageUploadButton
+                    label="Upload hoofdfoto"
+                    folder="products"
+                    onUploaded={(uploadedUrl, alt) => addUploadedImage(uploadedUrl, alt, true)}
+                    onError={(message) => setError(message)}
+                  />
+                  <AdminImageUploadButton
+                    label="Sleep extra foto’s hierheen"
+                    folder="products"
+                    multiple
+                    variant="dropzone"
+                    className="admin-dropzone--compact"
+                    onUploaded={(uploadedUrl) => addUploadedImage(uploadedUrl)}
+                    onError={(message) => setError(message)}
+                  />
+                </div>
+                {imagePreviewOk ? (
+                  <button type="button" className="admin-link-action admin-w-fit" onClick={() => removeImage(image)}>
+                    Hoofdfoto verwijderen
+                  </button>
+                ) : null}
+                <label className="admin-label">
+                  Alt-tekst hoofdfoto
+                  <input
+                    className={fieldClass}
+                    value={loc.imageAlt ?? ""}
+                    onChange={(e) => setLoc("imageAlt", e.target.value)}
+                  />
+                </label>
+                <details>
+                  <summary className="admin-muted" style={{ cursor: "pointer", fontSize: "0.8rem" }}>
+                    URL’s plakken
+                  </summary>
+                  <div className="admin-stack-tight admin-mt-1">
+                    <label className="admin-label">
+                      Hoofdfoto (URL)
+                      <input
+                        className={fieldClass}
+                        value={image}
+                        onChange={(e) => {
+                          const next = e.target.value;
+                          setImages((prev) => {
+                            const rest = prev.slice(1);
+                            return next.trim() ? [next, ...rest] : rest;
+                          });
+                        }}
+                      />
+                    </label>
+                    <button type="button" className="admin-btn-secondary admin-w-fit" onClick={handlePasteImageUrls}>
+                      Extra URL’s plakken
+                    </button>
+                  </div>
+                </details>
+              </div>
+            </div>
+          </Section>
+
+          <Section title="Prijs">
+            <div className="admin-form-grid">
+              <label className="admin-label">
+                Prijs
+                <input
+                  className={fieldClass}
+                  inputMode="decimal"
+                  value={priceDiscounted}
+                  onChange={(e) => setPriceDiscounted(e.target.value)}
+                />
+              </label>
+              <label className="admin-label">
+                Van-prijs (0 = geen)
+                <input
+                  className={fieldClass}
+                  inputMode="decimal"
+                  value={priceOld}
+                  onChange={(e) => setPriceOld(e.target.value)}
+                />
+              </label>
+              <label className="admin-label">
+                Adviesprijs
+                <input
+                  className={fieldClass}
+                  inputMode="decimal"
+                  value={priceCurrent}
+                  onChange={(e) => setPriceCurrent(e.target.value)}
+                />
+              </label>
+              <label className="admin-label">
+                Kortingslabel
+                <input className={fieldClass} value={discountName} onChange={(e) => setDiscountName(e.target.value)} />
+              </label>
+            </div>
+          </Section>
+
+          <Section title="Voorraad & SKU">
+            <div className="admin-form-grid">
+              <label className="admin-label">
+                SKU
+                <input className={fieldClass} value={sku} onChange={(e) => setSku(e.target.value)} />
+              </label>
+              <label className="admin-label">
+                Aantal
+                <input
+                  className={fieldClass}
+                  type="number"
+                  min={0}
+                  step={1}
+                  value={stockQty}
+                  onChange={(e) => setStockQty(e.target.value)}
+                  placeholder="bijv. 12"
+                />
+              </label>
+              <label className="admin-label">
+                Gereserveerd
+                <input
+                  className={fieldClass}
+                  type="number"
+                  min={0}
+                  step={1}
+                  value={reservedQty}
+                  onChange={(e) => setReservedQty(e.target.value)}
+                />
+              </label>
+              <div>
+                <p className="admin-label admin-m-0">Beschikbaar</p>
+                <p className="admin-product-stock-available">
+                  {stockAvailable != null ? stockAvailable : <span className="admin-muted">—</span>}
+                </p>
+              </div>
+              <label className="admin-label">
+                Voorraadstatus
+                <select
+                  className={fieldClass}
+                  value={hasStockNumber ? (stockAvailable! > 0 ? "in" : "out") : inStockManual ? "in" : "out"}
+                  disabled={hasStockNumber}
+                  onChange={(e) => setInStockManual(e.target.value === "in")}
+                >
+                  <option value="in">Op voorraad</option>
+                  <option value="out">Uitverkocht</option>
+                </select>
+              </label>
+            </div>
+            <p className="admin-muted admin-m-0">
+              {hasStockNumber
+                ? "Status volgt automatisch het aantal hierboven."
+                : "Zonder aantal geldt de handmatige voorraadstatus."}
+            </p>
+          </Section>
+
+          <Section title="Specificaties">
+            {specRows.length === 0 ? (
+              <p className="admin-muted admin-m-0">Nog geen specificaties.</p>
+            ) : (
+              <div className="admin-product-kv-list">
+                <div className="admin-product-kv admin-product-kv--head">
+                  <span>Naam</span>
+                  <span>Waarde</span>
+                  <span />
+                </div>
+                {specRows.map((row) => (
+                  <div key={row.key} className="admin-product-kv">
+                    <input
+                      className={`${fieldClass} admin-field--flush`}
+                      value={row.name}
+                      onChange={(e) => updateSpec(row.key, { name: e.target.value })}
+                      placeholder="bijv. Frame"
+                    />
+                    <input
+                      className={`${fieldClass} admin-field--flush`}
+                      value={row.value}
+                      onChange={(e) => updateSpec(row.key, { value: e.target.value })}
+                      placeholder="bijv. Carbon"
+                    />
+                    <button
+                      type="button"
+                      className="admin-btn-danger admin-btn-danger--sm"
+                      onClick={() =>
+                        setLoc(
+                          "specsText",
+                          specRowsToText(specRows.filter((item) => item.key !== row.key)),
+                        )
+                      }
+                    >
+                      Weg
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+            <button type="button" className="admin-btn-secondary admin-w-fit" onClick={addSpecRow}>
+              Specificatie toevoegen
+            </button>
+          </Section>
+
+          <Section
+            title="Varianten"
+            hint="Maat en kleur uit het bestaande label. Voorraad is per product, niet per variant."
+          >
+            {variations.length === 0 ? (
+              <p className="admin-muted admin-m-0">Nog geen varianten.</p>
+            ) : (
+              <div className="admin-table-wrap">
+                <table className="admin-table admin-product-variant-table">
+                  <thead>
+                    <tr>
+                      <th>Maat</th>
+                      <th>Kleur</th>
+                      <th>Prijs</th>
+                      <th>SKU</th>
+                      <th />
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {variations.map((row) => {
+                      const parts = splitVariantLabel(row.label);
+                      return (
+                        <tr key={row.id}>
+                          <td>
+                            <input
+                              className={`${fieldClass} admin-field--flush`}
+                              value={parts.maat}
+                              onChange={(e) =>
+                                updateVariation(row.id, { label: joinVariantLabel(e.target.value, parts.kleur) })
+                              }
+                              placeholder="M"
+                            />
+                          </td>
+                          <td>
+                            <input
+                              className={`${fieldClass} admin-field--flush`}
+                              value={parts.kleur}
+                              onChange={(e) =>
+                                updateVariation(row.id, { label: joinVariantLabel(parts.maat, e.target.value) })
+                              }
+                              placeholder="Zwart"
+                            />
+                          </td>
+                          <td>
+                            <input
+                              className={`${fieldClass} admin-field--flush`}
+                              inputMode="decimal"
+                              value={String(row.price)}
+                              onChange={(e) => {
+                                const price = Number(e.target.value);
+                                updateVariation(row.id, {
+                                  price: Number.isFinite(price) ? price : 0,
+                                  regularPrice: row.onSale ? row.regularPrice : Number.isFinite(price) ? price : 0,
+                                });
+                              }}
+                            />
+                          </td>
+                          <td>
+                            <input
+                              className={`${fieldClass} admin-field--flush`}
+                              value={row.sku ?? ""}
+                              onChange={(e) => updateVariation(row.id, { sku: e.target.value })}
+                            />
+                          </td>
+                          <td>
+                            <button
+                              type="button"
+                              className="admin-btn-danger admin-btn-danger--sm"
+                              onClick={() => setVariations((prev) => prev.filter((item) => item.id !== row.id))}
+                            >
+                              Weg
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+            <button type="button" className="admin-btn-secondary admin-w-fit" onClick={addVariation}>
+              Variant toevoegen
+            </button>
+          </Section>
+
+          <Fold title="SEO" hint="Zoektitel, slug en hoe dit product in Google en socials verschijnt.">
+            <div className="admin-form-grid">
+              <label className="admin-label admin-span-2">
+                URL-slug
+                <input
+                  className={fieldClass}
+                  value={loc.slug ?? ""}
+                  onChange={(e) => setLoc("slug", slugifyProductTitle(e.target.value) || e.target.value)}
+                  placeholder={slugifyProductTitle(name) || "product-url"}
+                />
+              </label>
+              <label className="admin-label admin-span-2">
+                SEO-titel
+                <input className={fieldClass} value={loc.seoTitle ?? ""} onChange={(e) => setLoc("seoTitle", e.target.value)} />
+              </label>
+              <label className="admin-label admin-span-2">
+                Meta description
+                <textarea className={fieldClass} value={loc.seoDescription ?? ""} onChange={(e) => setLoc("seoDescription", e.target.value)} />
+              </label>
+              <label className="admin-label admin-span-2">
+                Open Graph titel
+                <input className={fieldClass} value={loc.ogTitle ?? ""} onChange={(e) => setLoc("ogTitle", e.target.value)} />
+              </label>
+              <label className="admin-label admin-span-2">
+                Open Graph tekst
+                <textarea className={fieldClass} value={loc.ogDescription ?? ""} onChange={(e) => setLoc("ogDescription", e.target.value)} />
+              </label>
+              <label className="admin-label admin-span-2">
+                Social image URL
+                <input className={fieldClass} value={socialImage} onChange={(e) => setSocialImage(e.target.value)} />
+              </label>
+              <div className="admin-span-2 admin-form-actions">
+                <AdminImageUploadButton
+                  label="Social image uploaden"
+                  folder="products"
+                  onUploaded={(uploadedUrl) => {
+                    setError("");
+                    setSocialImage(uploadedUrl);
+                  }}
+                  onError={(message) => setError(message)}
+                />
+              </div>
+              <label className="admin-check-highlight admin-span-2" style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                <input type="checkbox" checked={noindex} onChange={(e) => setNoindex(e.target.checked)} />
+                Niet indexeren (noindex)
+              </label>
+            </div>
+          </Fold>
+        </div>
+
+        <aside className="admin-product-editor-side" aria-label="Publicatie en indeling">
+          <Section title="Status">
             <select
-              className={`${fieldClass} admin-max-w-md`}
+              className={fieldClass}
+              aria-label="Status"
+              value={productStatus}
+              onChange={(e) => {
+                const next = normalizeProductStatus(e.target.value);
+                setProductStatus(next);
+                if (next === "concept") setFeaturedOnHomepage(false);
+              }}
+            >
+              {PRODUCT_STATUSES.map((s) => (
+                <option key={s} value={s}>
+                  {PRODUCT_STATUS_LABEL[s]}
+                </option>
+              ))}
+            </select>
+            <label className="admin-check-highlight" style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+              <input
+                type="checkbox"
+                checked={featuredOnHomepage}
+                disabled={productStatus === "concept"}
+                onChange={(e) => setFeaturedOnHomepage(e.target.checked)}
+              />
+              Uitgelicht op de homepage
+            </label>
+            <p className="admin-muted admin-m-0">
+              Concept blijft verborgen in de shop, zoekresultaten en sitemap.
+            </p>
+          </Section>
+
+          <Section title="Categorie">
+            {categoryOptions.length > 0 ? (
+              <select
+                className={fieldClass}
+                value={categorySelectValue}
+                onChange={(e) => setCategory(e.target.value)}
+              >
+                <option value="">— Kies —</option>
+                {category && !categoryOptions.some((c) => c.name === categorySelectValue) ? (
+                  <option value={category}>{dutchLabelFromImportedName(category)}</option>
+                ) : null}
+                {categoryOptionGroups.map(([group, items]) =>
+                  group ? (
+                    <optgroup key={group} label={group}>
+                      {items.map((c) => (
+                        <option key={c.slug} value={c.name}>
+                          {c.name}
+                        </option>
+                      ))}
+                    </optgroup>
+                  ) : (
+                    items.map((c) => (
+                      <option key={c.slug} value={c.name}>
+                        {c.name}
+                      </option>
+                    ))
+                  ),
+                )}
+              </select>
+            ) : (
+              <input className={fieldClass} value={category} onChange={(e) => setCategory(e.target.value)} />
+            )}
+          </Section>
+
+          <Section title="Merk">
+            <input
+              className={fieldClass}
+              value={brand}
+              onChange={(e) => setBrand(e.target.value)}
+              aria-label="Merk"
+              placeholder="bijv. Giant"
+            />
+          </Section>
+
+          <Section title="Shop">
+            <Link
+              href={productPath(shopSlugPreview)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="admin-link-action"
+            >
+              Bekijk in de shop
+            </Link>
+            <p className="admin-muted admin-m-0">/{shopSlugPreview}</p>
+          </Section>
+        </aside>
+      </div>
+
+      <Fold title="Technisch" hint="Importbron, Easy Sales, tags en ruwe JSON. Alleen nodig bij koppelingen of troubleshooting.">
+        <div className="admin-form-grid">
+          <label className="admin-label">
+            Bron
+            <select
+              className={fieldClass}
               value={catalogSource}
               onChange={(e) => setCatalogSource(e.target.value as CatalogSource)}
             >
@@ -537,463 +1120,97 @@ export default function ProductEditorForm({ initial, categoryOptions = [] }: Pro
                 </option>
               ))}
             </select>
-          </div>
-
-          <div className="admin-panel-surface admin-stack-tight">
-            <h2 className="admin-section-title">Basisgegevens</h2>
-            <div className="admin-form-grid">
-              <div className="admin-span-2">
-                <label className={labelClass}>Naam</label>
-                <input className={fieldClass} value={name} onChange={(e) => setName(e.target.value)} />
-              </div>
-              <div>
-                <label className={labelClass}>Merk</label>
-                <input className={fieldClass} value={brand} onChange={(e) => setBrand(e.target.value)} />
-              </div>
-              <div>
-                <label className={labelClass}>Categorie / subcategorie</label>
-                {categoryOptions.length > 0 ? (
-                  <select
-                    className={fieldClass}
-                    value={categorySelectValue}
-                    onChange={(e) => setCategory(e.target.value)}
-                  >
-                    <option value="">— Kies —</option>
-                    {category && !categoryOptions.some((c) => c.name === categorySelectValue) ? (
-                      <option value={category}>{dutchLabelFromImportedName(category)}</option>
-                    ) : null}
-                    {categoryOptionGroups.map(([group, items]) =>
-                      group ? (
-                        <optgroup key={group} label={group}>
-                          {items.map((c) => (
-                            <option key={c.slug} value={c.name}>
-                              {c.name}
-                            </option>
-                          ))}
-                        </optgroup>
-                      ) : (
-                        items.map((c) => (
-                          <option key={c.slug} value={c.name}>
-                            {c.name}
-                          </option>
-                        ))
-                      ),
-                    )}
-                  </select>
-                ) : (
-                  <input className={fieldClass} value={category} onChange={(e) => setCategory(e.target.value)} />
-                )}
-              </div>
-              <div>
-                <label className={labelClass}>SKU</label>
-                <input className={fieldClass} value={sku} onChange={(e) => setSku(e.target.value)} />
-              </div>
-              <div className="admin-span-2">
-                <label className={labelClass}>Specificaties (één per regel, bijv. Frame: Carbon)</label>
-                <textarea
-                  className={`${fieldClass} admin-field--tall`}
-                  value={specsText}
-                  onChange={(e) => setSpecsText(e.target.value)}
-                />
-              </div>
-              <div className="admin-span-2">
-                <label className={labelClass}>Product URL</label>
-                <input className={fieldClass} value={url} onChange={(e) => setUrl(e.target.value)} />
-              </div>
-              <div className="admin-span-2">
-                <label className={labelClass}>Social proof (tekst; leeg = geen)</label>
-                <input
-                  className={fieldClass}
-                  value={socialProofText}
-                  onChange={(e) => setSocialProofText(e.target.value)}
-                />
-              </div>
-            </div>
-          </div>
-
-          <div className="admin-panel-surface admin-stack-tight">
-            <h2 className="admin-section-title">Beschrijving</h2>
-            <p className="admin-muted admin-m-0 admin-text-sm">
-              Tekst op de productpagina. Koppen, vet, lijsten, links en foto’s — geen ruwe HTML.
-            </p>
-            <div>
-              <label className={labelClass}>Korte omschrijving</label>
-              <AdminHtmlEditor
-                minHeight="compact"
-                placeholder="Korte tekst bovenaan de productpagina…"
-                value={wcShortHtml}
-                onChange={setWcShortHtml}
-                imageFolder="products"
-                onImageError={setError}
-              />
-            </div>
-            <div>
-              <label className={labelClass}>Volledige omschrijving</label>
-              <AdminHtmlEditor
-                minHeight="tall"
-                placeholder="Uitgebreide producttekst…"
-                value={wcDescHtml}
-                onChange={setWcDescHtml}
-                imageFolder="products"
-                onImageError={setError}
-              />
-            </div>
-          </div>
-
-          <div className="admin-panel-surface">
-            <h2 className="admin-section-title">Zichtbaarheid &amp; levering</h2>
-            <div className="admin-mb-1">
-              <label className={labelClass}>Status</label>
-              <select
-                className={fieldClass}
-                value={productStatus}
-                onChange={(e) => {
-                  const next = normalizeProductStatus(e.target.value);
-                  setProductStatus(next);
-                  if (next === "concept") {
-                    setFeaturedOnHomepage(false);
-                  }
-                }}
-              >
-                {PRODUCT_STATUSES.map((s) => (
-                  <option key={s} value={s}>
-                    {PRODUCT_STATUS_LABEL[s]}
-                  </option>
-                ))}
-              </select>
-              <p className="admin-muted admin-m-0 admin-mt-05 admin-text-sm">
-                Concept = verborgen in de shop, zoekresultaten en sitemap.
-              </p>
-            </div>
-            <div className="admin-inline-checks">
-              <label className="admin-check-highlight">
-                <input
-                  type="checkbox"
-                  checked={featuredOnHomepage}
-                  disabled={productStatus === "concept"}
-                  onChange={(e) => setFeaturedOnHomepage(e.target.checked)}
-                />
-                Uitgelicht op de homepage
-              </label>
-              <div className="admin-stock-readout admin-form-grid-2 admin-span-2">
-                <div>
-                  <label className={labelClass}>Voorraad (aantal)</label>
-                  <input
-                    className={fieldClass}
-                    type="number"
-                    min={0}
-                    step={1}
-                    value={stockQty}
-                    onChange={(e) => setStockQty(e.target.value)}
-                    placeholder="bijv. 12"
-                  />
-                </div>
-                <div>
-                  <label className={labelClass}>Voorraadstatus</label>
-                  <select
-                    className={fieldClass}
-                    value={hasStockNumber ? (stockAvailable! > 0 ? "in" : "out") : inStockManual ? "in" : "out"}
-                    disabled={hasStockNumber}
-                    onChange={(e) => setInStockManual(e.target.value === "in")}
-                  >
-                    <option value="in">Op voorraad</option>
-                    <option value="out">Uitverkocht</option>
-                  </select>
-                  <p className="admin-muted admin-m-0 admin-mt-05 admin-text-sm">
-                    {hasStockNumber
-                      ? "Volgt automatisch het aantal hierboven."
-                      : "Geldt zolang er geen aantal is ingevuld."}
-                  </p>
-                </div>
-                <div>
-                  <label className={labelClass}>Gereserveerd</label>
-                  <input
-                    className={fieldClass}
-                    type="number"
-                    min={0}
-                    step={1}
-                    value={reservedQty}
-                    onChange={(e) => setReservedQty(e.target.value)}
-                  />
-                </div>
-                <div>
-                  <p className="admin-label admin-m-0">Beschikbaar</p>
-                  <p className="admin-m-0">
-                    {stockAvailable != null ? (
-                      <strong>{stockAvailable}</strong>
-                    ) : (
-                      <span className="admin-muted">—</span>
-                    )}
-                  </p>
-                </div>
-                <div>
-                  <label className={labelClass}>Easy Sales product-ID</label>
-                  <input
-                    className={fieldClass}
-                    type="number"
-                    min={1}
-                    step={1}
-                    value={easySalesId}
-                    onChange={(e) => setEasySalesId(e.target.value)}
-                    placeholder="uit Easy Sales"
-                  />
-                </div>
-                {initial.stockSyncedAt ? (
-                  <p className="admin-muted admin-m-0 admin-text-sm admin-span-2">
-                    Laatste Easy Sales-sync:{" "}
-                    {new Date(initial.stockSyncedAt).toLocaleString("nl-NL")}
-                    {initial.easySalesSku ? ` · ES SKU ${initial.easySalesSku}` : ""}
-                  </p>
-                ) : (
-                  <p className="admin-muted admin-m-0 admin-text-sm admin-span-2">
-                    Niet gekoppeld aan Easy Sales — vul de voorraad hier handmatig in of beheer die via{" "}
-                    <Link href="/admin/inventory" className="admin-link-action">
-                      Voorraad
-                    </Link>
-                    .
-                  </p>
-                )}
-              </div>
-              <label>
-                <input type="checkbox" checked={freeCargo} onChange={(e) => setFreeCargo(e.target.checked)} />
-                Gratis verzending (alleen weergave; checkout gebruikt de shopdrempel)
-              </label>
-              <label>
-                <input
-                  type="checkbox"
-                  checked={sameDayShipping}
-                  onChange={(e) => setSameDayShipping(e.target.checked)}
-                />
-                Same-day verzending
-              </label>
-              <label>
-                <input
-                  type="checkbox"
-                  checked={hasFastDeliveryTag}
-                  onChange={(e) => setHasFastDeliveryTag(e.target.checked)}
-                />
-                Tag: snelle levering
-              </label>
-              <label>
-                <input
-                  type="checkbox"
-                  checked={hasFlashSaleTag}
-                  onChange={(e) => setHasFlashSaleTag(e.target.checked)}
-                />
-                Tag: flash sale
-              </label>
-            </div>
-          </div>
-
-          <div className="admin-panel-surface admin-stack-tight">
-            <h2 className="admin-section-title">SEO &amp; meta</h2>
-            <label className={labelClass}>SEO-titel</label>
-            <input className={fieldClass} value={seoTitle} onChange={(e) => setSeoTitle(e.target.value)} />
-            <label className={labelClass}>Meta description</label>
-            <textarea className={fieldClass} value={seoDescription} onChange={(e) => setSeoDescription(e.target.value)} />
-            <label className={labelClass}>Open Graph titel</label>
-            <input className={fieldClass} value={ogTitle} onChange={(e) => setOgTitle(e.target.value)} />
-            <label className={labelClass}>Open Graph tekst</label>
-            <textarea className={fieldClass} value={ogDescription} onChange={(e) => setOgDescription(e.target.value)} />
-            <label className={labelClass}>Social image URL</label>
-            <input className={fieldClass} value={socialImage} onChange={(e) => setSocialImage(e.target.value)} />
-            <div className="admin-form-actions">
-              <AdminImageUploadButton
-                label="Uploaden"
-                folder="products"
-                onUploaded={(url) => {
-                  setError("");
-                  setSocialImage(url);
-                }}
-                onError={(message) => setError(message)}
-              />
-            </div>
-            <label className={labelClass}>Alt-tekst hoofdfoto</label>
-            <input className={fieldClass} value={imageAlt} onChange={(e) => setImageAlt(e.target.value)} />
-            <label className="admin-check-highlight">
-              <input type="checkbox" checked={noindex} onChange={(e) => setNoindex(e.target.checked)} />
-              Niet indexeren (noindex)
-            </label>
-          </div>
-
-          <details className="admin-panel-surface admin-stack-tight">
-            <summary className="admin-section-summary">Geavanceerd (JSON)</summary>
-            <div className="admin-mt-1 admin-stack-tight">
-              <div>
-                <label className={labelClass}>Variaties (JSON-array, optioneel)</label>
-                <textarea
-                  className={`${fieldClass} admin-field--mono admin-field--tall-lg`}
-                  value={variationsJson}
-                  onChange={(e) => setVariationsJson(e.target.value)}
-                  spellCheck={false}
-                />
-              </div>
-              <div>
-                <label className={labelClass}>Landingpromo (JSON)</label>
-                <textarea
-                  className={`${fieldClass} admin-field--mono admin-field--tall-lg`}
-                  value={landingJson}
-                  onChange={(e) => setLandingJson(e.target.value)}
-                  spellCheck={false}
-                />
-              </div>
-              <div>
-                <label className={labelClass}>Winkelwagenbundels (JSON)</label>
-                <textarea
-                  className={`${fieldClass} admin-field--mono admin-field--tall-xl`}
-                  value={bundleJson}
-                  onChange={(e) => setBundleJson(e.target.value)}
-                  spellCheck={false}
-                />
-              </div>
-            </div>
-          </details>
+          </label>
+          <label className="admin-label">
+            Easy Sales product-ID
+            <input
+              className={fieldClass}
+              type="number"
+              min={1}
+              step={1}
+              value={easySalesId}
+              onChange={(e) => setEasySalesId(e.target.value)}
+              placeholder="uit Easy Sales"
+            />
+          </label>
+          <label className="admin-label">
+            Valuta
+            <input className={fieldClass} value={currency} onChange={(e) => setCurrency(e.target.value)} />
+          </label>
+          <label className="admin-label admin-span-2">
+            Product-URL
+            <input className={fieldClass} value={url} onChange={(e) => setUrl(e.target.value)} />
+          </label>
+          <label className="admin-label admin-span-2">
+            Social proof
+            <input className={fieldClass} value={socialProofText} onChange={(e) => setSocialProofText(e.target.value)} />
+          </label>
         </div>
-
-        <aside className="admin-product-editor-side" aria-label="Media en prijzen">
-          <div className="admin-panel-surface admin-stack-tight">
-            <h2 className="admin-section-title">Media</h2>
-            <div className="admin-media-row admin-media-stack--aside">
-              {imagePreviewOk ? (
-                <div className="admin-thumb-preview-wrap admin-thumb-preview-wrap--hero">
-                  <img src={imageTrim} alt="" />
-                </div>
-              ) : (
-                <div className="admin-thumb-preview-wrap admin-thumb-preview-wrap--hero opacity-40" aria-hidden />
-              )}
-              <div className="admin-media-actions">
-                <AdminImageUploadButton
-                  label="Upload hoofdfoto"
-                  folder="products"
-                  onUploaded={(uploadedUrl, alt) => {
-                    setError("");
-                    const prevMain = image.trim();
-                    setImage(uploadedUrl);
-                    if (alt?.trim()) {
-                      setImageAlt((prev) => (prev.trim() ? prev : alt.trim()));
-                    }
-                    if (prevMain && isPreviewableImageUrl(prevMain) && prevMain !== uploadedUrl) {
-                      setImagesText((prev) => appendImageUrls(prev, prevMain));
-                    }
-                  }}
-                  onError={(message) => setError(message)}
-                />
-                <AdminImageUploadButton
-                  label="Upload extra foto’s"
-                  folder="products"
-                  multiple
-                  onUploaded={(uploadedUrl) => {
-                    setError("");
-                    setImagesText((prev) => appendImageUrls(prev, uploadedUrl));
-                  }}
-                  onError={(message) => setError(message)}
-                />
-                <button type="button" className="admin-btn-secondary" onClick={handleChangeMainPhoto}>
-                  Plak hoofdfoto-URL
-                </button>
-                <button type="button" className="admin-btn-secondary" onClick={handleAddImages}>
-                  Plak extra URL’s
-                </button>
-              </div>
-              <div className="min-w-0 flex-1 admin-stack-tight">
-                <div>
-                  <label className={labelClass}>Hoofdfoto (URL)</label>
-                  <input
-                    ref={mainImageInputRef}
-                    className={fieldClass}
-                    value={image}
-                    onChange={(e) => setImage(e.target.value)}
-                  />
-                </div>
-                <div>
-                  <label className={labelClass}>Extra foto’s (één URL per regel)</label>
-                  <textarea
-                    className={`${fieldClass} admin-field--mono admin-field--tall`}
-                    value={imagesText}
-                    onChange={(e) => setImagesText(e.target.value)}
-                  />
-                </div>
-                {extraImageUrls.length > 0 ? (
-                  <div>
-                    <p className="admin-muted admin-m-0" style={{ fontSize: "0.72rem" }}>
-                      Extra previews — klik om als hoofdfoto te gebruiken (vorige hoofdfoto gaat naar de lijst).
-                    </p>
-                    <div className="admin-extra-thumbs" role="list">
-                      {extraImageUrls.map((url) => (
-                        <button
-                          key={url}
-                          type="button"
-                          className="admin-extra-thumb"
-                          title="Als hoofdfoto instellen"
-                          onClick={() => handlePromoteExtraToMain(url)}
-                        >
-                          <img src={url} alt="" loading="lazy" decoding="async" />
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                ) : null}
-              </div>
-            </div>
-          </div>
-
-          <div className="admin-panel-surface admin-stack-tight">
-            <h2 className="admin-section-title">Prijzen</h2>
-            <div className="admin-form-grid">
-              <div>
-                <label className={labelClass}>Valuta</label>
-                <input className={fieldClass} value={currency} onChange={(e) => setCurrency(e.target.value)} />
-              </div>
-              <div>
-                <label className={labelClass}>Huidige prijs</label>
-                <input
-                  className={fieldClass}
-                  inputMode="decimal"
-                  value={priceCurrent}
-                  onChange={(e) => setPriceCurrent(e.target.value)}
-                />
-              </div>
-              <div>
-                <label className={labelClass}>Prijs na korting</label>
-                <input
-                  className={fieldClass}
-                  inputMode="decimal"
-                  value={priceDiscounted}
-                  onChange={(e) => setPriceDiscounted(e.target.value)}
-                />
-              </div>
-              <div>
-                <label className={labelClass}>Oude prijs (0 = geen)</label>
-                <input
-                  className={fieldClass}
-                  inputMode="decimal"
-                  value={priceOld}
-                  onChange={(e) => setPriceOld(e.target.value)}
-                />
-              </div>
-              <div className="admin-span-2">
-                <label className={labelClass}>Kortingslabel</label>
-                <input className={fieldClass} value={discountName} onChange={(e) => setDiscountName(e.target.value)} />
-              </div>
-            </div>
-          </div>
-        </aside>
-      </div>
+        {initial.stockSyncedAt ? (
+          <p className="admin-muted admin-m-0">
+            Laatste Easy Sales-sync: {new Date(initial.stockSyncedAt).toLocaleString("nl-NL")}
+            {initial.easySalesSku ? ` · ES SKU ${initial.easySalesSku}` : ""}
+          </p>
+        ) : (
+          <p className="admin-muted admin-m-0">
+            Niet gekoppeld aan Easy Sales. Voorraad beheer je hierboven of via{" "}
+            <Link href="/admin/inventory" className="admin-link-action">
+              Voorraad
+            </Link>
+            .
+          </p>
+        )}
+        <div className="admin-inline-checks">
+          <label>
+            <input type="checkbox" checked={freeCargo} onChange={(e) => setFreeCargo(e.target.checked)} />
+            Gratis verzending (weergave)
+          </label>
+          <label>
+            <input type="checkbox" checked={sameDayShipping} onChange={(e) => setSameDayShipping(e.target.checked)} />
+            Same-day verzending
+          </label>
+          <label>
+            <input
+              type="checkbox"
+              checked={hasFastDeliveryTag}
+              onChange={(e) => setHasFastDeliveryTag(e.target.checked)}
+            />
+            Tag: snelle levering
+          </label>
+          <label>
+            <input type="checkbox" checked={hasFlashSaleTag} onChange={(e) => setHasFlashSaleTag(e.target.checked)} />
+            Tag: flash sale
+          </label>
+        </div>
+        <label className="admin-label">
+          Landingpromo (JSON)
+          <textarea
+            className={`${fieldClass} admin-field--mono admin-field--tall-lg`}
+            value={landingJson}
+            onChange={(e) => setLandingJson(e.target.value)}
+            spellCheck={false}
+          />
+        </label>
+        <label className="admin-label">
+          Winkelwagenbundels (JSON)
+          <textarea
+            className={`${fieldClass} admin-field--mono admin-field--tall-xl`}
+            value={bundleJson}
+            onChange={(e) => setBundleJson(e.target.value)}
+            spellCheck={false}
+          />
+        </label>
+      </Fold>
 
       <div className="admin-editor-sticky">
         <div className="admin-editor-sticky-inner">
-          <span className="admin-muted" style={{ fontSize: "0.8rem" }}>
-            ID {id}
+          <span className="admin-muted">
+            {titlePreview}
+            {priceLabel ? ` · ${priceLabel}` : ""}
+            {stockAvailable != null ? ` · ${stockAvailable} op voorraad` : ""}
             {payload ? "" : " · controleer invoer"}
           </span>
-          <div className="admin-form-actions">
-            <button type="button" onClick={save} disabled={saving} className="admin-btn-primary">
-              {saving ? "Opslaan…" : "Opslaan"}
-            </button>
-            <button type="button" onClick={remove} disabled={deleting} className="admin-btn-danger">
-              {deleting ? "…" : "Verwijderen"}
-            </button>
-          </div>
+          {renderSaveActions()}
         </div>
       </div>
     </div>

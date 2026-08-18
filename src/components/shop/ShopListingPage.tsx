@@ -1,4 +1,4 @@
-import Link from "next/link";
+import LocalizedLink from "@/components/locale/LocalizedLink";
 import Footer from "@/components/layout/Footer";
 import Header from "@/components/layout/Header";
 import TrustBar from "@/components/layout/TrustBar";
@@ -172,12 +172,12 @@ export default async function ShopListingPage({ pathCategorySlug, searchParams }
             {heading}
           </h1>
           {(categorySlug || catResolved.unknownCategory) && (
-            <Link
+            <LocalizedLink
               href="/shop"
               className="shrink-0 text-sm font-semibold text-[#96741f] underline underline-offset-2"
             >
               Bekijk alle producten
-            </Link>
+            </LocalizedLink>
           )}
         </div>
 
@@ -195,12 +195,12 @@ export default async function ShopListingPage({ pathCategorySlug, searchParams }
           <div className="mt-4 rounded-xl border border-[#e5dcc8] bg-white px-4 py-3 text-sm text-[var(--foreground)]/85">
             <p>
               Geen resultaten voor deze zoekopdracht. Probeer een andere term of{" "}
-              <Link
+              <LocalizedLink
                 href={buildShopListingUrl({ ...listingQuery, page: 1, search: null })}
                 className="font-semibold text-[#96741f] underline"
               >
                 wis de zoekopdracht
-              </Link>
+              </LocalizedLink>
               .
             </p>
             {categoryTree.length > 0 ? (
@@ -209,7 +209,7 @@ export default async function ShopListingPage({ pathCategorySlug, searchParams }
                 {categoryTree.slice(0, 5).map((root, i) => (
                   <span key={root.id}>
                     {i > 0 ? " · " : null}
-                    <Link
+                    <LocalizedLink
                       href={buildShopListingUrl({
                         ...listingQuery,
                         page: 1,
@@ -219,7 +219,7 @@ export default async function ShopListingPage({ pathCategorySlug, searchParams }
                       className="font-semibold text-[#96741f] underline"
                     >
                       {formatRalexCategoryName(root.name, root.slug)}
-                    </Link>
+                    </LocalizedLink>
                   </span>
                 ))}
               </p>
@@ -268,12 +268,12 @@ export default async function ShopListingPage({ pathCategorySlug, searchParams }
                 {!catResolved.unknownCategory ? "." : ""}
               </p>
               {searchTrimmed ? (
-                <Link
+                <LocalizedLink
                   href={buildShopListingUrl({ ...listingQuery, page: 1, search: null })}
                   className="text-xs font-semibold text-[#96741f] underline underline-offset-2"
                 >
                   Wis zoekopdracht
-                </Link>
+                </LocalizedLink>
               ) : null}
               {facetNote ? <p className="text-xs text-[var(--foreground)]/65">{facetNote}</p> : null}
               {searchNote ? <p className="text-xs text-[var(--foreground)]/65">{searchNote}</p> : null}
@@ -320,24 +320,24 @@ export default async function ShopListingPage({ pathCategorySlug, searchParams }
                       Vorige
                     </span>
                   ) : (
-                    <Link
+                    <LocalizedLink
                       href={pageHref(page - 1)}
                       className="rounded-full border border-[#e5dcc8] bg-white px-4 py-2 text-sm font-semibold text-[var(--foreground)] transition hover:border-[#B38F27] hover:bg-[#faf8f4]"
                     >
                       Vorige
-                    </Link>
+                    </LocalizedLink>
                   )}
                   {page >= totalPages ? (
                     <span className="rounded-full border border-[#e5dcc8] bg-white px-4 py-2 text-sm font-semibold text-[var(--foreground)]/40">
                       Volgende
                     </span>
                   ) : (
-                    <Link
+                    <LocalizedLink
                       href={pageHref(page + 1)}
                       className="rounded-full border border-[#B38F27] bg-[#B38F27] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#96741f]"
                     >
                       Volgende
-                    </Link>
+                    </LocalizedLink>
                   )}
                 </div>
               </nav>

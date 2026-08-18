@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
+import LocalizedLink from "@/components/locale/LocalizedLink";
 
 import { useCategories } from "@/components/categories/CategoriesProvider";
 import { formatRalexCategoryName } from "@/lib/ralex-categories";
@@ -34,9 +34,9 @@ export default function CategoryGrid() {
         <h2 className="text-2xl font-semibold text-[var(--foreground)] md:font-[family-name:var(--font-heading)] md:text-3xl">
           Shop per categorie
         </h2>
-        <Link href="/categorii" className="text-sm font-semibold text-[#96741f] hover:underline">
+        <LocalizedLink href="/categorii" className="text-sm font-semibold text-[#96741f] hover:underline">
           Alle categorieën →
-        </Link>
+        </LocalizedLink>
       </div>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:gap-4 lg:grid-cols-3">
         {tree.map((root) => {
@@ -45,7 +45,7 @@ export default function CategoryGrid() {
           const hasImage = Boolean(imageSrc);
 
           return (
-            <Link
+            <LocalizedLink
               key={root.id}
               href={categoryHref(root.slug)}
               className={`group relative flex min-h-[14rem] overflow-hidden rounded-2xl border transition hover:-translate-y-0.5 hover:shadow-lg sm:min-h-[16rem] ${
@@ -107,7 +107,7 @@ export default function CategoryGrid() {
                   </ul>
                 ) : null}
               </div>
-            </Link>
+            </LocalizedLink>
           );
         })}
       </div>

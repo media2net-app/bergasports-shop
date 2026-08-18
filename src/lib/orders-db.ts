@@ -9,8 +9,14 @@ import { requirePrisma } from "@/lib/database";
 import { cancelMolliePayment, getMolliePayment, isMolliePaymentCancellable } from "@/lib/mollie";
 import { deductStockForOrderItems } from "@/lib/easy-sales-stock-sync";
 import { pushOrderToEasySalesAfterCreate } from "@/lib/easy-sales-sync";
-import type { CreateOrderInput, OrderRow, OrderStatus, OrderWithItems } from "@/lib/orders";
-import { ORDER_STATUSES, orderShippingTotal } from "@/lib/orders";
+import type { CreateOrderInput, OrderBillingAddress, OrderRow, OrderStatus, OrderWithItems } from "@/lib/orders";
+import {
+  ORDER_STATUSES,
+  isPickupShippingLabel,
+  mergeOrderCheckoutNotes,
+  orderShippingTotal,
+  parseOrderCheckoutNotes,
+} from "@/lib/orders";
 import { catalogSalePrice, decodeImportedProductTitle } from "@/lib/products";
 import { getProductsRawByIds } from "@/lib/products-db";
 import {
@@ -35,6 +41,10 @@ function generateOrderNumber() {
     .toString()
     .padStart(4, "0");
   return `BS-${y}${m}${day}-${r}`;
+}
+
+function money2(n: number): number {
+  return Math.round(n * 100) / 100;
 }
 
 function prismaOrderToRow(o: {
@@ -110,7 +120,7 @@ function prismaOrderToRow(o: {
   };
 }
 
-async function markStatusEmailSent(orderId: number, kind: OrderStatusEmailKind): Promise<void> {
+async function markStatusEmailSent(orderId: number, kind: OrderStatusEmailKind, force = false): Promise<void> {
   const prisma = requirePrisma();
   const row = await prisma.order.findUnique({
     where: { id: BigInt(orderId) },
@@ -120,7 +130,7 @@ async function markStatusEmailSent(orderId: number, kind: OrderStatusEmailKind):
     return;
   }
   const sent = parseStatusEmailsSent(row.statusEmailsSent);
-  if (sent[kind]) {
+  if (sent[kind] && !force) {
     return;
   }
   const next = { ...sent, [kind]: new Date().toISOString() };
@@ -484,6 +494,21 @@ export async function getOrderById(id: number): Promise<OrderWithItems | null> {
   };
 }
 
+export async function resendOrderStatusEmail(id: number, kind: OrderStatusEmailKind): Promise<void> {
+  const order = await getOrderById(id);
+  if (!order) {
+    throw new Error("Bestelling niet gevonden.");
+  }
+  if (!order.customer_email?.trim()) {
+    throw new Error("Deze bestelling heeft geen e-mailadres.");
+  }
+  const ok = await sendOrderStatusEmailToCustomer(order, kind);
+  if (!ok) {
+    throw new Error("Mail versturen mislukt.");
+  }
+  await markStatusEmailSent(id, kind, true);
+}
+
 export async function updateOrderStatus(id: number, status: OrderStatus): Promise<OrderRow> {
   if (!ORDER_STATUSES.includes(status)) {
     throw new Error("Invalid status.");
@@ -519,27 +544,85 @@ export async function updateOrderStatus(id: number, status: OrderStatus): Promis
   return prismaOrderToRow(data);
 }
 
-export async function updateOrderFulfillment(
-  id: number,
-  input: {
-    customer_name?: string;
-    customer_email?: string | null;
-    customer_phone?: string;
-    shipping_address?: string;
-    shipping_city?: string;
-    shipping_county?: string | null;
-    shipping_postal_code?: string | null;
-    notes?: string | null;
-    tracking_code?: string | null;
-    tracking_url?: string | null;
-    shipping_carrier?: string | null;
-    sendcloud_parcel_id?: number | null;
-    sendcloud_label_url?: string | null;
-    refunded_at?: Date | null;
-    refund_amount?: number | null;
-    payment_status?: string | null;
-  },
-): Promise<OrderRow> {
+export type AdminOrderFulfillmentWrite = {
+  customer_name?: string;
+  customer_email?: string | null;
+  customer_phone?: string;
+  shipping_address?: string;
+  shipping_city?: string;
+  shipping_county?: string | null;
+  shipping_postal_code?: string | null;
+  notes?: string | null;
+  internal_note?: string | null;
+  billing_address?: string | null;
+  billing_city?: string | null;
+  billing_county?: string | null;
+  billing_postal_code?: string | null;
+  shipping_method?: "pickup" | "standard";
+  tracking_code?: string | null;
+  tracking_url?: string | null;
+  shipping_carrier?: string | null;
+  sendcloud_parcel_id?: number | null;
+  sendcloud_label_url?: string | null;
+  refunded_at?: Date | null;
+  refund_amount?: number | null;
+  payment_status?: string | null;
+};
+
+function billingFromInput(input: AdminOrderFulfillmentWrite): OrderBillingAddress | null | undefined {
+  if (
+    input.billing_address === undefined &&
+    input.billing_city === undefined &&
+    input.billing_county === undefined &&
+    input.billing_postal_code === undefined
+  ) {
+    return undefined;
+  }
+  const billing: OrderBillingAddress = {
+    address: input.billing_address?.trim() || "",
+    postal_code: input.billing_postal_code?.trim() || "",
+    city: input.billing_city?.trim() || "",
+    county: input.billing_county?.trim() || "",
+  };
+  if (!billing.address && !billing.postal_code && !billing.city && !billing.county) {
+    return null;
+  }
+  return billing;
+}
+
+export async function updateOrderFulfillment(id: number, input: AdminOrderFulfillmentWrite): Promise<OrderRow> {
+  const existing = await getOrderById(id);
+  if (!existing) {
+    throw new Error("Bestelling niet gevonden.");
+  }
+
+  const billing = billingFromInput(input);
+  let shippingLabel: string | undefined;
+  if (input.shipping_method === "pickup") {
+    shippingLabel = "Afhalen in Dedemsvaart";
+  } else if (input.shipping_method === "standard") {
+    const current = parseOrderCheckoutNotes(existing.notes).shippingLabel;
+    shippingLabel = isPickupShippingLabel(current) ? "Verzending Nederland" : (current ?? "Verzending Nederland");
+  }
+
+  const shouldMergeNotes =
+    input.internal_note !== undefined || billing !== undefined || shippingLabel !== undefined;
+  const notes = shouldMergeNotes
+    ? mergeOrderCheckoutNotes(input.notes !== undefined ? input.notes : existing.notes, {
+        ...(input.internal_note !== undefined ? { internalNote: input.internal_note } : {}),
+        ...(billing !== undefined ? { billing } : {}),
+        ...(shippingLabel !== undefined ? { shippingLabel } : {}),
+      })
+    : input.notes;
+
+  let total: number | undefined;
+  if (input.shipping_method === "pickup") {
+    const shipping = orderShippingTotal(existing);
+    if (shipping > 0.004) {
+      total = money2(Math.max(0, existing.subtotal - existing.discount_total));
+    }
+  }
+
   const prisma = requirePrisma();
   const data = await prisma.order.update({
     where: { id: BigInt(id) },
@@ -553,7 +636,7 @@ export async function updateOrderFulfillment(
       ...(input.shipping_postal_code !== undefined
         ? { shippingPostalCode: input.shipping_postal_code }
         : {}),
-      ...(input.notes !== undefined ? { notes: input.notes } : {}),
+      ...(notes !== undefined ? { notes } : {}),
       ...(input.tracking_code !== undefined ? { trackingCode: input.tracking_code } : {}),
       ...(input.tracking_url !== undefined ? { trackingUrl: input.tracking_url } : {}),
       ...(input.shipping_carrier !== undefined ? { shippingCarrier: input.shipping_carrier } : {}),
@@ -562,6 +645,7 @@ export async function updateOrderFulfillment(
       ...(input.refunded_at !== undefined ? { refundedAt: input.refunded_at } : {}),
       ...(input.refund_amount !== undefined ? { refundAmount: input.refund_amount } : {}),
       ...(input.payment_status !== undefined ? { paymentStatus: input.payment_status } : {}),
+      ...(total !== undefined ? { total } : {}),
     },
   });
   revalidatePath("/admin/orders");
@@ -577,10 +661,6 @@ export type AdminOrderItemWrite = {
   product_id?: number | null;
   variation_label?: string | null;
 };
-
-function money2(n: number): number {
-  return Math.round(n * 100) / 100;
-}
 
 export async function updateOrderItems(id: number, items: AdminOrderItemWrite[]): Promise<OrderWithItems> {
   if (!Array.isArray(items) || items.length === 0) {

@@ -7,8 +7,12 @@ import { useMemo, useState } from "react";
 import AdminFeaturedImagePanel from "@/components/admin/AdminFeaturedImagePanel";
 import AdminHtmlEditor from "@/components/admin/AdminHtmlEditor";
 import AdminImageUploadButton from "@/components/admin/AdminImageUploadButton";
+import AdminLocaleTabs from "@/components/admin/AdminLocaleTabs";
+import { useLocaleDraft } from "@/components/admin/useLocaleDraft";
 import DateTimePicker from "@/components/ui/DateTimePicker";
 import { isoToLocalDateTimeValue, localDateTimeValueToIso } from "@/lib/datetime-picker";
+import { hydrateNewsTranslations } from "@/lib/i18n/hydrate";
+import type { NewsLocaleFields } from "@/lib/i18n/translations";
 import type { NewsPostRow } from "@/lib/news-db";
 import { slugifyNl } from "@/lib/slugify";
 
@@ -19,19 +23,21 @@ type Props = { post?: NewsPostRow };
 export default function AdminNewsEditor({ post }: Props) {
   const router = useRouter();
   const isNew = !post;
-  const [title, setTitle] = useState(post?.title ?? "");
-  const [slug, setSlug] = useState(post?.slug ?? "");
-  const [excerpt, setExcerpt] = useState(post?.excerpt ?? "");
-  const [bodyHtml, setBodyHtml] = useState(post?.bodyHtml ?? "");
+  const {
+    locale: editLocale,
+    setLocale: setEditLocale,
+    languages,
+    fields: loc,
+    setField: setLoc,
+    compact,
+    filled,
+  } = useLocaleDraft<NewsLocaleFields>(
+    post ? post.translations : hydrateNewsTranslations({ title: "", slug: "", bodyHtml: "" }),
+  );
   const [coverImage, setCoverImage] = useState(post?.coverImage ?? "");
-  const [imageAlt, setImageAlt] = useState(post?.imageAlt ?? "");
   const [category, setCategory] = useState(post?.category ?? "Algemeen");
   const [publishedAt, setPublishedAt] = useState(isoToLocalDateTimeValue(post?.publishedAt));
   const [isPublished, setIsPublished] = useState(post?.isPublished ?? false);
-  const [seoTitle, setSeoTitle] = useState(post?.seoTitle ?? "");
-  const [seoDescription, setSeoDescription] = useState(post?.seoDescription ?? "");
-  const [ogTitle, setOgTitle] = useState(post?.ogTitle ?? "");
-  const [ogDescription, setOgDescription] = useState(post?.ogDescription ?? "");
   const [socialImage, setSocialImage] = useState(post?.socialImage ?? "");
   const [noindex, setNoindex] = useState(post?.noindex ?? false);
   const [error, setError] = useState("");
@@ -39,6 +45,8 @@ export default function AdminNewsEditor({ post }: Props) {
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
+  const title = loc.title ?? "";
+  const slug = loc.slug ?? "";
   const titlePreview = title.trim() || (isNew ? "Nieuw bericht" : "Bericht");
   const slugPreview = useMemo(() => slug.trim() || slugifyNl(title) || "", [slug, title]);
   const publicPath = slugPreview ? `/nieuws/${slugPreview}` : "";
@@ -48,22 +56,25 @@ export default function AdminNewsEditor({ post }: Props) {
     setError("");
     setSaveOk(false);
     setSaving(true);
+    const translations = compact();
+    const nl = translations.nl ?? loc;
     const payload = {
-      title,
-      slug: slug || undefined,
-      excerpt,
-      bodyHtml,
+      title: nl.title || title,
+      slug: nl.slug || slug || undefined,
+      excerpt: nl.excerpt ?? "",
+      bodyHtml: nl.bodyHtml ?? loc.bodyHtml ?? "",
       coverImage,
-      imageAlt,
+      imageAlt: nl.imageAlt ?? "",
       category,
       publishedAt: localDateTimeValueToIso(publishedAt),
       isPublished,
-      seoTitle,
-      seoDescription,
-      ogTitle,
-      ogDescription,
+      seoTitle: nl.seoTitle ?? "",
+      seoDescription: nl.seoDescription ?? "",
+      ogTitle: nl.ogTitle ?? "",
+      ogDescription: nl.ogDescription ?? "",
       socialImage,
       noindex,
+      translations,
     };
     try {
       const res = await fetch(isNew ? "/api/admin/news" : `/api/admin/news/${post.id}`, {
@@ -143,6 +154,14 @@ export default function AdminNewsEditor({ post }: Props) {
         {renderSaveActions()}
       </div>
 
+      <AdminLocaleTabs
+        languages={languages}
+        value={editLocale}
+        onChange={setEditLocale}
+        filledLocales={filled}
+        hint="Titel, slug, tekst en SEO per taal. Nederlandse slug blijft /nieuws/…; andere talen /en/nieuws/…"
+      />
+
       {saveOk ? (
         <div className="admin-banner ok admin-m-0" role="status">
           Bericht opgeslagen.
@@ -162,7 +181,7 @@ export default function AdminNewsEditor({ post }: Props) {
                 id="news-title"
                 className="admin-field admin-field--flush"
                 value={title}
-                onChange={(e) => setTitle(e.target.value)}
+                onChange={(e) => setLoc("title", e.target.value)}
                 placeholder="Kop van het bericht"
               />
             </div>
@@ -174,8 +193,8 @@ export default function AdminNewsEditor({ post }: Props) {
                 id="news-excerpt"
                 className="admin-field admin-field--flush"
                 rows={3}
-                value={excerpt}
-                onChange={(e) => setExcerpt(e.target.value)}
+                value={loc.excerpt ?? ""}
+                onChange={(e) => setLoc("excerpt", e.target.value)}
                 placeholder="Korte teaser voor de nieuwsoverzichtspagina"
               />
               <p className="admin-muted admin-m-0 admin-mt-05">
@@ -192,8 +211,8 @@ export default function AdminNewsEditor({ post }: Props) {
             <AdminHtmlEditor
               minHeight="tall"
               placeholder="Schrijf het bericht…"
-              value={bodyHtml}
-              onChange={setBodyHtml}
+              value={loc.bodyHtml ?? ""}
+              onChange={(html) => setLoc("bodyHtml", html)}
               imageFolder="uploads"
               onImageError={setError}
             />
@@ -232,7 +251,7 @@ export default function AdminNewsEditor({ post }: Props) {
                 id="news-slug"
                 className="admin-field admin-field--flush"
                 value={slug}
-                onChange={(e) => setSlug(e.target.value)}
+                onChange={(e) => setLoc("slug", e.target.value)}
                 placeholder="wordt automatisch uit de titel gezet"
               />
               {publicPath ? (
@@ -272,9 +291,9 @@ export default function AdminNewsEditor({ post }: Props) {
 
           <AdminFeaturedImagePanel
             image={coverImage}
-            alt={imageAlt}
+            alt={loc.imageAlt ?? ""}
             onImageChange={setCoverImage}
-            onAltChange={setImageAlt}
+            onAltChange={(alt) => setLoc("imageAlt", alt)}
             onError={setError}
             folder="uploads"
             urlId="news-cover"
@@ -292,8 +311,8 @@ export default function AdminNewsEditor({ post }: Props) {
               <input
                 id="news-seo-title"
                 className="admin-field admin-field--flush"
-                value={seoTitle}
-                onChange={(e) => setSeoTitle(e.target.value)}
+                value={loc.seoTitle ?? ""}
+                onChange={(e) => setLoc("seoTitle", e.target.value)}
               />
             </div>
             <div>
@@ -304,8 +323,8 @@ export default function AdminNewsEditor({ post }: Props) {
                 id="news-seo-desc"
                 className="admin-field admin-field--flush"
                 rows={3}
-                value={seoDescription}
-                onChange={(e) => setSeoDescription(e.target.value)}
+                value={loc.seoDescription ?? ""}
+                onChange={(e) => setLoc("seoDescription", e.target.value)}
               />
             </div>
             <div>
@@ -315,8 +334,8 @@ export default function AdminNewsEditor({ post }: Props) {
               <input
                 id="news-og-title"
                 className="admin-field admin-field--flush"
-                value={ogTitle}
-                onChange={(e) => setOgTitle(e.target.value)}
+                value={loc.ogTitle ?? ""}
+                onChange={(e) => setLoc("ogTitle", e.target.value)}
               />
             </div>
             <div>
@@ -327,8 +346,8 @@ export default function AdminNewsEditor({ post }: Props) {
                 id="news-og-desc"
                 className="admin-field admin-field--flush"
                 rows={2}
-                value={ogDescription}
-                onChange={(e) => setOgDescription(e.target.value)}
+                value={loc.ogDescription ?? ""}
+                onChange={(e) => setLoc("ogDescription", e.target.value)}
               />
             </div>
             <div>

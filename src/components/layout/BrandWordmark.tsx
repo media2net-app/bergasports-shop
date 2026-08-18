@@ -1,5 +1,5 @@
 import Image from "next/image";
-import Link from "next/link";
+import LocalizedLink from "@/components/locale/LocalizedLink";
 
 import {
   SITE_BRAND_NAME,
@@ -17,7 +17,7 @@ type Props = {
 
 export default function BrandWordmark({ className = "", compact = false }: Props) {
   return (
-    <Link
+    <LocalizedLink
       href="/"
       className={`group block shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)] focus-visible:ring-offset-2 ${className}`}
       aria-label={`${SITE_BRAND_NAME} — ${SITE_SLOGAN}`}
@@ -32,6 +32,6 @@ export default function BrandWordmark({ className = "", compact = false }: Props
           compact ? "h-7 max-w-[200px]" : "h-8 max-w-[240px] md:h-9 md:max-w-[280px]"
         }`}
       />
-    </Link>
+    </LocalizedLink>
   );
 }

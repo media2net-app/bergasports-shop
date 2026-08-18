@@ -359,18 +359,18 @@ export default function AdminOrderLineItems({
           <span>Subtotaal</span>
           <span>{formatProductPrice(previewSubtotal, currency)}</span>
         </div>
-        <div className="admin-order-totals-row">
-          <span>Verzending{shippingLabel ? ` · ${shippingLabel}` : ""}</span>
-          <span>{shippingTotal > 0.004 ? formatProductPrice(shippingTotal, currency) : "Gratis"}</span>
-        </div>
         {discountTotal > 0.005 ? (
           <div className="admin-order-totals-row">
             <span>Korting{couponCode ? ` · ${couponCode}` : ""}</span>
             <span>−{formatProductPrice(discountTotal, currency)}</span>
           </div>
         ) : null}
+        <div className="admin-order-totals-row">
+          <span>Verzending{shippingLabel ? ` · ${shippingLabel}` : ""}</span>
+          <span>{shippingTotal > 0.004 ? formatProductPrice(shippingTotal, currency) : "Gratis"}</span>
+        </div>
         <div className="admin-order-totals-row admin-order-totals-row--grand">
-          <span>Totaal</span>
+          <span>Te betalen</span>
           <span>{formatProductPrice(previewGrand, currency)}</span>
         </div>
       </div>

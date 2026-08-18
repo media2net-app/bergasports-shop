@@ -1,8 +1,13 @@
 import "server-only";
 
+import type { Prisma } from "@/generated/prisma/client";
+
 import { requirePrisma } from "@/lib/database";
 import { invalidateCategoriesCache } from "@/lib/categories-db";
 import { normalizeCategoryShopLink } from "@/lib/category-shop-link";
+import { DEFAULT_LOCALE } from "@/lib/i18n/locale-codes";
+import { hydrateCategoryTranslations } from "@/lib/i18n/hydrate";
+import { compactLocaleMap, type CategoryLocaleFields, type LocaleMap } from "@/lib/i18n/translations";
 import { formatRalexCategoryName } from "@/lib/ralex-categories";
 import { slugifyNl } from "@/lib/slugify";
 
@@ -36,6 +41,12 @@ const RESERVED_CATEGORY_SLUGS = new Set([
   "betaalmethoden",
   "merken",
   "_next",
+  "en",
+  "de",
+  "fr",
+  "es",
+  "it",
+  "nl",
 ]);
 
 export type AdminCategory = {
@@ -49,6 +60,7 @@ export type AdminCategory = {
   seoFooterHtml: string;
   seoMetaTitle: string;
   seoMetaDescription: string;
+  translations: LocaleMap<CategoryLocaleFields>;
 };
 
 export type AdminCategoryInput = {
@@ -59,6 +71,7 @@ export type AdminCategoryInput = {
   seoFooterHtml?: string | null;
   seoMetaTitle?: string | null;
   seoMetaDescription?: string | null;
+  translations?: LocaleMap<CategoryLocaleFields>;
 };
 
 function toAdminCategory(
@@ -72,6 +85,7 @@ function toAdminCategory(
     seoFooterHtml: string | null;
     seoMetaTitle: string | null;
     seoMetaDescription: string | null;
+    translations?: unknown;
   },
   childCount: number,
 ): AdminCategory {
@@ -86,6 +100,54 @@ function toAdminCategory(
     seoFooterHtml: row.seoFooterHtml ?? "",
     seoMetaTitle: row.seoMetaTitle ?? "",
     seoMetaDescription: row.seoMetaDescription ?? "",
+    translations: hydrateCategoryTranslations(row),
+  };
+}
+
+function asJson(value: unknown): Prisma.InputJsonValue {
+  return JSON.parse(JSON.stringify(value)) as Prisma.InputJsonValue;
+}
+
+function resolveNlCopy(input: AdminCategoryInput): {
+  name: string;
+  slug: string;
+  seoIntro: string | null;
+  seoFooterHtml: string | null;
+  seoMetaTitle: string | null;
+  seoMetaDescription: string | null;
+  translations: LocaleMap<CategoryLocaleFields>;
+} {
+  const translations = compactLocaleMap(
+    hydrateCategoryTranslations({
+      name: input.name,
+      slug: input.slug ?? "",
+      seoIntro: input.seoIntro,
+      seoFooterHtml: input.seoFooterHtml,
+      seoMetaTitle: input.seoMetaTitle,
+      seoMetaDescription: input.seoMetaDescription,
+      translations: input.translations,
+    }),
+  );
+  const nl = translations[DEFAULT_LOCALE] ?? {};
+  const name = normalizeName(nl.name || input.name, nl.slug || input.slug);
+  const slug = normalizeSlug(nl.slug || input.slug, name);
+  translations[DEFAULT_LOCALE] = {
+    ...nl,
+    name,
+    slug,
+    description: nl.description ?? input.seoIntro ?? "",
+    seoFooterHtml: nl.seoFooterHtml ?? input.seoFooterHtml ?? "",
+    seoTitle: nl.seoTitle ?? input.seoMetaTitle ?? "",
+    seoDescription: nl.seoDescription ?? input.seoMetaDescription ?? "",
+  };
+  return {
+    name,
+    slug,
+    seoIntro: trimOrNull(translations[DEFAULT_LOCALE]?.description),
+    seoFooterHtml: trimOrNull(translations[DEFAULT_LOCALE]?.seoFooterHtml),
+    seoMetaTitle: trimOrNull(translations[DEFAULT_LOCALE]?.seoTitle),
+    seoMetaDescription: trimOrNull(translations[DEFAULT_LOCALE]?.seoDescription),
+    translations,
   };
 }
 
@@ -205,10 +267,9 @@ async function retargetProductCategory(oldName: string, newName: string): Promis
 }
 
 export async function createAdminCategory(input: AdminCategoryInput): Promise<AdminCategory> {
-  const name = normalizeName(input.name, input.slug);
-  const slug = normalizeSlug(input.slug, name);
+  const copy = resolveNlCopy(input);
   const parentId = normalizeParentId(input.parentId);
-  await assertSlugAvailable(slug);
+  await assertSlugAvailable(copy.slug);
   await assertParentExists(parentId);
 
   const prisma = requirePrisma();
@@ -216,15 +277,16 @@ export async function createAdminCategory(input: AdminCategoryInput): Promise<Ad
   const row = await prisma.category.create({
     data: {
       id,
-      name,
-      slug,
+      name: copy.name,
+      slug: copy.slug,
       parentId,
       productCount: 0,
-      link: normalizeCategoryShopLink(slug),
-      seoIntro: trimOrNull(input.seoIntro),
-      seoFooterHtml: trimOrNull(input.seoFooterHtml),
-      seoMetaTitle: trimOrNull(input.seoMetaTitle),
-      seoMetaDescription: trimOrNull(input.seoMetaDescription),
+      link: normalizeCategoryShopLink(copy.slug),
+      seoIntro: copy.seoIntro,
+      seoFooterHtml: copy.seoFooterHtml,
+      seoMetaTitle: copy.seoMetaTitle,
+      seoMetaDescription: copy.seoMetaDescription,
+      translations: asJson(copy.translations),
     },
   });
   invalidateCategoriesCache();
@@ -238,8 +300,7 @@ export async function updateAdminCategory(id: number, input: AdminCategoryInput)
     throw new Error("Categorie niet gevonden.");
   }
 
-  const name = normalizeName(input.name, input.slug);
-  const slug = normalizeSlug(input.slug, name);
+  const copy = resolveNlCopy(input);
   const parentId = normalizeParentId(input.parentId);
   if (parentId === id) {
     throw new Error("Een categorie kan niet onder zichzelf hangen.");
@@ -250,24 +311,25 @@ export async function updateAdminCategory(id: number, input: AdminCategoryInput)
       throw new Error("Een categorie kan niet onder een eigen subcategorie hangen.");
     }
   }
-  await assertSlugAvailable(slug, id);
+  await assertSlugAvailable(copy.slug, id);
   await assertParentExists(parentId);
 
-  if (current.name !== name) {
-    await retargetProductCategory(current.name, name);
+  if (current.name !== copy.name) {
+    await retargetProductCategory(current.name, copy.name);
   }
 
   const row = await prisma.category.update({
     where: { id },
     data: {
-      name,
-      slug,
+      name: copy.name,
+      slug: copy.slug,
       parentId,
-      link: normalizeCategoryShopLink(slug),
-      seoIntro: trimOrNull(input.seoIntro),
-      seoFooterHtml: trimOrNull(input.seoFooterHtml),
-      seoMetaTitle: trimOrNull(input.seoMetaTitle),
-      seoMetaDescription: trimOrNull(input.seoMetaDescription),
+      link: normalizeCategoryShopLink(copy.slug),
+      seoIntro: copy.seoIntro,
+      seoFooterHtml: copy.seoFooterHtml,
+      seoMetaTitle: copy.seoMetaTitle,
+      seoMetaDescription: copy.seoMetaDescription,
+      translations: asJson(copy.translations),
     },
   });
   invalidateCategoriesCache();

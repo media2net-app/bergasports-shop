@@ -2,7 +2,7 @@ import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 
 import { guardAdminApi } from "@/lib/admin-api-guard";
-import { isEmailTemplateKey } from "@/lib/email-template-defs";
+import { isEmailTemplateKey, type EmailTemplateDraft } from "@/lib/email-template-defs";
 import { getEmailTemplate, resetEmailTemplate, saveEmailTemplate } from "@/lib/email-templates-db";
 
 export const runtime = "nodejs";
@@ -34,7 +34,7 @@ export async function PATCH(request: Request, ctx: Ctx) {
   if (!isEmailTemplateKey(decoded)) {
     return NextResponse.json({ error: "Onbekend mailtype" }, { status: 404 });
   }
-  let body: { subject?: string; title?: string; bodyHtml?: string };
+  let body: { subject?: string; title?: string; bodyHtml?: string; translations?: EmailTemplateDraft["translations"] };
   try {
     body = (await request.json()) as typeof body;
   } catch {
@@ -45,6 +45,7 @@ export async function PATCH(request: Request, ctx: Ctx) {
       subject: body.subject ?? "",
       title: body.title ?? "",
       bodyHtml: body.bodyHtml ?? "",
+      translations: body.translations,
     });
     revalidatePath("/admin/email");
     return NextResponse.json({ template });

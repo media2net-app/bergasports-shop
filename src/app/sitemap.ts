@@ -1,6 +1,9 @@
 import type { MetadataRoute } from "next";
 
 import { loadRalexCategories } from "@/lib/categories-db";
+import { withLocalePrefix } from "@/lib/i18n/locale-shared";
+import { listEnabledShopLanguages } from "@/lib/i18n/shop-languages";
+import { DEFAULT_LOCALE } from "@/lib/i18n/locale-codes";
 import { productPath } from "@/lib/product-slug";
 import { loadCatalogProducts } from "@/lib/products-db";
 import { flattenRalexCategoryTree } from "@/lib/ralex-categories";
@@ -39,13 +42,29 @@ const SITEMAP_EXCLUDED = new Set(["/account", "/checkout", "/despre-noi"]);
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = siteUrl();
   const now = new Date();
+  const languages = await listEnabledShopLanguages().catch(() => []);
+  const defaultLocale = languages.find((row) => row.isDefault)?.code ?? DEFAULT_LOCALE;
+  const extraLocales = languages.filter((row) => row.enabled && row.code !== defaultLocale).map((row) => row.code);
 
-  const entries: MetadataRoute.Sitemap = STATIC_PATHS.map((path) => ({
-    url: `${base}${path}`,
-    lastModified: now,
-    changeFrequency: path === "/" ? "daily" : "weekly",
-    priority: path === "/" ? 1 : path === "/shop" ? 0.9 : 0.6,
-  }));
+  function pushPath(
+    path: string,
+    meta: { lastModified?: Date; changeFrequency?: MetadataRoute.Sitemap[number]["changeFrequency"]; priority?: number },
+  ) {
+    entries.push({ url: `${base}${path}`, ...meta });
+    for (const loc of extraLocales) {
+      entries.push({ url: `${base}${withLocalePrefix(path, loc, defaultLocale)}`, ...meta });
+    }
+  }
+
+  const entries: MetadataRoute.Sitemap = [];
+
+  for (const path of STATIC_PATHS) {
+    pushPath(path, {
+      lastModified: now,
+      changeFrequency: path === "/" ? "daily" : "weekly",
+      priority: path === "/" ? 1 : path === "/shop" ? 0.9 : 0.6,
+    });
+  }
 
   const [products, categoriesFile] = await Promise.all([
     loadCatalogProducts(),
@@ -53,8 +72,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ]);
 
   for (const product of products) {
-    entries.push({
-      url: `${base}${productPath(product)}`,
+    pushPath(productPath(product), {
       lastModified: now,
       changeFrequency: "weekly",
       priority: 0.7,
@@ -63,8 +81,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   for (const cat of flattenRalexCategoryTree(categoriesFile.tree)) {
     if (!cat.slug?.trim()) continue;
-    entries.push({
-      url: `${base}${shopCategoryPath(cat.slug)}`,
+    pushPath(shopCategoryPath(cat.slug), {
       lastModified: now,
       changeFrequency: "weekly",
       priority: 0.75,
@@ -74,8 +91,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   try {
     const news = await loadNewsPosts({ limit: 200 });
     for (const post of news) {
-      entries.push({
-        url: `${base}/nieuws/${post.slug}`,
+      pushPath(`/nieuws/${post.slug}`, {
         lastModified: post.publishedAt ?? now,
         changeFrequency: "weekly",
         priority: 0.55,
@@ -102,8 +118,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       ) {
         continue;
       }
-      entries.push({
-        url: `${base}${pagePath.startsWith("/") ? pagePath : `/${pagePath}`}`,
+      pushPath(pagePath.startsWith("/") ? pagePath : `/${pagePath}`, {
         lastModified: row.updatedAt,
         changeFrequency: "monthly",
         priority: 0.5,

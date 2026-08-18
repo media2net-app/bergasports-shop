@@ -1,4 +1,4 @@
-import Link from "next/link";
+import LocalizedLink from "@/components/locale/LocalizedLink";
 
 import NewsCard from "@/components/news/NewsCard";
 import SectionHeading from "@/components/home/SectionHeading";
@@ -14,7 +14,7 @@ export default async function HomeNewsSection() {
         title="Laatste nieuws"
         text="Nieuwe fietsen, Nimbl, wedstrijden en wat er speelt in Dedemsvaart."
         action={
-          <Link
+          <LocalizedLink
             href="/nieuws"
             className="arrow-link inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[var(--foreground)]/70 transition hover:text-[var(--brand)]"
           >
@@ -22,7 +22,7 @@ export default async function HomeNewsSection() {
             <span aria-hidden className="arrow-link-icon">
               →
             </span>
-          </Link>
+          </LocalizedLink>
         }
       />
       {posts.length === 0 ? (

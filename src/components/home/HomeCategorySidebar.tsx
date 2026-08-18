@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import LocalizedLink from "@/components/locale/LocalizedLink";
 import { useCategories } from "@/components/categories/CategoriesProvider";
 import { formatRalexCategoryName } from "@/lib/ralex-categories";
 import { buildShopListingUrl } from "@/lib/shop-category-filter";
@@ -34,33 +34,33 @@ export default function HomeCategorySidebar() {
                     </span>
                   </summary>
                   <div className="border-t border-[var(--brand-border)] bg-[var(--brand-surface)] py-1">
-                    <Link
+                    <LocalizedLink
                       href={categoryHref(root.slug)}
                       className="block px-3 py-2 text-xs font-semibold text-[#96741f] hover:bg-white/80"
                     >
                       Bekijk alles — {label}
-                    </Link>
+                    </LocalizedLink>
                     {root.children.map((ch) => (
-                      <Link
+                      <LocalizedLink
                         key={ch.id}
                         href={categoryHref(ch.slug)}
                         className="block border-t border-[#f0ead8] px-4 py-2 text-sm text-[var(--foreground)] hover:bg-white"
                       >
                         {formatRalexCategoryName(ch.name, ch.slug)}
-                      </Link>
+                      </LocalizedLink>
                     ))}
                   </div>
                 </details>
               );
             }
             return (
-              <Link
+              <LocalizedLink
                 key={root.id}
                 href={categoryHref(root.slug)}
                 className="block border-b border-[var(--brand-border-soft)] bg-[var(--brand)] px-3 py-2.5 text-[13px] font-semibold text-white transition hover:bg-[var(--brand-hover)] last:border-b-0"
               >
                 {label}
-              </Link>
+              </LocalizedLink>
             );
           })}
         </nav>

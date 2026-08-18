@@ -1,7 +1,8 @@
 "use client";
 
 import { startTransition, useCallback, useEffect, useId, useRef, useState } from "react";
-import Link from "next/link";
+import LocalizedLink from "@/components/locale/LocalizedLink";
+import { useLocalizedHref } from "@/components/locale/ShopLanguagesProvider";
 import { useRouter } from "next/navigation";
 
 import OptimizedProductImage from "@/components/ui/OptimizedProductImage";
@@ -28,6 +29,7 @@ type Props = {
 export default function HeaderSearchBar({ variant = "light", autoFocus = false }: Props) {
   const isDark = variant === "dark";
   const router = useRouter();
+  const localizedHref = useLocalizedHref();
   const listId = useId();
   const rootRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -112,10 +114,10 @@ export default function HeaderSearchBar({ variant = "light", autoFocus = false }
     (hit: ShopSearchHit) => {
       setOpen(false);
       setActive(-1);
-      router.push(productPath(hit.slug));
+      router.push(localizedHref(productPath(hit.slug)));
       inputRef.current?.blur();
     },
-    [router],
+    [router, localizedHref],
   );
 
   const onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -150,7 +152,7 @@ export default function HeaderSearchBar({ variant = "light", autoFocus = false }
   return (
     <div ref={rootRef} className="relative z-[55] w-full">
       <form
-        action="/shop"
+        action={localizedHref("/shop")}
         method="get"
         className={`flex w-full items-center gap-2 rounded-full border px-4 py-2 shadow-sm ${
           isDark
@@ -244,7 +246,7 @@ export default function HeaderSearchBar({ variant = "light", autoFocus = false }
             </li>
           ))}
           <li className="border-t border-[#e5dcc8] px-3 py-2" role="presentation">
-            <Link
+            <LocalizedLink
               href={`/shop?q=${encodeURIComponent(query.trim())}`}
               className="text-xs font-semibold text-[#96741f] underline underline-offset-2"
               onMouseDown={(e) => e.stopPropagation()}
@@ -254,7 +256,7 @@ export default function HeaderSearchBar({ variant = "light", autoFocus = false }
               }}
             >
               Bekijk alle resultaten in de webshop
-            </Link>
+            </LocalizedLink>
           </li>
         </ul>
       ) : null}
@@ -266,13 +268,13 @@ export default function HeaderSearchBar({ variant = "light", autoFocus = false }
           role="status"
         >
           Geen producten gevonden. Probeer een andere term of{" "}
-          <Link
+          <LocalizedLink
             href={`/shop?q=${encodeURIComponent(query.trim())}`}
             className="font-semibold text-[#96741f] underline"
             onMouseDown={(e) => e.stopPropagation()}
           >
             open de webshop
-          </Link>
+          </LocalizedLink>
           .
         </div>
       ) : null}

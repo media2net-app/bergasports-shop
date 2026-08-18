@@ -6,7 +6,9 @@ import { getEmailLogoUrlSetting } from "@/lib/shop-runtime";
 import { getEmailTemplate } from "@/lib/email-templates-db";
 import { buildEmailVars, renderEmailTemplate } from "@/lib/email-template-render";
 import type { EmailTemplateKey } from "@/lib/email-template-defs";
-import type { OrderStatusEmailKind } from "@/lib/transactional-order-emails";
+import type { OrderStatusEmailKind } from "@/lib/order-email-kinds";
+import { DEFAULT_LOCALE } from "@/lib/i18n/locale-codes";
+import { overlayTranslation, pickTranslation, type EmailLocaleFields } from "@/lib/i18n/translations";
 
 const ORDER_EMAIL_KEY: Record<OrderStatusEmailKind, EmailTemplateKey> = {
   received: "order.received",
@@ -32,6 +34,9 @@ export function statusToEmailKind(
   }
   if (status === "delivered") {
     return "delivered";
+  }
+  if (status === "ready_for_pickup") {
+    return null;
   }
   if (status === "confirmed" && previousStatus !== "confirmed") {
     return "confirmed";
@@ -63,8 +68,20 @@ export async function sendOrderStatusEmailToCustomer(
   }
 
   const template = await getEmailTemplate(ORDER_EMAIL_KEY[kind]);
+  let locale = DEFAULT_LOCALE;
+  try {
+    const { getRequestLocale } = await import("@/lib/i18n/locale");
+    locale = await getRequestLocale();
+  } catch {
+    locale = DEFAULT_LOCALE;
+  }
+  const overlay = pickTranslation<EmailLocaleFields>(template.translations, locale);
+  const localized = overlayTranslation(
+    { subject: template.subject, title: template.title, bodyHtml: template.bodyHtml },
+    overlay,
+  );
   const { subject, text, html } = renderEmailTemplate(
-    template,
+    { ...template, ...localized },
     buildEmailVars(order),
     await getEmailLogoUrlSetting(),
   );

@@ -1,4 +1,4 @@
-import Link from "next/link";
+import LocalizedLink from "@/components/locale/LocalizedLink";
 
 import ShopProductCardVariationChips from "@/components/shop/ShopProductCardVariationChips";
 import OptimizedProductImage, {
@@ -35,7 +35,7 @@ export default function ShopProductCard({
     <article
       className={`card-lift group flex h-full flex-col overflow-hidden rounded-2xl border border-[#e5dcc8] bg-white hover:border-[var(--brand)]/45 ${!inStock ? "opacity-75" : ""} ${className}`}
     >
-      <Link
+      <LocalizedLink
         href={href}
         className="flex min-h-0 flex-1 flex-col focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#B38F27]"
       >
@@ -90,18 +90,18 @@ export default function ShopProductCard({
             ) : null}
           </div>
         </div>
-      </Link>
+      </LocalizedLink>
 
       <div className="px-4 pb-4">
         <ShopProductCardVariationChips product={product} />
 
         {inStock ? (
-          <Link
+          <LocalizedLink
             href={href}
             className="mt-3 block w-full rounded-full bg-[#B38F27] px-4 py-2.5 text-center text-sm font-semibold text-white transition duration-300 group-hover:bg-[#96741f] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B38F27] focus-visible:ring-offset-2"
           >
             {ctaLabel}
-          </Link>
+          </LocalizedLink>
         ) : (
           <span className="mt-3 block w-full rounded-full border border-[#e5dcc8] bg-[#faf9fc] px-4 py-2.5 text-center text-sm font-semibold text-[var(--foreground)]/60">
             Niet op voorraad

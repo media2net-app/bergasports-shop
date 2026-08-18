@@ -1,28 +1,27 @@
 "use client";
 
-import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import {
-  languageAlternateUrl,
-  localeFromHost,
-  type AppLocale,
-} from "@/lib/i18n/locale-shared";
+import { useShopLanguages, useShopLocale } from "@/components/locale/ShopLanguagesProvider";
+import { DEFAULT_LOCALE, stripLocalePrefix, withLocalePrefix } from "@/lib/i18n/locale-shared";
 
 type Props = {
   className?: string;
-  /** Override detected locale (server can pass). */
-  locale?: AppLocale;
+  locale?: string;
 };
 
 export default function LanguageSwitcher({ className = "", locale }: Props) {
   const pathname = usePathname() || "/";
-  const current: AppLocale =
-    locale ??
-    (typeof window !== "undefined" ? localeFromHost(window.location.host) : "nl");
+  const { defaultLocale, locale: contextLocale } = useShopLocale();
+  const languages = useShopLanguages().filter((row) => row.enabled);
+  const { locale: prefix } = stripLocalePrefix(pathname);
+  const current = locale ?? prefix ?? contextLocale ?? defaultLocale ?? DEFAULT_LOCALE;
 
-  const nlHref = languageAlternateUrl(pathname, "nl");
-  const enHref = languageAlternateUrl(pathname, "en");
+  if (languages.length < 2) {
+    return null;
+  }
+
+  const { pathname: rest } = stripLocalePrefix(pathname);
 
   const linkClass = (active: boolean) =>
     `text-[11px] font-bold uppercase tracking-[0.14em] transition ${
@@ -31,13 +30,18 @@ export default function LanguageSwitcher({ className = "", locale }: Props) {
 
   return (
     <div className={`inline-flex items-center gap-1.5 ${className}`} aria-label="Taal">
-      <a href={nlHref} className={linkClass(current === "nl")} hrefLang="nl">
-        NL
-      </a>
-      <span className="text-white/30">|</span>
-      <a href={enHref} className={linkClass(current === "en")} hrefLang="en">
-        EN
-      </a>
+      {languages.map((lang, index) => (
+        <span key={lang.code} className="inline-flex items-center gap-1.5">
+          {index > 0 ? <span className="text-white/30">|</span> : null}
+          <a
+            href={withLocalePrefix(rest, lang.code, defaultLocale)}
+            className={linkClass(current === lang.code)}
+            hrefLang={lang.code}
+          >
+            {lang.code.toUpperCase()}
+          </a>
+        </span>
+      ))}
     </div>
   );
 }

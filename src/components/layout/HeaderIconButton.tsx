@@ -1,5 +1,7 @@
 import type { ButtonHTMLAttributes, ReactNode } from "react";
 
+import LocalizedLink from "@/components/locale/LocalizedLink";
+
 type Props = ButtonHTMLAttributes<HTMLButtonElement> & {
   label: string;
   children: ReactNode;
@@ -38,7 +40,7 @@ export function HeaderIconLink({
   className?: string;
 }) {
   return (
-    <a
+    <LocalizedLink
       href={href}
       className={`relative inline-flex h-10 w-10 items-center justify-center rounded-full text-white/90 transition hover:bg-white/10 hover:text-white ${className}`}
       aria-label={label}
@@ -49,6 +51,6 @@ export function HeaderIconLink({
           {badge > 99 ? "99+" : badge}
         </span>
       ) : null}
-    </a>
+    </LocalizedLink>
   );
 }

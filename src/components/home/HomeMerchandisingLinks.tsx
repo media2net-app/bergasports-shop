@@ -1,4 +1,4 @@
-import Link from "next/link";
+import LocalizedLink from "@/components/locale/LocalizedLink";
 
 import { SHOP_MERCH_VIEWS } from "@/lib/shop-merchandising-views";
 
@@ -20,14 +20,14 @@ export default function HomeMerchandisingLinks() {
       <ul className="mt-4 grid gap-3 sm:grid-cols-3">
         {SHOP_MERCH_VIEWS.map((item) => (
           <li key={item.id}>
-            <Link
+            <LocalizedLink
               href={`/shop?view=${item.id}`}
               className="flex h-full flex-col rounded-2xl border border-[#e5dcc8] bg-white p-4 transition hover:border-[#B38F27]/25 hover:shadow-md"
             >
               <span className="text-base font-semibold text-[var(--foreground)]">{item.title}</span>
               <span className="mt-1 flex-1 text-sm text-[var(--foreground)]/70">{item.description}</span>
               <span className="mt-3 text-sm font-semibold text-[#96741f]">Bekijk in webshop →</span>
-            </Link>
+            </LocalizedLink>
           </li>
         ))}
       </ul>

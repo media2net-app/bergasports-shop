@@ -1,3 +1,5 @@
+import type { CategoryLocaleFields, LocaleMap } from "@/lib/i18n/translations";
+
 export type RalexCategoryRecord = {
   id: number;
   name: string;
@@ -7,6 +9,7 @@ export type RalexCategoryRecord = {
   link: string;
   importCompletedAt?: string;
   importedProductCount?: number;
+  translations?: LocaleMap<CategoryLocaleFields>;
 };
 
 export type RalexCategoryNode = RalexCategoryRecord & {
