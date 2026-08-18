@@ -4,8 +4,10 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 
+import AdminMoneyInput from "@/components/admin/AdminMoneyInput";
 import AdminProductTypeahead from "@/components/admin/AdminProductTypeahead";
 import type { AdminProductSearchHit, OrderLineCatalogInfo } from "@/lib/admin-product-search-types";
+import { formatMoneyInput } from "@/lib/money-input";
 import type { OrderItemRow } from "@/lib/orders";
 import { formatProductPrice } from "@/lib/products";
 
@@ -31,7 +33,7 @@ function toDraft(item: OrderItemRow, catalog?: OrderLineCatalogInfo): DraftItem 
     kind: item.product_id ? "product" : "unlinked",
     name: item.name,
     quantity: String(item.quantity),
-    unit_price: String(item.unit_price),
+    unit_price: formatMoneyInput(item.unit_price),
     product_id: item.product_id,
     variation_label: item.variation_label ?? "",
     image: item.image || catalog?.image || null,
@@ -45,7 +47,7 @@ function customRow(): DraftItem {
     kind: "custom",
     name: "",
     quantity: "1",
-    unit_price: "0",
+    unit_price: "0.00",
     product_id: null,
     variation_label: "",
     image: null,
@@ -59,7 +61,7 @@ function fromHit(hit: AdminProductSearchHit): DraftItem {
     kind: "product",
     name: hit.name,
     quantity: "1",
-    unit_price: String(hit.price),
+    unit_price: formatMoneyInput(hit.price),
     product_id: hit.id,
     variation_label: "",
     image: hit.image,
@@ -288,13 +290,10 @@ export default function AdminOrderLineItems({
                     +
                   </button>
                 </div>
-                <input
+                <AdminMoneyInput
                   className="admin-order-input admin-order-input--num"
-                  type="number"
-                  min={0}
-                  step="0.01"
                   value={row.unit_price}
-                  onChange={(e) => updateRow(row.key, { unit_price: e.target.value })}
+                  onChange={(unit_price) => updateRow(row.key, { unit_price })}
                   aria-label="Stukprijs"
                 />
                 <span className="admin-order-line-money">{formatProductPrice(line, currency)}</span>

@@ -4,6 +4,14 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import AdminMoneyInput from "@/components/admin/AdminMoneyInput";
+import { formatMoneyInput } from "@/lib/money-input";
+import {
+  ORDER_STATUS_EMAIL_KIND_LABEL,
+  ORDER_STATUS_EMAIL_KINDS,
+  emailKindForFulfillmentStatus,
+  type OrderStatusEmailKind,
+} from "@/lib/order-email-kinds";
 import {
   isPaidPaymentStatus,
   isPickupShippingLabel,
@@ -16,12 +24,6 @@ import {
   type OrderWithItems,
 } from "@/lib/orders";
 import { formatProductPrice } from "@/lib/products";
-import {
-  ORDER_STATUS_EMAIL_KIND_LABEL,
-  ORDER_STATUS_EMAIL_KINDS,
-  emailKindForFulfillmentStatus,
-  type OrderStatusEmailKind,
-} from "@/lib/order-email-kinds";
 
 function addressLines(input: {
   address: string;
@@ -115,7 +117,7 @@ export default function AdminOrderFulfillment({
   const [trackingUrl, setTrackingUrl] = useState(order.tracking_url ?? "");
   const [carrier, setCarrier] = useState(order.shipping_carrier ?? "");
   const [shipAsk, setShipAsk] = useState(false);
-  const [refundAmount, setRefundAmount] = useState(String(remaining.toFixed(2)));
+  const [refundAmount, setRefundAmount] = useState(() => formatMoneyInput(remaining, { min: 0.01, max: remaining }));
   const [refundOpen, setRefundOpen] = useState(false);
   const [emailKind, setEmailKind] = useState<OrderStatusEmailKind>(emailKindForFulfillmentStatus(order.status));
   const [copied, setCopied] = useState(false);
@@ -552,14 +554,12 @@ export default function AdminOrderFulfillment({
         {canRefund ? (
           refundOpen ? (
             <div className="admin-order-refund">
-              <input
+              <AdminMoneyInput
                 className="admin-order-input admin-order-input--num"
-                type="number"
                 min={0.01}
                 max={remaining}
-                step="0.01"
                 value={refundAmount}
-                onChange={(e) => setRefundAmount(e.target.value)}
+                onChange={setRefundAmount}
                 aria-label="Terugbetalingsbedrag"
               />
               <button type="button" className="admin-order-text-btn" disabled={busy} onClick={() => void refund()}>

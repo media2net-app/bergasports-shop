@@ -4,6 +4,12 @@
  */
 
 import { categoryDisplayName } from "@/lib/category-meta";
+import {
+  extractBrandNameFromAttributes,
+  extractBrandNameFromTaxonomy,
+  isBrandAttributeKey,
+  preserveProductBrand,
+} from "@/lib/brands-shared";
 import { toCanonicalWcSlug, toPublicCategorySlug } from "@/lib/category-slugs";
 import type { TrendyolJsonProduct, WcProductAttributeJson, WcVariationJson } from "@/lib/products";
 import { uniqueProductSlug } from "@/lib/product-slug";
@@ -203,6 +209,8 @@ export type WcRestProduct = {
   stock_status?: string;
   images?: WcRestImage[];
   categories?: WcRestCategory[];
+  tags?: WcRestCategory[];
+  brands?: WcRestCategory[];
   attributes?: WcRestAttribute[];
 };
 
@@ -441,12 +449,20 @@ export function mapWcRestAttributes(attrs: WcRestAttribute[] | undefined): WcPro
   return out;
 }
 
-/** Woo eigenschappen → specsText (niet in de HTML-beschrijving). */
+/** Woo eigenschappen → specsText (niet in de HTML-beschrijving). Merk gaat naar het Brand-model. */
 export function specsTextFromWcAttributes(attrs: WcRestAttribute[] | undefined): string {
   return mapWcRestAttributes(attrs)
-    .filter((attr) => attr.visible)
+    .filter((attr) => attr.visible && !isBrandAttributeKey(attr.name, attr.slug))
     .map((attr) => `${attr.name}: ${attr.options.join(", ")}`)
     .join("\n");
+}
+
+export function extractWcProductBrand(p: WcRestProduct): string | undefined {
+  return (
+    extractBrandNameFromTaxonomy(p.brands) ||
+    extractBrandNameFromAttributes(p.attributes) ||
+    extractBrandNameFromTaxonomy(p.tags?.filter((tag) => isBrandAttributeKey(tag.name, tag.slug)))
+  );
 }
 
 export function applyGlobalAttributeTerms(
@@ -564,7 +580,7 @@ export function mapWcRestProductToJson(
   const base: TrendyolJsonProduct = {
     id: p.id,
     name,
-    brand: "Bergasports",
+    brand: extractWcProductBrand(p),
     category,
     url: p.permalink || `https://www.bergasports.com/product/${p.slug || p.id}`,
     image: primary,
@@ -654,9 +670,10 @@ export function mergeImportedProduct(
   usedBySlug.set(slug, existing.id);
   const hasEasySalesStock =
     typeof existing.stockQuantity === "number" && Number.isFinite(existing.stockQuantity);
+  const withBrand = preserveProductBrand(incoming, existing);
 
   return {
-    ...incoming,
+    ...withBrand,
     id: existing.id,
     slug,
     featuredOnHomepage: Boolean(existing.featuredOnHomepage),

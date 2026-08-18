@@ -7,10 +7,14 @@ import { useEffect, useMemo, useState, type ReactNode } from "react";
 import AdminHtmlEditor from "@/components/admin/AdminHtmlEditor";
 import AdminImageUploadButton from "@/components/admin/AdminImageUploadButton";
 import AdminLocaleTabs from "@/components/admin/AdminLocaleTabs";
+import AdminMoneyInput from "@/components/admin/AdminMoneyInput";
 import { useLocaleDraft } from "@/components/admin/useLocaleDraft";
+import type { ShopBrand } from "@/lib/brands-shared";
 import { dutchLabelFromImportedName } from "@/lib/category-meta";
 import { DEFAULT_LOCALE } from "@/lib/i18n/locale-codes";
 import type { ProductLocaleFields } from "@/lib/i18n/translations";
+import { formatMoneyInput, roundMoney } from "@/lib/money-input";
+import { parseSpecEntries, specEntriesToText } from "@/lib/product-specs";
 import { productPath, slugifyProductTitle } from "@/lib/product-slug";
 import {
   CATALOG_SOURCES,
@@ -81,35 +85,11 @@ function mergeImageUrls(existing: string[], rawPaste: string): string[] {
 type SpecRow = { key: string; name: string; value: string };
 
 function parseSpecRows(text: string): SpecRow[] {
-  return text
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter(Boolean)
-    .map((line, index) => {
-      const sep = line.indexOf(":");
-      if (sep === -1) {
-        return { key: `spec-${index}`, name: line, value: "" };
-      }
-      return {
-        key: `spec-${index}`,
-        name: line.slice(0, sep).trim(),
-        value: line.slice(sep + 1).trim(),
-      };
-    });
+  return parseSpecEntries(text).map((row, index) => ({ key: `spec-${index}`, ...row }));
 }
 
 function specRowsToText(rows: SpecRow[]): string {
-  return rows
-    .map((row) => {
-      const name = row.name.trim();
-      const value = row.value.trim();
-      if (!name && !value) return "";
-      if (!value) return name;
-      if (!name) return value;
-      return `${name}: ${value}`;
-    })
-    .filter(Boolean)
-    .join("\n");
+  return specEntriesToText(rows);
 }
 
 function splitVariantLabel(label: string): { maat: string; kleur: string } {
@@ -156,9 +136,14 @@ function Fold({ title, hint, children }: { title: string; hint?: string; childre
 type ProductEditorFormProps = {
   initial: TrendyolJsonProduct;
   categoryOptions?: CategoryOption[];
+  brandOptions?: ShopBrand[];
 };
 
-export default function ProductEditorForm({ initial, categoryOptions = [] }: ProductEditorFormProps) {
+export default function ProductEditorForm({
+  initial,
+  categoryOptions = [],
+  brandOptions = [],
+}: ProductEditorFormProps) {
   const router = useRouter();
   const [error, setError] = useState("");
   const [saveOk, setSaveOk] = useState(false);
@@ -178,14 +163,17 @@ export default function ProductEditorForm({ initial, categoryOptions = [] }: Pro
   } = useLocaleDraft<ProductLocaleFields>(hydrateProductTranslations(initial));
   const name = loc.name ?? "";
   const shopSlugPreview = (loc.slug || "").trim() || slugifyProductTitle(name) || initial.slug || `product-${id}`;
+  const [brandId, setBrandId] = useState(
+    typeof initial.brandId === "number" && initial.brandId > 0 ? initial.brandId : 0,
+  );
   const [brand, setBrand] = useState(initial.brand ?? "");
   const [category, setCategory] = useState(initial.category ?? "");
   const [url, setUrl] = useState(initial.url);
   const [images, setImages] = useState<string[]>(() => uniqueImages(initial.image, initial.images));
   const [currency, setCurrency] = useState(initial.currency ?? "EUR");
-  const [priceCurrent, setPriceCurrent] = useState(String(initial.priceCurrent ?? 0));
-  const [priceDiscounted, setPriceDiscounted] = useState(String(initial.priceDiscounted ?? 0));
-  const [priceOld, setPriceOld] = useState(String(initial.priceOld ?? 0));
+  const [priceCurrent, setPriceCurrent] = useState(() => formatMoneyInput(initial.priceCurrent ?? 0));
+  const [priceDiscounted, setPriceDiscounted] = useState(() => formatMoneyInput(initial.priceDiscounted ?? 0));
+  const [priceOld, setPriceOld] = useState(() => formatMoneyInput(initial.priceOld ?? 0));
   const [discountName, setDiscountName] = useState(
     typeof initial.discount === "object" && initial.discount && "discountName" in initial.discount
       ? String((initial.discount as { discountName?: string }).discountName ?? "")
@@ -239,10 +227,10 @@ export default function ProductEditorForm({ initial, categoryOptions = [] }: Pro
 
   const payload = useMemo((): TrendyolJsonProduct | null => {
     try {
-      const pc = Number(priceCurrent);
-      const pd = Number(priceDiscounted);
-      const po = Number(priceOld);
-      if (Number.isNaN(pc) || Number.isNaN(pd) || Number.isNaN(po)) {
+      const pc = roundMoney(Number(priceCurrent));
+      const pd = roundMoney(Number(priceDiscounted));
+      const po = roundMoney(Number(priceOld));
+      if (!Number.isFinite(pc) || !Number.isFinite(pd) || !Number.isFinite(po)) {
         return null;
       }
       let landingPromo: TrendyolJsonProduct["landingPromo"];
@@ -267,6 +255,7 @@ export default function ProductEditorForm({ initial, categoryOptions = [] }: Pro
         name: nlName,
         slug: (nlCopy.slug ?? "").trim() || slugifyProductTitle(nlName) || `product-${id}`,
         brand: brand.trim() || undefined,
+        brandId: brandId > 0 ? brandId : undefined,
         category: category.trim() || undefined,
         url:
           url.trim() ||
@@ -275,9 +264,9 @@ export default function ProductEditorForm({ initial, categoryOptions = [] }: Pro
         images: images.length ? images : [image.trim()].filter(Boolean),
         currency: currency.trim() || "EUR",
         priceCurrent: pc,
-        priceCurrentText: String(pc),
+        priceCurrentText: pc.toFixed(2),
         priceDiscounted: pd,
-        priceDiscountedText: String(pd).replace(".", ","),
+        priceDiscountedText: pd.toFixed(2).replace(".", ","),
         priceOld: po,
         discount: { discountName: discountName.trim() },
         freeCargo,
@@ -325,8 +314,8 @@ export default function ProductEditorForm({ initial, categoryOptions = [] }: Pro
         .map((row) => {
           const parts = splitVariantLabel(row.label);
           const label = joinVariantLabel(parts.maat, parts.kleur) || row.label.trim() || `Variatie #${row.id}`;
-          const price = Number(row.price);
-          const regular = Number(row.regularPrice);
+          const price = roundMoney(Number(row.price));
+          const regular = roundMoney(Number(row.regularPrice));
           if (!Number.isFinite(price)) return null;
           const nextRow: WcVariationJson = {
             id: row.id,
@@ -365,6 +354,10 @@ export default function ProductEditorForm({ initial, categoryOptions = [] }: Pro
       const specsTrim = (nlCopy.specsText ?? "").trim();
       if (specsTrim) next.specsText = specsTrim;
       else delete next.specsText;
+      if (brandId > 0) next.brandId = brandId;
+      else delete next.brandId;
+      if (brand.trim()) next.brand = brand.trim();
+      else delete next.brand;
       const seoTitleTrim = (nlCopy.seoTitle ?? "").trim();
       if (seoTitleTrim) next.seoTitle = seoTitleTrim;
       else delete next.seoTitle;
@@ -395,6 +388,7 @@ export default function ProductEditorForm({ initial, categoryOptions = [] }: Pro
     id,
     name,
     brand,
+    brandId,
     category,
     url,
     image,
@@ -507,6 +501,18 @@ export default function ProductEditorForm({ initial, categoryOptions = [] }: Pro
     return mapped?.name ?? category;
   }, [category, categoryOptions]);
 
+  const brandSelectValue = useMemo(() => {
+    if (brandId > 0 && brandOptions.some((b) => b.id === brandId)) return String(brandId);
+    if (brand.trim()) {
+      const matched = brandOptions.find(
+        (b) => b.name.toLowerCase() === brand.trim().toLowerCase() || b.slug === brand.trim().toLowerCase(),
+      );
+      if (matched) return String(matched.id);
+      return "legacy";
+    }
+    return "";
+  }, [brand, brandId, brandOptions]);
+
   function addUploadedImage(uploadedUrl: string, alt?: string | null, asMain = false) {
     setError("");
     if (asMain && alt?.trim() && !(loc.imageAlt ?? "").trim()) {
@@ -559,8 +565,8 @@ export default function ProductEditorForm({ initial, categoryOptions = [] }: Pro
       {
         id: nextVariationId(prev),
         label: "",
-        price: Number(priceDiscounted) || Number(priceCurrent) || 0,
-        regularPrice: Number(priceCurrent) || 0,
+        price: roundMoney(Number(priceDiscounted) || Number(priceCurrent) || 0),
+        regularPrice: roundMoney(Number(priceCurrent) || 0),
         onSale: false,
         url: "",
       },
@@ -748,30 +754,15 @@ export default function ProductEditorForm({ initial, categoryOptions = [] }: Pro
             <div className="admin-form-grid">
               <label className="admin-label">
                 Prijs
-                <input
-                  className={fieldClass}
-                  inputMode="decimal"
-                  value={priceDiscounted}
-                  onChange={(e) => setPriceDiscounted(e.target.value)}
-                />
+                <AdminMoneyInput className={fieldClass} value={priceDiscounted} onChange={setPriceDiscounted} />
               </label>
               <label className="admin-label">
                 Van-prijs (0 = geen)
-                <input
-                  className={fieldClass}
-                  inputMode="decimal"
-                  value={priceOld}
-                  onChange={(e) => setPriceOld(e.target.value)}
-                />
+                <AdminMoneyInput className={fieldClass} value={priceOld} onChange={setPriceOld} />
               </label>
               <label className="admin-label">
                 Adviesprijs
-                <input
-                  className={fieldClass}
-                  inputMode="decimal"
-                  value={priceCurrent}
-                  onChange={(e) => setPriceCurrent(e.target.value)}
-                />
+                <AdminMoneyInput className={fieldClass} value={priceCurrent} onChange={setPriceCurrent} />
               </label>
               <label className="admin-label">
                 Kortingslabel
@@ -924,15 +915,15 @@ export default function ProductEditorForm({ initial, categoryOptions = [] }: Pro
                             />
                           </td>
                           <td>
-                            <input
+                            <AdminMoneyInput
                               className={`${fieldClass} admin-field--flush`}
-                              inputMode="decimal"
-                              value={String(row.price)}
-                              onChange={(e) => {
-                                const price = Number(e.target.value);
+                              value={formatMoneyInput(row.price)}
+                              onChange={(next) => {
+                                const price = Number(next);
+                                const n = Number.isFinite(price) ? price : 0;
                                 updateVariation(row.id, {
-                                  price: Number.isFinite(price) ? price : 0,
-                                  regularPrice: row.onSale ? row.regularPrice : Number.isFinite(price) ? price : 0,
+                                  price: n,
+                                  regularPrice: row.onSale ? row.regularPrice : n,
                                 });
                               }}
                             />
@@ -1082,13 +1073,41 @@ export default function ProductEditorForm({ initial, categoryOptions = [] }: Pro
           </Section>
 
           <Section title="Merk">
-            <input
+            <select
               className={fieldClass}
-              value={brand}
-              onChange={(e) => setBrand(e.target.value)}
+              value={brandSelectValue}
               aria-label="Merk"
-              placeholder="bijv. Giant"
-            />
+              onChange={(e) => {
+                const raw = e.target.value;
+                if (!raw || raw === "legacy") {
+                  if (raw !== "legacy") {
+                    setBrandId(0);
+                    setBrand("");
+                  }
+                  return;
+                }
+                const nextId = Number(raw);
+                const row = brandOptions.find((b) => b.id === nextId);
+                setBrandId(nextId);
+                setBrand(row?.name ?? brand);
+              }}
+            >
+              <option value="">— Geen merk —</option>
+              {brandSelectValue === "legacy" ? <option value="legacy">{brand}</option> : null}
+              {brandOptions.map((b) => (
+                <option key={b.id} value={String(b.id)}>
+                  {b.name}
+                  {b.visible ? "" : " (verborgen)"}
+                </option>
+              ))}
+            </select>
+            <p className="admin-muted admin-m-0">
+              Beheer de lijst onder{" "}
+              <Link href="/admin/brands" className="admin-link-action">
+                Merken
+              </Link>
+              .
+            </p>
           </Section>
 
           <Section title="Shop">

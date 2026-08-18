@@ -8,7 +8,8 @@ import {
 } from "@/lib/ralex-categories-file";
 import { applyRalexPriceMarkup, shouldApplyRalexPriceMarkup } from "@/lib/ralex-price-markup";
 import type { TrendyolJsonProduct, WcVariationJson } from "@/lib/products";
-import { upsertProductRaw } from "@/lib/trendyol-json-store";
+import { extractBrandNameFromAttributes, preserveProductBrand } from "@/lib/brands-shared";
+import { getProductRawById, upsertProductRaw } from "@/lib/trendyol-json-store";
 import type { WcStoreProduct } from "@/lib/ralex-wc-store-api";
 import {
   fetchAllWcStoreProductsForCategory,
@@ -81,10 +82,18 @@ export function wcStoreProductToTrendyolJson(
   const currency =
     currencyCode === "EUR" ? "EUR" : currencyCode === "RON" ? "Lei" : currencyCode;
 
+  const brand = extractBrandNameFromAttributes(
+    p.attributes?.map((attr) => ({
+      name: attr.name,
+      slug: attr.taxonomy,
+      terms: attr.terms,
+    })),
+  );
+
   const base: TrendyolJsonProduct = {
     id: p.id,
     name,
-    brand: "Bergasports",
+    brand,
     category: categoryLabel,
     url: p.permalink,
     image: primary,
@@ -184,7 +193,8 @@ export async function importRalexProductsForCategory(categoryId: number): Promis
   });
 
   for (const product of mapped) {
-    await upsertProductRaw(product);
+    const existing = product.brand?.trim() ? null : await getProductRawById(product.id);
+    await upsertProductRaw(preserveProductBrand(product, existing));
   }
 
   const row = snapshot.categories.find((c) => c.id === categoryId);

@@ -8,22 +8,31 @@ import ShopToolbar from "@/components/shop/ShopToolbar";
 import { CategorySeoFooter } from "@/components/shop/CategorySeoContent";
 import { CategorySeoIntroCollapsible } from "@/components/shop/CategorySeoIntroCollapsible";
 import {
+  applyShopBrandFilter,
   applyShopFacetFilters,
   applyShopSearchQuery,
+  applyShopSpecFilter,
   buildShopListingUrl,
   findRalexCategoryNodeBySlug,
+  getAvailableShopBrandFacets,
   getAvailableShopColorFacets,
   getAvailableShopSizeFacets,
+  getAvailableShopSpecFacetGroups,
+  parseShopBrandParams,
   parseShopColorParams,
   parseShopSizeParams,
+  parseShopSpecParams,
   resolveShopCategoryFilter,
+  shopBrandFacetLabel,
   shopColorFacetLabel,
   shopSizeFacetLabel,
+  shopSpecFacetLabel,
   toShopFacetChips,
 } from "@/lib/shop-category-filter";
 import { buildCategorySeoContent } from "@/lib/category-seo";
 import { loadCategorySeoOverrides, loadRalexCategories } from "@/lib/categories-db";
 import { loadCatalogProducts } from "@/lib/products-db";
+import { listShopBrands } from "@/lib/brands-db";
 import { applyShopMerchView, parseShopMerchView, shopMerchViewLabel } from "@/lib/shop-merchandising-views";
 import { applyShopSort, parseShopSortParam } from "@/lib/shop-sort";
 import { formatRalexCategoryName } from "@/lib/ralex-categories";
@@ -37,6 +46,8 @@ export type ShopListingSearchParams = {
   cat?: string;
   color?: string;
   marime?: string;
+  merk?: string;
+  eig?: string;
   q?: string;
   sort?: string;
   view?: string;
@@ -49,7 +60,11 @@ type Props = {
 };
 
 export default async function ShopListingPage({ pathCategorySlug, searchParams }: Props) {
-  const [catalog, categoriesFile] = await Promise.all([loadCatalogProducts(), loadRalexCategories()]);
+  const [catalog, categoriesFile, managedBrands] = await Promise.all([
+    loadCatalogProducts(),
+    loadRalexCategories(),
+    listShopBrands().catch(() => []),
+  ]);
   const categoryTree = categoriesFile.tree;
   const sp = searchParams ?? {};
   const requestedPage = Math.max(1, Number.parseInt(String(sp.page ?? "1"), 10) || 1);
@@ -58,6 +73,8 @@ export default async function ShopListingPage({ pathCategorySlug, searchParams }
     (typeof sp.cat === "string" && sp.cat.trim().length > 0 ? sp.cat.trim() : undefined);
   const colorIds = parseShopColorParams(typeof sp.color === "string" ? sp.color : undefined);
   const sizeIds = parseShopSizeParams(typeof sp.marime === "string" ? sp.marime : undefined);
+  const brandIds = parseShopBrandParams(typeof sp.merk === "string" ? sp.merk : undefined);
+  const specIds = parseShopSpecParams(typeof sp.eig === "string" ? sp.eig : undefined);
   const searchTrimmed =
     typeof sp.q === "string" && sp.q.trim().length > 0 ? sp.q.trim() : null;
   const sort = parseShopSortParam(typeof sp.sort === "string" ? sp.sort : undefined);
@@ -68,10 +85,14 @@ export default async function ShopListingPage({ pathCategorySlug, searchParams }
   let filteredProducts = catResolved.filteredProducts;
   if (!catResolved.unknownCategory) {
     filteredProducts = applyShopFacetFilters(filteredProducts, colorIds, sizeIds);
+    filteredProducts = applyShopBrandFilter(filteredProducts, brandIds);
+    filteredProducts = applyShopSpecFilter(filteredProducts, specIds);
     filteredProducts = applyShopSearchQuery(filteredProducts, searchTrimmed);
   } else if (searchTrimmed || merchView) {
     let pool = catalog;
     pool = applyShopFacetFilters(pool, colorIds, sizeIds);
+    pool = applyShopBrandFilter(pool, brandIds);
+    pool = applyShopSpecFilter(pool, specIds);
     filteredProducts = applyShopSearchQuery(pool, searchTrimmed);
   }
 
@@ -93,6 +114,8 @@ export default async function ShopListingPage({ pathCategorySlug, searchParams }
     cat: categorySlug,
     colors: colorIds,
     sizes: sizeIds,
+    brands: brandIds,
+    specs: specIds,
     search: searchTrimmed,
     sort,
     view: merchView,
@@ -118,6 +141,16 @@ export default async function ShopListingPage({ pathCategorySlug, searchParams }
     colorIds,
     sizeIds,
   );
+  const brandPool = applyShopSpecFilter(
+    applyShopFacetFilters(facetPoolWithSearch, colorIds, sizeIds),
+    specIds,
+  );
+  const specPool = applyShopBrandFilter(
+    applyShopFacetFilters(facetPoolWithSearch, colorIds, sizeIds),
+    brandIds,
+  );
+  const sidebarBrandFacets = getAvailableShopBrandFacets(brandPool, brandIds, managedBrands);
+  const sidebarSpecGroups = getAvailableShopSpecFacetGroups(specPool, specIds);
 
   const heading = catResolved.unknownCategory
     ? merchView
@@ -130,8 +163,11 @@ export default async function ShopListingPage({ pathCategorySlug, searchParams }
         : "Alle producten";
 
   const facetNote =
-    !catResolved.unknownCategory && (colorIds.length > 0 || sizeIds.length > 0)
+    !catResolved.unknownCategory &&
+    (colorIds.length > 0 || sizeIds.length > 0 || brandIds.length > 0 || specIds.length > 0)
       ? `Actieve filters: ${[
+          ...brandIds.map((id) => shopBrandFacetLabel(id, sidebarBrandFacets)),
+          ...specIds.map((id) => shopSpecFacetLabel(id, sidebarSpecGroups)),
           ...colorIds.map(shopColorFacetLabel),
           ...sizeIds.map(shopSizeFacetLabel),
         ].join(", ")}.`
@@ -226,14 +262,14 @@ export default async function ShopListingPage({ pathCategorySlug, searchParams }
             ) : null}
           </div>
         ) : null}
-        {!catResolved.unknownCategory && total === 0 && categorySlug && !colorIds.length && !sizeIds.length && !searchTrimmed ? (
+        {!catResolved.unknownCategory && total === 0 && categorySlug && !colorIds.length && !sizeIds.length && !brandIds.length && !specIds.length && !searchTrimmed ? (
           <p className="mt-4 rounded-xl border border-[#e5dcc8] bg-white px-4 py-3 text-sm text-[var(--foreground)]/85">
             Er zijn momenteel geen producten in deze categorie.
           </p>
         ) : null}
-        {!catResolved.unknownCategory && total === 0 && (colorIds.length > 0 || sizeIds.length > 0) ? (
+        {!catResolved.unknownCategory && total === 0 && (colorIds.length > 0 || sizeIds.length > 0 || brandIds.length > 0 || specIds.length > 0) ? (
           <p className="mt-4 rounded-xl border border-[#e5dcc8] bg-white px-4 py-3 text-sm text-[var(--foreground)]/85">
-            Geen producten voldoen aan de geselecteerde filters. Probeer kleur- of maatfilters te verwijderen.
+            Geen producten voldoen aan de geselecteerde filters. Probeer filters te verwijderen.
           </p>
         ) : null}
 
@@ -243,8 +279,12 @@ export default async function ShopListingPage({ pathCategorySlug, searchParams }
               activeCategorySlug={categorySlug}
               selectedColors={colorIds}
               selectedSizes={sizeIds}
+              selectedBrands={brandIds}
+              selectedSpecs={specIds}
               colorFacets={toShopFacetChips(sidebarColorFacets)}
               sizeFacets={toShopFacetChips(sidebarSizeFacets)}
+              brandFacets={sidebarBrandFacets}
+              specGroups={sidebarSpecGroups}
               searchQuery={searchTrimmed}
               sort={sort}
               merchView={merchView}
@@ -284,12 +324,16 @@ export default async function ShopListingPage({ pathCategorySlug, searchParams }
                 categorySlug={categorySlug}
                 selectedColors={colorIds}
                 selectedSizes={sizeIds}
+                selectedBrands={brandIds}
+                selectedSpecs={specIds}
                 searchQuery={searchTrimmed}
                 sort={sort}
                 merchView={merchView}
                 categoryLabel={catResolved.categoryLabel}
                 colorLabels={toShopFacetChips(sidebarColorFacets)}
                 sizeLabels={toShopFacetChips(sidebarSizeFacets)}
+                brandLabels={sidebarBrandFacets}
+                specGroups={sidebarSpecGroups}
               />
             ) : null}
 

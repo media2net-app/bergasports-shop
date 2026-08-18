@@ -26,6 +26,7 @@ import {
   belongsToBergasportsCatalog,
   isBergasportsCatalogSource,
 } from "@/lib/bergasports-catalog";
+import { assignBrandOnProduct } from "@/lib/brands-write";
 import { mirrorProductImagesIfNeeded } from "@/lib/product-image-storage";
 import { bigIntToNumber, decimalToNumber, productIdToBigInt } from "@/lib/prisma-mappers";
 
@@ -169,6 +170,7 @@ function productToDbRow(product: TrendyolJsonProduct) {
     slug,
     name: product.name,
     brand: product.brand ?? null,
+    brandId: typeof product.brandId === "number" && product.brandId > 0 ? product.brandId : null,
     category: product.category ?? null,
     catalogSource: normalizeCatalogSource(product.catalogSource),
     priceCurrent: product.priceCurrent ?? null,
@@ -183,7 +185,8 @@ function productToDbRow(product: TrendyolJsonProduct) {
 async function upsertRaw(product: TrendyolJsonProduct): Promise<void> {
   const prisma = requirePrisma();
   const all = await fetchAllProductsRaw();
-  const withSlug = ensureShopProductUrl(withProductSlug(product, all));
+  const withBrand = await assignBrandOnProduct(prisma, product);
+  const withSlug = ensureShopProductUrl(withProductSlug(withBrand, all));
   const row = productToDbRow(withSlug);
   await prisma.product.upsert({
     where: { id: row.id },

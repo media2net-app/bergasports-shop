@@ -2,8 +2,10 @@
 
 import { useMemo, useState } from "react";
 
+import AdminMoneyInput from "@/components/admin/AdminMoneyInput";
 import DateTimePicker from "@/components/ui/DateTimePicker";
 import { isoToLocalDateValue } from "@/lib/datetime-picker";
+import { formatMoneyInput } from "@/lib/money-input";
 import { formatProductPrice } from "@/lib/products";
 
 type AdminCoupon = {
@@ -36,7 +38,7 @@ export default function AdminCouponsPanel({ initialCoupons }: { initialCoupons: 
   const [busy, setBusy] = useState(false);
   const [code, setCode] = useState("");
   const [type, setType] = useState<"percent" | "fixed">("percent");
-  const [amount, setAmount] = useState("10");
+  const [amount, setAmount] = useState(() => formatMoneyInput(10, { min: 0.01 }));
   const [minSubtotal, setMinSubtotal] = useState("");
   const [endsAt, setEndsAt] = useState("");
 
@@ -65,7 +67,7 @@ export default function AdminCouponsPanel({ initialCoupons }: { initialCoupons: 
       }
       setCoupons((prev) => [data.coupon!, ...prev]);
       setCode("");
-      setAmount("10");
+      setAmount(formatMoneyInput(10, { min: 0.01 }));
       setMinSubtotal("");
       setEndsAt("");
       setType("percent");
@@ -167,14 +169,12 @@ export default function AdminCouponsPanel({ initialCoupons }: { initialCoupons: 
             <label className="admin-settings-field-label" htmlFor="coupon-amount">
               {type === "fixed" ? "Bedrag (€)" : "Percentage"}
             </label>
-            <input
+            <AdminMoneyInput
               id="coupon-amount"
               className="admin-field admin-field--flush"
-              type="number"
-              min="0.01"
-              step="0.01"
+              min={0.01}
               value={amount}
-              onChange={(e) => setAmount(e.target.value)}
+              onChange={setAmount}
               required
             />
           </div>
@@ -182,14 +182,12 @@ export default function AdminCouponsPanel({ initialCoupons }: { initialCoupons: 
             <label className="admin-settings-field-label" htmlFor="coupon-min">
               Min. subtotaal (€)
             </label>
-            <input
+            <AdminMoneyInput
               id="coupon-min"
               className="admin-field admin-field--flush"
-              type="number"
-              min="0"
-              step="0.01"
+              allowEmpty
               value={minSubtotal}
-              onChange={(e) => setMinSubtotal(e.target.value)}
+              onChange={setMinSubtotal}
               placeholder="Optioneel"
             />
           </div>

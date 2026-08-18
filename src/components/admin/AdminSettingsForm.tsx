@@ -2,6 +2,8 @@
 
 import { useState, type FormEvent } from "react";
 
+import AdminMoneyInput from "@/components/admin/AdminMoneyInput";
+import { formatMoneyInput } from "@/lib/money-input";
 import type { AdminSettingFieldView } from "@/lib/site-settings-defs";
 import { getSettingGroup } from "@/lib/site-settings-defs";
 
@@ -15,13 +17,18 @@ function fieldIsWide(field: AdminSettingFieldView): boolean {
   return /URL|ADDRESS|FROM|HOST|TOKEN/i.test(field.key);
 }
 
+function fieldIsMoney(field: AdminSettingFieldView): boolean {
+  return field.key === "NEXT_PUBLIC_FREE_SHIPPING_THRESHOLD_EUR";
+}
+
 export default function AdminSettingsForm({ groupId, initialFields }: AdminSettingsFormProps) {
   const group = getSettingGroup(groupId);
   const [fields, setFields] = useState(initialFields);
   const [drafts, setDrafts] = useState<Record<string, string>>(() => {
     const next: Record<string, string> = {};
     for (const f of initialFields) {
-      next[f.key] = f.secret ? "" : f.displayValue;
+      const raw = f.secret ? "" : f.displayValue;
+      next[f.key] = fieldIsMoney(f) ? formatMoneyInput(raw, { allowEmpty: true }) : raw;
     }
     return next;
   });
@@ -69,7 +76,8 @@ export default function AdminSettingsForm({ groupId, initialFields }: AdminSetti
         setDrafts((prev) => {
           const merged = { ...prev };
           for (const f of next) {
-            merged[f.key] = f.secret ? "" : f.displayValue;
+            const raw = f.secret ? "" : f.displayValue;
+            merged[f.key] = fieldIsMoney(f) ? formatMoneyInput(raw, { allowEmpty: true }) : raw;
           }
           return merged;
         });
@@ -135,6 +143,15 @@ export default function AdminSettingsForm({ groupId, initialFields }: AdminSetti
                   placeholder={placeholder}
                   value={drafts[field.key] ?? ""}
                   onChange={(e) => setDraft(field.key, e.target.value)}
+                />
+              ) : fieldIsMoney(field) ? (
+                <AdminMoneyInput
+                  id={inputId}
+                  className="admin-field admin-field--flush"
+                  allowEmpty
+                  placeholder={placeholder}
+                  value={drafts[field.key] ?? ""}
+                  onChange={(value) => setDraft(field.key, value)}
                 />
               ) : (
                 <input

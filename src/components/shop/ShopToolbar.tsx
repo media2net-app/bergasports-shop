@@ -7,38 +7,51 @@ import { shopMerchViewLabel } from "@/lib/shop-merchandising-views";
 import { SHOP_SORT_OPTIONS, type ShopSort } from "@/lib/shop-sort";
 import {
   buildShopListingUrl,
+  shopBrandFacetLabel,
   shopColorFacetLabel,
   shopSizeFacetLabel,
+  shopSpecFacetLabel,
+  type ShopSpecFacetGroup,
 } from "@/lib/shop-category-filter";
 
 type Props = {
   categorySlug: string | null;
   selectedColors: string[];
   selectedSizes: string[];
+  selectedBrands: string[];
+  selectedSpecs: string[];
   searchQuery: string | null;
   sort: ShopSort;
   merchView: ShopMerchView | null;
   categoryLabel: string | null;
   colorLabels: { id: string; label: string }[];
   sizeLabels: { id: string; label: string }[];
+  brandLabels: { id: string; label: string }[];
+  specGroups: ShopSpecFacetGroup[];
 };
 
 export default function ShopToolbar({
   categorySlug,
   selectedColors,
   selectedSizes,
+  selectedBrands,
+  selectedSpecs,
   searchQuery,
   sort,
   merchView,
   categoryLabel,
   colorLabels,
   sizeLabels,
+  brandLabels,
+  specGroups,
 }: Props) {
   const baseQuery = {
     cat: categorySlug,
     page: 1,
     colors: selectedColors,
     sizes: selectedSizes,
+    brands: selectedBrands,
+    specs: selectedSpecs,
     search: searchQuery,
     sort,
     view: merchView,
@@ -49,6 +62,8 @@ export default function ShopToolbar({
     page: 1,
     colors: [],
     sizes: [],
+    brands: [],
+    specs: [],
     search: null,
     sort,
     view: null,
@@ -82,6 +97,26 @@ export default function ShopToolbar({
       href: buildShopListingUrl({
         ...baseQuery,
         sizes: selectedSizes.filter((x) => x !== id),
+      }),
+    });
+  }
+  for (const id of selectedBrands) {
+    chips.push({
+      key: `b-${id}`,
+      label: shopBrandFacetLabel(id, brandLabels),
+      href: buildShopListingUrl({
+        ...baseQuery,
+        brands: selectedBrands.filter((x) => x !== id),
+      }),
+    });
+  }
+  for (const id of selectedSpecs) {
+    chips.push({
+      key: `e-${id}`,
+      label: shopSpecFacetLabel(id, specGroups),
+      href: buildShopListingUrl({
+        ...baseQuery,
+        specs: selectedSpecs.filter((x) => x !== id),
       }),
     });
   }

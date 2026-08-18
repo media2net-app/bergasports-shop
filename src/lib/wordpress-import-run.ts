@@ -7,6 +7,7 @@ import { randomBytes } from "node:crypto";
 
 import type { Prisma, PrismaClient } from "@/generated/prisma/client";
 import { hashAdminPassword } from "@/lib/admin-password-hash";
+import { assignBrandOnProduct } from "@/lib/brands-write";
 import { publicCategoryPath } from "@/lib/category-slugs";
 import { normalizeCategoryShopLink } from "@/lib/category-shop-link";
 import { productIdToBigInt } from "@/lib/prisma-mappers";
@@ -332,6 +333,10 @@ async function importProducts(
   const byId = new Map<number, TrendyolJsonProduct>();
   const bySku = new Map<string, TrendyolJsonProduct>();
   const usedBySlug = new Map<string, number>();
+  const brandCache = new Map<
+    string,
+    { id: number; name: string; slug: string; logoUrl: string | null; visible: boolean; sortOrder: number }
+  >();
   for (const row of existingRows) {
     const data = row.data as TrendyolJsonProduct;
     const id = Number(row.id);
@@ -355,6 +360,7 @@ async function importProducts(
     const skuKey = incoming.wcSku?.trim().toLowerCase();
     const existing = byId.get(incoming.id) ?? (skuKey ? bySku.get(skuKey) ?? null : null);
     const merged = mergeImportedProduct(incoming, existing, usedBySlug);
+    const withBrand = await assignBrandOnProduct(prisma, merged, brandCache);
 
     if (options.dryRun) {
       if (existing) result.updated += 1;
@@ -362,47 +368,49 @@ async function importProducts(
       continue;
     }
 
-    const featuredOnHomepage = Boolean(merged.featuredOnHomepage);
-    const catalogSource = merged.catalogSource === "ralex" ? "ralex" : "manual";
-    const data = { ...merged, featuredOnHomepage, catalogSource } as Prisma.InputJsonValue;
+    const featuredOnHomepage = Boolean(withBrand.featuredOnHomepage);
+    const catalogSource = withBrand.catalogSource === "ralex" ? "ralex" : "manual";
+    const data = { ...withBrand, featuredOnHomepage, catalogSource } as Prisma.InputJsonValue;
     await prisma.product.upsert({
-      where: { id: productIdToBigInt(merged.id) },
+      where: { id: productIdToBigInt(withBrand.id) },
       create: {
-        id: productIdToBigInt(merged.id),
+        id: productIdToBigInt(withBrand.id),
         data,
-        slug: merged.slug ?? null,
-        name: merged.name,
-        brand: merged.brand ?? null,
-        category: merged.category ?? null,
+        slug: withBrand.slug ?? null,
+        name: withBrand.name,
+        brand: withBrand.brand ?? null,
+        brandId: typeof withBrand.brandId === "number" ? withBrand.brandId : null,
+        category: withBrand.category ?? null,
         catalogSource,
-        priceCurrent: merged.priceCurrent ?? null,
-        priceDiscounted: merged.priceDiscounted ?? null,
-        currency: merged.currency ?? "EUR",
-        image: merged.image || null,
-        url: merged.url,
+        priceCurrent: withBrand.priceCurrent ?? null,
+        priceDiscounted: withBrand.priceDiscounted ?? null,
+        currency: withBrand.currency ?? "EUR",
+        image: withBrand.image || null,
+        url: withBrand.url,
         featuredOnHomepage,
       },
       update: {
         data,
-        slug: merged.slug ?? null,
-        name: merged.name,
-        brand: merged.brand ?? null,
-        category: merged.category ?? null,
+        slug: withBrand.slug ?? null,
+        name: withBrand.name,
+        brand: withBrand.brand ?? null,
+        brandId: typeof withBrand.brandId === "number" ? withBrand.brandId : null,
+        category: withBrand.category ?? null,
         catalogSource,
-        priceCurrent: merged.priceCurrent ?? null,
-        priceDiscounted: merged.priceDiscounted ?? null,
-        currency: merged.currency ?? "EUR",
-        image: merged.image || null,
-        url: merged.url,
+        priceCurrent: withBrand.priceCurrent ?? null,
+        priceDiscounted: withBrand.priceDiscounted ?? null,
+        currency: withBrand.currency ?? "EUR",
+        image: withBrand.image || null,
+        url: withBrand.url,
         featuredOnHomepage,
       },
     });
     if (existing) result.updated += 1;
     else result.created += 1;
-    byId.set(merged.id, merged);
-    if (skuKey) bySku.set(skuKey, merged);
+    byId.set(withBrand.id, withBrand);
+    if (skuKey) bySku.set(skuKey, withBrand);
 
-    const dest = `/product/${merged.slug || incoming.wcSlug || incoming.id}`;
+    const dest = `/product/${withBrand.slug || incoming.wcSlug || incoming.id}`;
     const sources = wordpressSourcePaths(raw.permalink, [
       raw.slug ? `/product/${raw.slug}` : "",
       incoming.wcSlug ? `/product/${incoming.wcSlug}` : "",

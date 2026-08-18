@@ -18,12 +18,29 @@ model AdminUser {
   @@map("admin_users")
 }
 
+model Brand {
+  id        Int      @id @default(autoincrement())
+  name      String
+  slug      String   @unique
+  logoUrl   String?  @map("logo_url")
+  visible   Boolean  @default(true)
+  sortOrder Int      @default(0) @map("sort_order")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  products Product[]
+
+  @@index([visible, sortOrder])
+  @@map("brands")
+}
+
 model Product {
   id                 BigInt   @id
   data               Json     @db.JsonB
   slug               String?
   name               String?
   brand              String?
+  brandId            Int?     @map("brand_id")
   category           String?
   catalogSource      String?  @map("catalog_source")
   priceCurrent       Decimal? @map("price_current") @db.Decimal(12, 2)
@@ -34,9 +51,12 @@ model Product {
   featuredOnHomepage Boolean  @default(false) @map("featured_on_homepage")
   updatedAt          DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
+  brandRecord Brand? @relation(fields: [brandId], references: [id], onDelete: SetNull)
+
   @@index([updatedAt(sort: Desc)])
   @@index([slug])
   @@index([featuredOnHomepage, updatedAt(sort: Desc)])
+  @@index([brandId])
   @@map("products")
 }
 

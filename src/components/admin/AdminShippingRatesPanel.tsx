@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 
+import AdminMoneyInput from "@/components/admin/AdminMoneyInput";
+import { formatMoneyInput } from "@/lib/money-input";
 import { formatProductPrice } from "@/lib/products";
 
 type ShippingRate = {
@@ -23,7 +25,7 @@ export default function AdminShippingRatesPanel({ initialRates }: { initialRates
   const [countryCode, setCountryCode] = useState("NL");
   const [label, setLabel] = useState("");
   const [method, setMethod] = useState("standard");
-  const [price, setPrice] = useState("6.95");
+  const [price, setPrice] = useState(() => formatMoneyInput(6.95));
   const [estimatedDays, setEstimatedDays] = useState("1–3 werkdagen");
   const [freeAbove, setFreeAbove] = useState("");
 
@@ -191,14 +193,11 @@ export default function AdminShippingRatesPanel({ initialRates }: { initialRates
             <label className="admin-settings-field-label" htmlFor="ship-price">
               Prijs (€)
             </label>
-            <input
+            <AdminMoneyInput
               id="ship-price"
               className="admin-field admin-field--flush"
-              type="number"
-              min="0"
-              step="0.01"
               value={price}
-              onChange={(e) => setPrice(e.target.value)}
+              onChange={setPrice}
               required
             />
           </div>
@@ -217,14 +216,12 @@ export default function AdminShippingRatesPanel({ initialRates }: { initialRates
             <label className="admin-settings-field-label" htmlFor="ship-free">
               Gratis vanaf (€)
             </label>
-            <input
+            <AdminMoneyInput
               id="ship-free"
               className="admin-field admin-field--flush"
-              type="number"
-              min="0"
-              step="0.01"
+              allowEmpty
               value={freeAbove}
-              onChange={(e) => setFreeAbove(e.target.value)}
+              onChange={setFreeAbove}
               placeholder="Leeg = shopdrempel (alleen NL)"
             />
           </div>

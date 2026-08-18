@@ -112,6 +112,7 @@ export default function AdminDashboardShell({
   const couponsActive = path.startsWith("/admin/coupons");
   const customersActive = path.startsWith("/admin/customers");
   const categoriesActive = path.startsWith("/admin/categories");
+  const brandsActive = path.startsWith("/admin/brands");
   const settingsActive = path.startsWith("/admin/settings");
   const usersActive = path.startsWith("/admin/users");
 
@@ -199,6 +200,9 @@ export default function AdminDashboardShell({
               icon={<IconPages />}
             >
               Categorieën
+            </AdminNavLink>
+            <AdminNavLink href="/admin/brands" active={brandsActive} onNavigate={closeMenu} icon={<IconTag />}>
+              Merken
             </AdminNavLink>
             <AdminNavLink href="/admin/news" active={newsActive} onNavigate={closeMenu} icon={<IconNews />}>
               Nieuws

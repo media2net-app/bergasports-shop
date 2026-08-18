@@ -9,6 +9,7 @@ import {
   buildShopListingUrl,
   type ShopFacetChip,
   type ShopListingSort,
+  type ShopSpecFacetGroup,
 } from "@/lib/shop-category-filter";
 
 const CATEGORY_PREVIEW_COUNT = 5;
@@ -17,8 +18,12 @@ type ShopSidebarProps = {
   activeCategorySlug: string | null;
   selectedColors: string[];
   selectedSizes: string[];
+  selectedBrands: string[];
+  selectedSpecs: string[];
   colorFacets: ShopFacetChip[];
   sizeFacets: ShopFacetChip[];
+  brandFacets: ShopFacetChip[];
+  specGroups: ShopSpecFacetGroup[];
   /** Zoekterm uit `?q=` — behouden bij navigatie in sidebar. */
   searchQuery?: string | null;
   sort?: ShopListingSort;
@@ -92,6 +97,8 @@ function SizeFacetSection({
     page: 1;
     colors: string[];
     sizes: string[];
+    brands: string[];
+    specs: string[];
     search: string | null;
     sort?: ShopListingSort;
     view: ShopMerchView | null;
@@ -146,8 +153,12 @@ export default function ShopSidebar({
   activeCategorySlug,
   selectedColors,
   selectedSizes,
+  selectedBrands,
+  selectedSpecs,
   colorFacets,
   sizeFacets,
+  brandFacets,
+  specGroups,
   searchQuery,
   sort,
   merchView = null,
@@ -162,13 +173,20 @@ export default function ShopSidebar({
       ? tree
       : tree.slice(0, CATEGORY_PREVIEW_COUNT);
   const hasMoreCategories = tree.length > CATEGORY_PREVIEW_COUNT;
-  const hasFacetSelection = selectedColors.length > 0 || selectedSizes.length > 0;
-  const activeFacetCount = selectedColors.length + selectedSizes.length;
+  const hasFacetSelection =
+    selectedColors.length > 0 ||
+    selectedSizes.length > 0 ||
+    selectedBrands.length > 0 ||
+    selectedSpecs.length > 0;
+  const activeFacetCount =
+    selectedColors.length + selectedSizes.length + selectedBrands.length + selectedSpecs.length;
   const search = searchQuery?.trim() || null;
   const listingBase = {
     page: 1 as const,
     colors: selectedColors,
     sizes: selectedSizes,
+    brands: selectedBrands,
+    specs: selectedSpecs,
     search,
     sort,
     view: merchView,
@@ -265,7 +283,7 @@ export default function ShopSidebar({
             className="flex w-full items-center justify-between gap-2 rounded-xl border border-[#e5dcc8] bg-[#faf8f4] px-3 py-2.5 text-left text-sm font-semibold text-[var(--foreground)] transition hover:border-[#B38F27]/25 lg:hidden"
             onClick={() => setMobileFacetsOpen((v) => !v)}
           >
-            <span>Filters kleur & maat</span>
+            <span>Filters</span>
             <span className="flex shrink-0 items-center gap-2">
               {activeFacetCount > 0 ? (
                 <span className="rounded-full bg-[#B38F27] px-2 py-0.5 text-[11px] font-bold text-white">
@@ -281,9 +299,69 @@ export default function ShopSidebar({
           <div
             id="shop-facets-panel"
             role="region"
-            aria-label="Filters kleur en maat"
+            aria-label="Filters merk, eigenschappen, kleur en maat"
             className={`space-y-6 ${mobileFacetsOpen ? "block" : "hidden"} lg:block`}
           >
+            {brandFacets.length > 0 ? (
+            <div>
+              <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--foreground)]/55">Merk</p>
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {brandFacets.map((f) => {
+                  const active = selectedBrands.includes(f.id);
+                  const next = toggle(selectedBrands, f.id);
+                  return (
+                    <LocalizedLink
+                      key={f.id}
+                      href={buildShopListingUrl({
+                        cat: activeCategorySlug,
+                        ...listingBase,
+                        brands: next,
+                      })}
+                      className={`rounded-full border px-2.5 py-1 text-xs font-medium transition ${
+                        active
+                          ? "border-[#B38F27] bg-[#B38F27] text-white"
+                          : "border-[#e5dcc8] bg-white text-[var(--foreground)] hover:border-[#B38F27]/35"
+                      }`}
+                    >
+                      {f.label}
+                    </LocalizedLink>
+                  );
+                })}
+              </div>
+            </div>
+            ) : null}
+
+            {specGroups.map((group) => (
+              <div key={group.nameSlug}>
+                <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--foreground)]/55">
+                  {group.name}
+                </p>
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {group.options.map((f) => {
+                    const active = selectedSpecs.includes(f.id);
+                    const next = toggle(selectedSpecs, f.id);
+                    return (
+                      <LocalizedLink
+                        key={f.id}
+                        href={buildShopListingUrl({
+                          cat: activeCategorySlug,
+                          ...listingBase,
+                          specs: next,
+                        })}
+                        className={`rounded-full border px-2.5 py-1 text-xs font-medium transition ${
+                          active
+                            ? "border-[#B38F27] bg-[#B38F27] text-white"
+                            : "border-[#e5dcc8] bg-white text-[var(--foreground)] hover:border-[#B38F27]/35"
+                        }`}
+                      >
+                        {f.label}
+                      </LocalizedLink>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+
             {colorFacets.length > 0 ? (
             <div>
               <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--foreground)]/55">Kleur</p>
@@ -331,10 +409,12 @@ export default function ShopSidebar({
                   ...listingBase,
                   colors: [],
                   sizes: [],
+                  brands: [],
+                  specs: [],
                 })}
                 className="block text-center text-xs font-semibold text-[#96741f] underline underline-offset-2"
               >
-                Wis kleur- en maatfilters
+                Wis filters
               </LocalizedLink>
             ) : null}
           </div>

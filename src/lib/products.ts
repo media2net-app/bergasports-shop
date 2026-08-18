@@ -59,6 +59,7 @@ export type TrendyolJsonProduct = {
   id: number;
   name: string;
   brand?: string;
+  brandId?: number;
   category?: string;
   url: string;
   image: string;
@@ -158,6 +159,7 @@ export type Product = {
   name: string;
   category: string;
   brand?: string;
+  brandId?: number;
   price: number;
   oldPrice?: number;
   currency: string;
@@ -285,6 +287,7 @@ export function mapTrendyolJsonToProduct(product: TrendyolJsonProduct): Product 
     name: decodeImportedProductTitle(product.name),
     category: product.category || "Bergasports",
     brand: product.brand,
+    brandId: typeof product.brandId === "number" && product.brandId > 0 ? product.brandId : undefined,
     price: discountedPrice ?? currentPrice,
     oldPrice: oldPrice && oldPrice > (discountedPrice ?? currentPrice) ? oldPrice : undefined,
     currency: product.currency || "EUR",

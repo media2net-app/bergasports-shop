@@ -1,6 +1,12 @@
 import { categoryMatchLabels, dutchLabelFromImportedName } from "@/lib/category-meta";
 import { publicCategoryPath, toCanonicalWcSlug, toPublicCategorySlug } from "@/lib/category-slugs";
 import { parseLocaleMap, type CategoryLocaleFields } from "@/lib/i18n/translations";
+import { brandSlugFromName, type ShopBrand } from "@/lib/brands-shared";
+import {
+  isSkippedSpecFacetName,
+  parseSpecEntries,
+  splitSpecValues,
+} from "@/lib/product-specs";
 import { decodeImportedProductTitle, formatProductCardPrice, type Product } from "@/lib/products";
 import {
   flattenRalexCategoryTree,
@@ -257,7 +263,7 @@ export function resolveShopCategoryFilter(
 }
 
 export function shopListingHref(page: number, categorySlug: string | null): string {
-  return buildShopListingUrl({ cat: categorySlug, page, colors: [], sizes: [], search: null });
+  return buildShopListingUrl({ cat: categorySlug, page, colors: [], sizes: [], brands: [], specs: [], search: null });
 }
 
 export type ShopFacetOption = {
@@ -856,6 +862,197 @@ export function applyShopSearchQuery(products: Product[], raw: string | null | u
   return products.filter((p) => productMatchesShopSearch(p, q));
 }
 
+function productBrandSlug(product: Pick<Product, "brand">): string | null {
+  const name = product.brand?.trim();
+  if (!name) return null;
+  const slug = brandSlugFromName(name);
+  return slug || null;
+}
+
+const BRAND_SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+const SPEC_ID_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*:[a-z0-9]+(?:-[a-z0-9]+)*$/;
+
+export function parseShopBrandParams(raw: string | null | undefined): string[] {
+  if (!raw?.trim()) return [];
+  return [
+    ...new Set(
+      raw
+        .split(",")
+        .map((s) => s.trim().toLowerCase())
+        .filter((s) => BRAND_SLUG_RE.test(s)),
+    ),
+  ];
+}
+
+export function parseShopSpecParams(raw: string | null | undefined): string[] {
+  if (!raw?.trim()) return [];
+  return [
+    ...new Set(
+      raw
+        .split(",")
+        .map((s) => s.trim().toLowerCase())
+        .filter((s) => SPEC_ID_RE.test(s)),
+    ),
+  ];
+}
+
+export function applyShopBrandFilter(products: Product[], brandSlugs: string[]): Product[] {
+  if (!brandSlugs.length) return products;
+  const wanted = new Set(brandSlugs);
+  return products.filter((p) => {
+    const slug = productBrandSlug(p);
+    return slug != null && wanted.has(slug);
+  });
+}
+
+function specId(name: string, value: string): string | null {
+  const nameSlug = brandSlugFromName(name);
+  const valueSlug = brandSlugFromName(value);
+  if (!nameSlug || !valueSlug) return null;
+  return `${nameSlug}:${valueSlug}`;
+}
+
+function productSpecIds(product: Pick<Product, "specsText">): Set<string> {
+  const ids = new Set<string>();
+  for (const entry of parseSpecEntries(product.specsText)) {
+    if (isSkippedSpecFacetName(entry.name)) continue;
+    const values = splitSpecValues(entry.value);
+    const parts = values.length ? values : entry.value ? [entry.value] : [];
+    for (const value of parts) {
+      const id = specId(entry.name, value);
+      if (id) ids.add(id);
+    }
+  }
+  return ids;
+}
+
+export function applyShopSpecFilter(products: Product[], specIds: string[]): Product[] {
+  if (!specIds.length) return products;
+  const grouped = new Map<string, string[]>();
+  for (const id of specIds) {
+    const sep = id.indexOf(":");
+    if (sep < 1) continue;
+    const nameSlug = id.slice(0, sep);
+    const valueSlug = id.slice(sep + 1);
+    const list = grouped.get(nameSlug) ?? [];
+    list.push(valueSlug);
+    grouped.set(nameSlug, list);
+  }
+  if (!grouped.size) return products;
+  return products.filter((p) => {
+    const ids = productSpecIds(p);
+    for (const [nameSlug, values] of grouped) {
+      if (!values.some((value) => ids.has(`${nameSlug}:${value}`))) {
+        return false;
+      }
+    }
+    return true;
+  });
+}
+
+export function getAvailableShopBrandFacets(
+  products: Product[],
+  selectedBrands: string[],
+  managedBrands: ShopBrand[] = [],
+): ShopFacetChip[] {
+  const managedBySlug = new Map(managedBrands.map((b) => [b.slug, b]));
+  const selected = new Set(selectedBrands);
+  const byId = new Map<string, ShopFacetChip>();
+
+  for (const p of products) {
+    const name = p.brand?.trim();
+    const slug = productBrandSlug(p);
+    if (!name || !slug) continue;
+    const managed = managedBySlug.get(slug);
+    if (managed && !managed.visible && !selected.has(slug)) continue;
+    if (!byId.has(slug)) {
+      byId.set(slug, { id: slug, label: managed?.name ?? name });
+    }
+  }
+
+  for (const slug of selectedBrands) {
+    if (byId.has(slug)) continue;
+    const managed = managedBySlug.get(slug);
+    byId.set(slug, { id: slug, label: managed?.name ?? slug });
+  }
+
+  return [...byId.values()].sort((a, b) => a.label.localeCompare(b.label, "nl", { sensitivity: "base" }));
+}
+
+export type ShopSpecFacetGroup = {
+  name: string;
+  nameSlug: string;
+  options: ShopFacetChip[];
+};
+
+export function getAvailableShopSpecFacetGroups(
+  products: Product[],
+  selectedSpecs: string[],
+): ShopSpecFacetGroup[] {
+  const selected = new Set(selectedSpecs);
+  const groups = new Map<string, { name: string; nameSlug: string; values: Map<string, string> }>();
+
+  for (const p of products) {
+    for (const entry of parseSpecEntries(p.specsText)) {
+      if (isSkippedSpecFacetName(entry.name)) continue;
+      const nameSlug = brandSlugFromName(entry.name);
+      if (!nameSlug) continue;
+      let group = groups.get(nameSlug);
+      if (!group) {
+        group = { name: entry.name, nameSlug, values: new Map() };
+        groups.set(nameSlug, group);
+      }
+      const values = splitSpecValues(entry.value);
+      const parts = values.length ? values : entry.value ? [entry.value] : [];
+      for (const value of parts) {
+        const id = specId(entry.name, value);
+        if (!id) continue;
+        if (!group.values.has(id)) group.values.set(id, value);
+      }
+    }
+  }
+
+  for (const id of selectedSpecs) {
+    const sep = id.indexOf(":");
+    if (sep < 1) continue;
+    const nameSlug = id.slice(0, sep);
+    const valueSlug = id.slice(sep + 1);
+    let group = groups.get(nameSlug);
+    if (!group) {
+      group = { name: nameSlug, nameSlug, values: new Map() };
+      groups.set(nameSlug, group);
+    }
+    if (!group.values.has(id)) {
+      group.values.set(id, valueSlug);
+    }
+  }
+
+  const out: ShopSpecFacetGroup[] = [];
+  for (const group of groups.values()) {
+    const options = [...group.values.entries()]
+      .map(([id, label]) => ({ id, label }))
+      .sort((a, b) => a.label.localeCompare(b.label, "nl", { numeric: true, sensitivity: "base" }));
+    const hasSelection = options.some((o) => selected.has(o.id));
+    if (options.length < 2 && !hasSelection) continue;
+    out.push({ name: group.name, nameSlug: group.nameSlug, options });
+  }
+
+  out.sort((a, b) => a.name.localeCompare(b.name, "nl", { sensitivity: "base" }));
+  return out.slice(0, 12);
+}
+
+export function shopBrandFacetLabel(id: string, brands: ShopFacetChip[] = []): string {
+  return brands.find((b) => b.id === id)?.label ?? id;
+}
+
+export function shopSpecFacetLabel(id: string, groups: ShopSpecFacetGroup[] = []): string {
+  for (const group of groups) {
+    const option = group.options.find((o) => o.id === id);
+    if (option) return `${group.name}: ${option.label}`;
+  }
+  return id.replace(":", ": ");
+}
+
 export type ShopListingSort = "relevance" | "price_asc" | "price_desc" | "name_asc" | "newest";
 
 export type ShopListingQuery = {
@@ -863,6 +1060,8 @@ export type ShopListingQuery = {
   page: number;
   colors: string[];
   sizes: string[];
+  brands?: string[];
+  specs?: string[];
   search?: string | null;
   sort?: ShopListingSort;
   view?: string | null;
@@ -880,6 +1079,14 @@ export function buildShopListingUrl(query: ShopListingQuery): string {
   }
   if (query.sizes.length) {
     params.set("marime", [...query.sizes].sort().join(","));
+  }
+  const brands = query.brands ?? [];
+  if (brands.length) {
+    params.set("merk", [...brands].sort().join(","));
+  }
+  const specs = query.specs ?? [];
+  if (specs.length) {
+    params.set("eig", [...specs].sort().join(","));
   }
   const s = query.search?.trim();
   if (s) {
