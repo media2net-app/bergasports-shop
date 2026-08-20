@@ -1,6 +1,6 @@
 import "server-only";
 
-import { getOpenAiApiKey } from "@/lib/openai-admin-status";
+import { formatMissingOpenAiKeyError, getOpenAiApiKey } from "@/lib/openai-admin-status";
 
 export type GenerateImageResult = {
   pngBuffer: Buffer;
@@ -93,7 +93,7 @@ function gptImageBody(model: GptImageModel, prompt: string): Record<string, unkn
 export async function generateProductImageWithOpenAI(prompt: string): Promise<GenerateImageResult> {
   const key = await getOpenAiApiKey();
   if (!key) {
-    throw new Error("OPENAI_API_KEY is not configured.");
+    throw new Error(await formatMissingOpenAiKeyError());
   }
 
   const attempts: { label: string; body: Record<string, unknown> }[] = [

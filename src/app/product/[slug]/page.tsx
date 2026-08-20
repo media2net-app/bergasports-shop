@@ -23,7 +23,7 @@ import {
   resolveProductShopCategory,
   resolveShopCategoryMatch,
 } from "@/lib/shop-category-filter";
-import { categoryDisplayName, dutchLabelFromImportedName } from "@/lib/category-meta";
+import { categoryDisplayName, englishLabelFromImportedName, dutchLabelFromImportedName } from "@/lib/category-meta";
 import { isShopNameBrand } from "@/lib/brands-shared";
 import { isProductInStock } from "@/lib/products";
 import {
@@ -122,14 +122,17 @@ function variationQuery(sp: { variation?: string }): string {
 
 export async function generateMetadata({ params }: ProductDetailPageProps): Promise<Metadata> {
   const { slug: segment } = await params;
-  const product = await loadProductFromPathSegment(segment);
+  const [product, locale] = await Promise.all([
+    loadProductFromPathSegment(segment),
+    getRequestLocale(),
+  ]);
   if (!product) {
     await followSeoRedirect(`/product/${segment}`);
-    return { title: "Product niet gevonden" };
+    return { title: ui(locale).productNotFound };
   }
   return buildPageMetadata({
-    absoluteTitle: productSeoTitle(product),
-    description: productMetaDescription(product),
+    absoluteTitle: productSeoTitle(product, locale),
+    description: productMetaDescription(product, locale),
     path: await localizedPublicPath(productPath(product)),
     image: product.socialImage?.trim() || product.image,
     imageAlt: product.imageAlt?.trim() || product.name,
@@ -168,7 +171,9 @@ export default async function ProductDetailPage({ params, searchParams }: Produc
     getRequestLocale(),
   ]);
   const t = ui(locale);
-  const productCategory = resolveProductShopCategory(product, categoriesFile.tree);
+  const productCategory = resolveProductShopCategory(product, categoriesFile.tree, locale);
+  const categoryEyebrow = (raw: string) =>
+    locale === "en" ? englishLabelFromImportedName(null, raw) : dutchLabelFromImportedName(raw);
 
   const resolvedInitialVariationId =
     initialVariationId != null &&
@@ -230,6 +235,7 @@ export default async function ProductDetailPage({ params, searchParams }: Produc
   const jsonLd = productJsonLd(product, origin, {
     variationId: resolvedInitialVariationId,
     path: publicProductPath,
+    locale,
   });
   const breadcrumbLd = productBreadcrumbJsonLd(product, origin, {
     categoryName: productCategory?.label,
@@ -269,7 +275,7 @@ export default async function ProductDetailPage({ params, searchParams }: Produc
       <Header />
 
       <section className="mx-auto w-full max-w-[1440px] px-4 py-5 md:py-8 lg:px-6">
-        <nav className="text-sm" aria-label="Breadcrumb">
+        <nav className="text-sm" aria-label={t.breadcrumbAria}>
           <ol className="flex flex-wrap items-center gap-1.5 text-[var(--foreground)]/60">
             <li>
               <LocalizedLink href="/shop" className="transition-colors hover:text-[var(--brand)]">
@@ -312,7 +318,7 @@ export default async function ProductDetailPage({ params, searchParams }: Produc
               <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[var(--brand)]">
                 {product.brand && !isShopNameBrand(product.brand)
                   ? product.brand
-                  : dutchLabelFromImportedName(product.category)}
+                  : categoryEyebrow(product.category)}
               </p>
               <h1 className="mt-2 font-[family-name:var(--font-heading)] text-2xl font-semibold tracking-tight text-[var(--foreground)] md:text-3xl">
                 {product.name}
@@ -484,8 +490,8 @@ export default async function ProductDetailPage({ params, searchParams }: Produc
                   <SpecRow
                     label={t.rating}
                     value={`${product.wcAverageRating}${
-                      typeof product.wcReviewCount === "number"
-                        ? ` (${product.wcReviewCount} reviews)`
+                      typeof product.wcReviewCount === "number" && product.wcReviewCount > 0
+                        ? ` (${t.reviewsCount(product.wcReviewCount)})`
                         : ""
                     }`}
                   />
@@ -494,12 +500,12 @@ export default async function ProductDetailPage({ params, searchParams }: Produc
                   <SpecRow
                     label={t.categories}
                     value={product.wcCategories
-                      .map((c) => categoryDisplayName(c.slug, c.name))
+                      .map((c) => categoryDisplayName(c.slug, c.name, locale))
                       .filter(Boolean)
                       .join(", ")}
                   />
                 ) : (
-                  <SpecRow label={t.category} value={dutchLabelFromImportedName(product.category)} />
+                  <SpecRow label={t.category} value={categoryEyebrow(product.category)} />
                 )}
               </dl>
             </div>

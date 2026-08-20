@@ -84,9 +84,9 @@ const STRINGS = {
     newsIntro: "Updates uit de winkel, nieuwe producten en wat er speelt in Dedemsvaart.",
     viewAll: "Alles bekijken",
     collectionsEyebrow: "Bekijk onze producten",
-    collectionsTitle: "Fietsen en Nimbl",
+    collectionsTitle: "Fietsen, Nimbl en kleding",
     collectionsText:
-      "Twee collecties die we zelf rijden en in Dedemsvaart laten passen: race, gravel en mountainbike, plus wielrenschoenen van Nimbl.",
+      "Drie collecties die we zelf gebruiken en in Dedemsvaart adviseren: race, gravel en mountainbike, wielrenschoenen van Nimbl, plus fietskleding.",
     allBikes: "Alle fietsen",
     allNimbl: "Alle Nimbl-schoenen",
     emptyCollection: "Nog geen producten in deze collectie.",
@@ -313,6 +313,24 @@ const STRINGS = {
     category: "Categorie",
     similarProducts: "Vergelijkbare producten",
     viewMore: "Bekijk meer",
+    productNotFound: "Product niet gevonden",
+    breadcrumbAria: "Kruimelpad",
+    prevImage: "Vorige afbeelding",
+    nextImage: "Volgende afbeelding",
+    viewImageN: (n: number) => `Afbeelding ${n} bekijken`,
+    galleryThumbAlt: (name: string, n: number) => `${name} miniatuur ${n}`,
+    promoOldPrice: "OUDE PRIJS:",
+    promoSalePrice: "ACTIEPRIJS:",
+    promoYouSave: (amount: string) => `Je bespaart: ${amount}`,
+    promoHours: "UUR",
+    promoMinutes: "MIN",
+    promoSeconds: "SEC",
+    promoLastPieces: "• Op voorraad — laatste stuks!",
+    promoHurry: "Wees er snel bij!",
+    promoOrderNow: "Nu bestellen",
+    promoCod: "Rembours bij aflevering",
+    promoOr: "OF",
+    promoPhoneOrder: (phone: string) => `TELEFOONBESTELLING ${phone}`,
     outOfStockNotice:
       "Momenteel niet op voorraad — je kunt dit product niet toevoegen. Neem contact op voor beschikbaarheid.",
     chooseAVariant: "Kies een variant",
@@ -473,9 +491,9 @@ const STRINGS = {
     newsIntro: "Updates from the shop, new products and what’s happening in Dedemsvaart.",
     viewAll: "View all",
     collectionsEyebrow: "Explore our products",
-    collectionsTitle: "Bikes and Nimbl",
+    collectionsTitle: "Bikes, Nimbl and apparel",
     collectionsText:
-      "Two collections we ride ourselves and fit in Dedemsvaart: road, gravel and mountain bike, plus Nimbl cycling shoes.",
+      "Three collections we use ourselves and advise on in Dedemsvaart: road, gravel and mountain bike, Nimbl cycling shoes, plus cycling apparel.",
     allBikes: "All bikes",
     allNimbl: "All Nimbl shoes",
     emptyCollection: "No products in this collection yet.",
@@ -696,6 +714,24 @@ const STRINGS = {
     category: "Category",
     similarProducts: "Similar products",
     viewMore: "View more",
+    productNotFound: "Product not found",
+    breadcrumbAria: "Breadcrumb",
+    prevImage: "Previous image",
+    nextImage: "Next image",
+    viewImageN: (n: number) => `View image ${n}`,
+    galleryThumbAlt: (name: string, n: number) => `${name} thumbnail ${n}`,
+    promoOldPrice: "WAS:",
+    promoSalePrice: "SALE PRICE:",
+    promoYouSave: (amount: string) => `You save: ${amount}`,
+    promoHours: "HRS",
+    promoMinutes: "MIN",
+    promoSeconds: "SEC",
+    promoLastPieces: "• In stock — last pieces!",
+    promoHurry: "Hurry while stocks last!",
+    promoOrderNow: "Order now",
+    promoCod: "Cash on delivery",
+    promoOr: "OR",
+    promoPhoneOrder: (phone: string) => `PHONE ORDER ${phone}`,
     outOfStockNotice:
       "Currently out of stock — you can’t add this product. Contact us about availability.",
     chooseAVariant: "Choose a variant",
@@ -864,14 +900,30 @@ export function localizedMegaMenu(locale: string): typeof WEBSHOP_MEGA_MENU {
           { href: BERGASPORTS_CATEGORY_PATHS.mtb, label: t.mtb },
         ],
       },
-      { title: t.skates, href: BERGASPORTS_CATEGORY_PATHS.speedSkates, links: [] },
+      {
+        title: t.skates,
+        href: BERGASPORTS_CATEGORY_PATHS.speedSkates,
+        links: [
+          { href: BERGASPORTS_CATEGORY_PATHS.completeSkates, label: "Complete skates" },
+          { href: BERGASPORTS_CATEGORY_PATHS.skateShoes, label: "Skate shoes" },
+          { href: BERGASPORTS_CATEGORY_PATHS.skateWheels, label: "Skate wheels" },
+          { href: BERGASPORTS_CATEGORY_PATHS.skateBearings, label: "Bearings" },
+        ],
+      },
+      {
+        title: t.wheels,
+        href: BERGASPORTS_CATEGORY_PATHS.wheels,
+        links: [
+          { href: BERGASPORTS_CATEGORY_PATHS.wheels, label: t.wheels },
+          { href: BERGASPORTS_CATEGORY_PATHS.scopeOutlet, label: "Scope Outlet" },
+        ],
+      },
       {
         title: t.shoesClothing,
         href: BERGASPORTS_CATEGORY_PATHS.shoesClothing,
         links: [
-          { href: BERGASPORTS_CATEGORY_PATHS.cyclingShoes, label: "Nimbl" },
-          { href: BERGASPORTS_CATEGORY_PATHS.lafugaCustom, label: "LaFuga custom apparel" },
-          { href: BERGASPORTS_CATEGORY_PATHS.lafugaWear, label: "LaFuga in the shop" },
+          { href: BERGASPORTS_CATEGORY_PATHS.cyclingShoes, label: "Cycling shoes" },
+          { href: BERGASPORTS_CATEGORY_PATHS.lafugaWear, label: "Apparel" },
         ],
       },
       {
@@ -880,10 +932,8 @@ export function localizedMegaMenu(locale: string): typeof WEBSHOP_MEGA_MENU {
         links: [
           { href: BERGASPORTS_CATEGORY_PATHS.cyclingHelmets, label: t.helmets },
           { href: BERGASPORTS_CATEGORY_PATHS.glasses, label: t.glasses },
-          { href: BERGASPORTS_CATEGORY_PATHS.wheels, label: t.wheels },
           { href: BERGASPORTS_CATEGORY_PATHS.groupSets, label: t.groupSets },
           { href: BERGASPORTS_CATEGORY_PATHS.cleats, label: t.cleats },
-          { href: BERGASPORTS_CATEGORY_PATHS.scopeOutlet, label: "Scope Outlet" },
         ],
       },
     ] satisfies ShopMegaMenuColumn[],
@@ -963,7 +1013,7 @@ export function localizedHomeHero(locale: string) {
 export function localizedHomePillars(locale: string) {
   if (toUiLocale(locale) === "nl") return HOME_PILLARS;
   return [
-    { ...HOME_PILLARS[0], title: "Road bikes", text: "Built for speed and performance." },
+    { ...HOME_PILLARS[0], title: "Bikes", text: "Road, gravel and mountain bike — brands we ride ourselves." },
     { ...HOME_PILLARS[1], title: "Wheels", text: "The right wheelset for your bike and riding style." },
     {
       ...HOME_PILLARS[2],
@@ -1008,14 +1058,16 @@ export function localizedHomeInstagram(locale: string) {
   if (toUiLocale(locale) === "nl") {
     return {
       title: "Follow Bergasports",
-      text: "Stay up to date with new products, bikes, LaFuga, events and the latest Bergasports news.",
-      cta: "Follow us on Instagram",
+      text: "Blijf op de hoogte van nieuwe producten, fietsen, LaFuga, events en het laatste Bergasports-nieuws.",
+      cta: "Volg ons op Instagram",
+      empty: "Nog geen berichten op de site. Volg ons op",
     };
   }
   return {
     title: "Follow Bergasports",
     text: "Stay up to date with new products, bikes, LaFuga, events and the latest Bergasports news.",
     cta: "Follow us on Instagram",
+    empty: "No posts on the site yet. Follow us on",
   };
 }
 

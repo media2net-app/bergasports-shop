@@ -12,7 +12,7 @@ export default function HomeShopCategories() {
         Webshop
       </h2>
       <p className="mt-1 text-sm text-[var(--foreground)]/70">
-        Racefietsen, wielen, schoenen, kleding en accessoires.
+        Fietsen, wielen, schoenen, kleding en accessoires.
       </p>
       <ul className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {WEBSHOP_MENU_LINKS.map((item) => (

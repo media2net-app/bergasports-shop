@@ -19,15 +19,21 @@ export const SHOP_OPENING_HOURS: OpeningHoursRow[] = [
   { day: "Maandag", schemaDay: "Monday", hours: "Gesloten" },
   { day: "Dinsdag", schemaDay: "Tuesday", hours: "12:30 – 17:30", opens: "12:30", closes: "17:30" },
   { day: "Woensdag", schemaDay: "Wednesday", hours: "12:30 – 17:30", opens: "12:30", closes: "17:30" },
-  { day: "Donderdag", schemaDay: "Thursday", hours: "12:30 – 21:00", opens: "12:30", closes: "21:00" },
-  { day: "Vrijdag", schemaDay: "Friday", hours: "12:30 – 17:30", opens: "12:30", closes: "17:30" },
+  { day: "Donderdag", schemaDay: "Thursday", hours: "12:30 – 17:00", opens: "12:30", closes: "17:00" },
+  {
+    day: "Vrijdag",
+    schemaDay: "Friday",
+    hours: "12:30 – 17:30 · 19:00 – 21:00",
+    opens: "12:30",
+    closes: "17:30",
+  },
   { day: "Zaterdag", schemaDay: "Saturday", hours: "12:00 – 16:00", opens: "12:00", closes: "16:00" },
   { day: "Zondag", schemaDay: "Sunday", hours: "Gesloten" },
 ];
 
 /** Eénregelige samenvatting voor footer, trust-blokken en e-mails. */
 export const SHOP_OPENING_HOURS_SHORT =
-  "Di t/m vr 12:30 – 17:30 · do tot 21:00 · za 12:00 – 16:00";
+  "Di–wo 12:30 – 17:30 · do 12:30 – 17:00 · vr 12:30 – 17:30 · 19:00 – 21:00 · za 12:00 – 16:00";
 
 export const SHOP_MAPS_URL =
   "https://www.google.com/maps/search/?api=1&query=Julianastraat+3A+7701+GH+Dedemsvaart";
@@ -66,6 +72,10 @@ export const BERGASPORTS_CATEGORY_PATHS = {
   gravel: "/gravel",
   mtb: "/mtb",
   speedSkates: "/skeelers",
+  skateBearings: "/skeeler-lagers",
+  skateShoes: "/skeeler-schoenen",
+  skateWheels: "/skeeler-wielen",
+  completeSkates: "/complete-skeelers",
   wheels: "/wielen",
   scopeOutlet: "/scope-outlet",
   cyclingShoes: "/wielrenschoenen",
@@ -81,13 +91,11 @@ export const BERGASPORTS_CATEGORY_PATHS = {
 
 /** Flat links for search / mobile quick list. */
 export const WEBSHOP_MENU_LINKS: ShopMenuLink[] = [
-  { href: BERGASPORTS_CATEGORY_PATHS.roadBikes, label: "Racefietsen" },
-  { href: BERGASPORTS_CATEGORY_PATHS.gravel, label: "Gravel" },
-  { href: BERGASPORTS_CATEGORY_PATHS.mtb, label: "MTB" },
+  { href: BERGASPORTS_CATEGORY_PATHS.bikes, label: "Fietsen" },
   { href: BERGASPORTS_CATEGORY_PATHS.speedSkates, label: "Skeelers" },
-  { href: BERGASPORTS_CATEGORY_PATHS.cyclingShoes, label: "Nimbl" },
-  { href: BERGASPORTS_CATEGORY_PATHS.lafugaWear, label: "LaFuga kleding" },
   { href: BERGASPORTS_CATEGORY_PATHS.wheels, label: "Wielen" },
+  { href: BERGASPORTS_CATEGORY_PATHS.cyclingShoes, label: "Fietsschoenen" },
+  { href: BERGASPORTS_CATEGORY_PATHS.lafugaWear, label: "Kleding" },
   { href: BERGASPORTS_CATEGORY_PATHS.accessories, label: "Accessoires" },
 ];
 
@@ -112,15 +120,27 @@ export const WEBSHOP_MEGA_MENU = {
     {
       title: "Skeelers",
       href: BERGASPORTS_CATEGORY_PATHS.speedSkates,
-      links: [],
+      links: [
+        { href: BERGASPORTS_CATEGORY_PATHS.completeSkates, label: "Complete skeelers" },
+        { href: BERGASPORTS_CATEGORY_PATHS.skateShoes, label: "Schoenen" },
+        { href: BERGASPORTS_CATEGORY_PATHS.skateWheels, label: "Wielen" },
+        { href: BERGASPORTS_CATEGORY_PATHS.skateBearings, label: "Lagers" },
+      ],
+    },
+    {
+      title: "Wielen",
+      href: BERGASPORTS_CATEGORY_PATHS.wheels,
+      links: [
+        { href: BERGASPORTS_CATEGORY_PATHS.wheels, label: "Wielen" },
+        { href: BERGASPORTS_CATEGORY_PATHS.scopeOutlet, label: "Scope Outlet" },
+      ],
     },
     {
       title: "Schoenen & kleding",
       href: BERGASPORTS_CATEGORY_PATHS.shoesClothing,
       links: [
-        { href: BERGASPORTS_CATEGORY_PATHS.cyclingShoes, label: "Nimbl" },
-        { href: BERGASPORTS_CATEGORY_PATHS.lafugaCustom, label: "LaFuga custom kleding" },
-        { href: BERGASPORTS_CATEGORY_PATHS.lafugaWear, label: "LaFuga in de shop" },
+        { href: BERGASPORTS_CATEGORY_PATHS.cyclingShoes, label: "Fietsschoenen" },
+        { href: BERGASPORTS_CATEGORY_PATHS.lafugaWear, label: "Kleding" },
       ],
     },
     {
@@ -129,10 +149,8 @@ export const WEBSHOP_MEGA_MENU = {
       links: [
         { href: BERGASPORTS_CATEGORY_PATHS.cyclingHelmets, label: "Helmen" },
         { href: BERGASPORTS_CATEGORY_PATHS.glasses, label: "Brillen" },
-        { href: BERGASPORTS_CATEGORY_PATHS.wheels, label: "Wielen" },
         { href: BERGASPORTS_CATEGORY_PATHS.groupSets, label: "Groepsets" },
         { href: BERGASPORTS_CATEGORY_PATHS.cleats, label: "Schoenplaatjes" },
-        { href: BERGASPORTS_CATEGORY_PATHS.scopeOutlet, label: "Scope Outlet" },
       ],
     },
   ] satisfies ShopMegaMenuColumn[],
@@ -236,16 +254,16 @@ export const HOME_HERO = {
   titleLine2: "Je sportpartner.",
   lead: "Persoonlijk advies, hoogwaardige materialen en jarenlange ervaring in topsport.",
   primaryCta: "Bekijk fietsen",
-  primaryHref: BERGASPORTS_CATEGORY_PATHS.roadBikes,
+  primaryHref: BERGASPORTS_CATEGORY_PATHS.bikes,
   secondaryCta: "Plan een afspraak",
   secondaryHref: "/afspraak#formulier",
 } as const;
 
 export const HOME_PILLARS = [
   {
-    title: "Racefietsen",
-    text: "Voor maximale snelheid en prestaties.",
-    href: BERGASPORTS_CATEGORY_PATHS.roadBikes,
+    title: "Fietsen",
+    text: "Race, gravel en mountainbike — merken die we zelf rijden.",
+    href: BERGASPORTS_CATEGORY_PATHS.bikes,
   },
   {
     title: "Wielen",
@@ -255,7 +273,7 @@ export const HOME_PILLARS = [
   {
     title: "Schoenen & kleding",
     text: "Hoogwaardig materiaal voor training en wedstrijden.",
-    href: BERGASPORTS_CATEGORY_PATHS.cyclingShoes,
+    href: BERGASPORTS_CATEGORY_PATHS.shoesClothing,
   },
   {
     title: "Accessoires",

@@ -12,6 +12,7 @@ import { getGoogleReviewsConnectionStatus } from "@/lib/google-reviews";
 import { LOCALE_CATALOG } from "@/lib/i18n/locale-codes";
 import { listShopLanguages } from "@/lib/i18n/shop-languages";
 import { getInstagramConnectionStatus } from "@/lib/instagram";
+import { getChatGptAdminStatus } from "@/lib/openai-admin-status";
 import { buildAdminSettingsView } from "@/lib/site-settings-db";
 import { getSettingGroup, isSettingGroupId } from "@/lib/site-settings-defs";
 import { isWooCommerceApiConfigured } from "@/lib/woocommerce-api";
@@ -41,25 +42,39 @@ export default async function AdminSettingsGroupPage({ params }: PageProps) {
     notFound();
   }
 
-  const fields = await buildAdminSettingsView();
+  const fields = await buildAdminSettingsView({ fresh: true });
   const groupFields = fields.filter((f) => f.group === groupId && !f.hidden);
   const hoursJson = fields.find((f) => f.key === "SHOP_OPENING_HOURS_JSON")?.displayValue ?? "";
   const instagramStatus = groupId === "instagram" ? await getInstagramConnectionStatus() : null;
+  const instagramPostsJson = fields.find((f) => f.key === "INSTAGRAM_POSTS_JSON")?.displayValue ?? "";
   const googleStatus = groupId === "google" ? await getGoogleReviewsConnectionStatus() : null;
   const featuredJson = fields.find((f) => f.key === "GOOGLE_REVIEWS_FEATURED_JSON")?.displayValue ?? "";
   const wooConfigured = groupId === "woocommerce" ? await isWooCommerceApiConfigured() : false;
   const languages = groupId === "languages" ? await listShopLanguages() : [];
+  const openAiStatus = groupId === "openai" ? await getChatGptAdminStatus() : null;
 
   return (
     <AdminSettingsShell activeGroup={groupId}>
       <div className="admin-stack">
+        {openAiStatus ? (
+          <div
+            className={`admin-banner ${openAiStatus.ok ? "ok" : "warn"} admin-m-0`}
+            role="status"
+          >
+            {openAiStatus.ok
+              ? `${openAiStatus.label}: ${openAiStatus.detail}`
+              : `${openAiStatus.label}. ${openAiStatus.detail}`}
+          </div>
+        ) : null}
         {groupId === "languages" ? (
           <AdminLanguagesPanel initialLanguages={languages} catalog={LOCALE_CATALOG} />
         ) : (
           <AdminSettingsForm groupId={groupId} initialFields={groupFields} />
         )}
         {groupId === "store" ? <AdminOpeningHoursEditor initialJson={hoursJson} /> : null}
-        {instagramStatus ? <AdminInstagramPanel initial={instagramStatus} /> : null}
+        {instagramStatus ? (
+          <AdminInstagramPanel initial={instagramStatus} initialPostsJson={instagramPostsJson} />
+        ) : null}
         {googleStatus ? (
           <AdminGoogleReviewsPanel initial={googleStatus} initialFeaturedJson={featuredJson} />
         ) : null}

@@ -8,7 +8,8 @@ import HomeBrandsSection from "@/components/home/HomeBrandsSection";
 import HomeFeaturedSection from "@/components/home/HomeFeaturedSection";
 import HomeFeaturedSkeleton from "@/components/home/HomeFeaturedSkeleton";
 import HomeHeroFromCms from "@/components/home/HomeHeroFromCms";
-import HomeInstagramSection from "@/components/home/HomeInstagramSection";
+// Temporarily disabled — restore HomeInstagramSection when feed is ready again.
+// import HomeInstagramSection from "@/components/home/HomeInstagramSection";
 import HomeNewsSection from "@/components/home/HomeNewsSection";
 import HomePillarsSection from "@/components/home/HomePillarsSection";
 import HomeReviewsSection from "@/components/home/HomeReviewsSection";
@@ -91,9 +92,7 @@ export default async function Home({ searchParams }: HomeProps) {
         <Suspense fallback={null}>
           <HomeNewsSection />
         </Suspense>
-        <Suspense fallback={null}>
-          <HomeInstagramSection />
-        </Suspense>
+        {/* Instagram feed section temporarily removed from storefront */}
         <Suspense fallback={null}>
           <HomeReviewsSection />
         </Suspense>

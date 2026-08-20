@@ -2,8 +2,10 @@
 
 import { useMemo, useState } from "react";
 
+import { useShopLocale } from "@/components/locale/ShopLanguagesProvider";
 import { useProductVariation } from "@/components/product/ProductVariationContext";
 import OptimizedProductImage from "@/components/ui/OptimizedProductImage";
+import { ui } from "@/lib/i18n/ui";
 
 const arrowClassName =
   "absolute top-1/2 -translate-y-1/2 rounded-full border border-[var(--brand-border)] bg-white/95 p-2.5 text-[var(--foreground)] transition hover:border-[var(--brand)] hover:text-[var(--brand)] lg:opacity-0 lg:group-hover:opacity-100 lg:focus-visible:opacity-100";
@@ -28,6 +30,8 @@ export default function ProductImageGallery({
   name,
   initialHighlightImage,
 }: ProductImageGalleryProps) {
+  const { locale } = useShopLocale();
+  const t = ui(locale);
   const variation = useProductVariation();
   const highlightImage = variation?.highlightImage?.trim() || initialHighlightImage?.trim();
 
@@ -67,13 +71,13 @@ export default function ProductImageGallery({
               <button
                 key={`${imageUrl}-${index}`}
                 className={thumbClassName(index === selectedIndex)}
-                aria-label={`Afbeelding ${index + 1} bekijken`}
+                aria-label={t.viewImageN(index + 1)}
                 aria-current={index === selectedIndex}
                 onClick={() => setSelectedIndex(index)}
               >
                 <OptimizedProductImage
                   src={imageUrl}
-                  alt={`${name} miniatuur ${index + 1}`}
+                  alt={t.galleryThumbAlt(name, index + 1)}
                   variant="galleryThumb"
                 />
               </button>
@@ -95,14 +99,14 @@ export default function ProductImageGallery({
               <button
                 className={`${arrowClassName} left-3`}
                 onClick={prevImage}
-                aria-label="Vorige afbeelding"
+                aria-label={t.prevImage}
               >
                 &#8592;
               </button>
               <button
                 className={`${arrowClassName} right-3`}
                 onClick={nextImage}
-                aria-label="Volgende afbeelding"
+                aria-label={t.nextImage}
               >
                 &#8594;
               </button>
@@ -120,13 +124,13 @@ export default function ProductImageGallery({
             <button
               key={`${imageUrl}-${index}`}
               className={thumbClassName(index === selectedIndex)}
-              aria-label={`Afbeelding ${index + 1} bekijken`}
+              aria-label={t.viewImageN(index + 1)}
               aria-current={index === selectedIndex}
               onClick={() => setSelectedIndex(index)}
             >
               <OptimizedProductImage
                 src={imageUrl}
-                alt={`${name} miniatuur ${index + 1}`}
+                alt={t.galleryThumbAlt(name, index + 1)}
                 variant="galleryThumb"
               />
             </button>

@@ -362,8 +362,24 @@ export async function loadCategorySeoOverrides(slug: string): Promise<CategorySe
     locale = "nl";
   }
   const overlay = pickTranslation(parseLocaleMap<CategoryLocaleFields>(data.translations), locale);
+  const fromOverlayIntro = overlay?.description?.trim() || null;
+  const fromColumnIntro = data.seoIntro?.trim() || null;
+  /** Woo-import zette vaak EN in seo_intro; gebruik die alleen voor EN, anders code-defaults. */
+  const columnLooksEnglish = Boolean(
+    fromColumnIntro &&
+      /\b(the|and|with|your|for|from|this|that|which|their)\b/i.test(fromColumnIntro) &&
+      !/\b(de|het|een|van|voor|bij|met|onze|jouw)\b/i.test(fromColumnIntro.slice(0, 120)),
+  );
+  const seoIntro =
+    fromOverlayIntro ||
+    (locale === "en"
+      ? fromColumnIntro
+      : columnLooksEnglish
+        ? null
+        : fromColumnIntro);
+
   return {
-    seoIntro: overlay?.description?.trim() || data.seoIntro,
+    seoIntro,
     seoFooterHtml: overlay?.seoFooterHtml?.trim() || data.seoFooterHtml,
     seoMetaTitle: overlay?.seoTitle?.trim() || data.seoMetaTitle,
     seoMetaDescription: overlay?.seoDescription?.trim() || data.seoMetaDescription,

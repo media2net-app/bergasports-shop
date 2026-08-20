@@ -49,7 +49,8 @@ const CAMPAIGN_EMPTY_COPY: Record<MarketingChannelId, string> = {
 const PERFORMANCE_LEAD_COPY: Record<MarketingChannelId, string> = {
   tiktok: "Paste weekly totals from TikTok Ads Manager.",
   meta: "Paste weekly totals from Meta Ads Manager.",
-  google_ads: "Paste weekly totals from Google Ads.",
+  google_ads:
+    "Sync from Google Ads API (Instellingen → Pixels) or paste weekly totals manually.",
   google_merchant: "Track feed-related ad spend and attributed Shopping revenue.",
   email: "Attribute revenue to email flows (welcome, post-purchase, win-back).",
 };
@@ -119,6 +120,7 @@ export default function AdminMarketingChannelPanel({
   const router = useRouter();
   const [insight, setInsight] = useState(initialInsight);
   const [saving, setSaving] = useState(false);
+  const [syncingAds, setSyncingAds] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -155,6 +157,55 @@ export default function AdminMarketingChannelPanel({
     }
   }
 
+  async function handleGoogleAdsSync() {
+    setSyncingAds(true);
+    setError(null);
+    setMessage(null);
+    try {
+      const res = await fetch("/api/admin/marketing/google-ads", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ period: "30d" }),
+      });
+      const data = (await res.json()) as {
+        error?: string;
+        metrics?: {
+          spend: number;
+          impressions: number;
+          clicks: number;
+          conversions: number;
+          conversionValue: number;
+          campaigns: MarketingCampaignRow[];
+          dateRangeLabel: string;
+          fetchedAt: string;
+        };
+      };
+      if (!res.ok || !data.metrics) {
+        setError(data.error ?? "Google Ads sync mislukt.");
+        return;
+      }
+      const m = data.metrics;
+      setInsight({
+        ...insight,
+        channel: "google_ads",
+        adSpendRon: m.spend,
+        attributedRevenueRon: m.conversionValue,
+        impressions: m.impressions,
+        clicks: m.clicks,
+        conversions: Math.round(m.conversions),
+        campaigns: m.campaigns,
+        notes: `Gesynchroniseerd uit Google Ads API · ${m.dateRangeLabel} · ${m.fetchedAt}`,
+        updatedAt: m.fetchedAt,
+      });
+      setMessage(`Synced from Google Ads (${m.dateRangeLabel}).`);
+      router.refresh();
+    } catch {
+      setError("Network error.");
+    } finally {
+      setSyncingAds(false);
+    }
+  }
+
   function updateCampaign(index: number, patch: Partial<MarketingCampaignRow>) {
     setInsight((prev) => ({
       ...prev,
@@ -185,6 +236,16 @@ export default function AdminMarketingChannelPanel({
           </p>
         </div>
         <div className="admin-marketing-channel-head-actions">
+          {channel.id === "google_ads" ? (
+            <button
+              type="button"
+              className="admin-btn admin-btn-primary admin-btn-sm"
+              disabled={syncingAds}
+              onClick={() => void handleGoogleAdsSync()}
+            >
+              {syncingAds ? "Sync…" : "Sync Google Ads API"}
+            </button>
+          ) : null}
           {channel.profileUrl ? (
             <a
               href={channel.profileUrl}
@@ -235,9 +296,14 @@ export default function AdminMarketingChannelPanel({
           value={roi.roas != null ? `${roi.roas}×` : "—"}
           hint={
             insight.adSpendRon > 0
-              ? roi.profitRon >= 0
-                ? `Profit ${formatRon(roi.profitRon)}`
-                : `Loss ${formatRon(Math.abs(roi.profitRon))}`
+              ? [
+                  roi.roi != null ? `ROI ${Math.round(roi.roi * 100)}%` : null,
+                  roi.profitRon >= 0
+                    ? `Profit ${formatRon(roi.profitRon)}`
+                    : `Loss ${formatRon(Math.abs(roi.profitRon))}`,
+                ]
+                  .filter(Boolean)
+                  .join(" · ")
               : "Needs ad spend"
           }
           icon={<IconImport />}

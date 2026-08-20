@@ -3,23 +3,30 @@ import {
   type RalexCategoryNode,
 } from "@/lib/ralex-categories";
 
-/** Virtueel winkel-ouder: Nimbl + LaFuga, geen Woo-categorie. */
+/** Virtueel winkel-ouder: Fietsschoenen + Kleding, geen Woo-categorie. */
 export const SHOES_CLOTHING_NAV_SLUG = "schoenen-kleding";
 const SHOES_CLOTHING_NAV_ID = -9001;
 
-const NAV_ROOT_ORDER = ["bikes", "speed-skates", SHOES_CLOTHING_NAV_SLUG, "accessories"];
+const NAV_ROOT_ORDER = [
+  "bikes",
+  "speed-skates",
+  "wheels",
+  SHOES_CLOTHING_NAV_SLUG,
+  "accessories",
+];
 
 const CHILD_ORDER: Record<string, string[]> = {
   bikes: ["road-bike", "gravelbike", "mtb", "used-bikes"],
-  accessories: ["cycling-helmets", "glasses", "wheels", "group-sets", "cleats", "scope-outlet"],
+  "speed-skates": ["complete-skates", "skate-shoes", "skate-wheels", "skate-bearings"],
+  wheels: ["scope-outlet"],
+  accessories: ["cycling-helmets", "glasses", "group-sets", "cleats"],
   [SHOES_CLOTHING_NAV_SLUG]: ["cycling-shoes", "lafuga-wear"],
 };
 
 /** Woo top-level → gewenste NL-ouder (slug). */
 const REPARENT: Record<string, string> = {
   glasses: "accessories",
-  wheels: "accessories",
-  "scope-outlet": "accessories",
+  "scope-outlet": "wheels",
   "cycling-shoes": SHOES_CLOTHING_NAV_SLUG,
   "lafuga-wear": SHOES_CLOTHING_NAV_SLUG,
   "used-bikes": "bikes",

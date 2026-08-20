@@ -51,52 +51,52 @@ for (const [country, label, method, price, freeAbove, days, sort] of rates) {
   }
 }
 
-// Category SEO intros (NL public paths resolve via aliases)
+// Category SEO intros (NL); EN leeft in translations via category-copy / cat:skeelers
 const seo = [
   [
     "road-bike",
-    "High-end racefietsen voor renners die meer uit hun materiaal willen halen.",
-    "Bij Bergasports vind je een zorgvuldig geselecteerde collectie racefietsen van onder andere Colnago, Basso, Cervélo, Orbea, Cipollini, Titici en Sensa.",
+    "High-end racefietsen voor renners die meer uit hun materiaal willen halen. Bij Bergasports vind je Colnago, Cipollini, Orbea, Basso, Cervélo en meer — met advies over maat, groepset en wielen.",
+    null,
   ],
   [
     "gravelbike",
-    "Van snelle gravelraces tot lange avonturen: kies een gravelbike die past bij jouw terrein en rijstijl.",
+    "Van snelle gravelraces tot lange avonturen: kies een gravelbike die past bij jouw terrein en rijstijl. Persoonlijk advies vanuit Dedemsvaart.",
     null,
   ],
   [
     "mtb",
-    "Performance mountainbikes voor cross-country, trails en technische parcoursen.",
+    "Performance mountainbikes voor cross-country, trails en technische parcoursen. Persoonlijk advies vanuit Dedemsvaart.",
     null,
   ],
   [
     "wheels",
-    "De juiste wielset verandert het karakter van je fiets.",
-    "Bij Bergasports vind je hoogwaardige wielsets voor race, gravel en performance cycling.",
+    "De juiste wielset verandert het karakter van je fiets. Carbon wielsets van Scope en meer — voor race, gravel en performance.",
+    null,
   ],
   [
     "cycling-shoes",
-    "Maximale krachtoverdracht begint bij je voeten.",
-    "Hoogwaardige wielrenschoenen voor renners die maximale performance zoeken.",
+    "Fietsschoenen van Nimbl en andere topmerken — licht, stijf en te passen in Dedemsvaart.",
+    null,
   ],
   [
     "lafuga-wear",
-    "Cycling & inline clothing by Ingmar Berga.",
-    "Performance kleding ontstaan vanuit jarenlange ervaring in de topsport.",
+    "LaFuga custom kleding — designed by Ingmar Berga. Standaard collectie in de shop, maatwerk voor jouw team.",
+    null,
   ],
   [
     "glasses",
-    "Bescherming, comfort en helder zicht tijdens iedere rit.",
+    "Sportbrillen en fietsbrillen met heldere lenzen en een goede pasvorm. Persoonlijk advies vanuit Dedemsvaart.",
     null,
   ],
   [
     "accessories",
-    "De juiste details maken je fiets compleet.",
+    "Helmen, brillen, schoenplaatjes, groepsets en alle andere fietsaccessoires. Persoonlijk advies vanuit Dedemsvaart.",
     null,
   ],
   [
     "speed-skates",
-    "Performance materiaal voor inline skaters.",
-    "Van 2004 tot 2022 was Ingmar actief als professioneel schaatser en skeeleraar.",
+    "Skeelers, schoenen, frames, wielen en lagers voor training en wedstrijd. Advies van oud-topsporter Ingmar Berga uit Dedemsvaart.",
+    null,
   ],
 ];
 

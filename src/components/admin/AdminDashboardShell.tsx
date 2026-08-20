@@ -8,8 +8,10 @@ import { useCallback, useEffect, useState, type ReactNode } from "react";
 import AdminSidebarDbStatus from "@/components/admin/AdminSidebarDbStatus";
 import AdminTopbar from "@/components/admin/AdminTopbar";
 import {
+  IconCheck,
   IconDashboard,
   IconExternal,
+  IconImport,
   IconInventory,
   IconLeads,
   IconLogout,
@@ -109,6 +111,9 @@ export default function AdminDashboardShell({
   const leadsActive = path.startsWith("/admin/leads");
   const emailActive = path.startsWith("/admin/email");
   const newsletterActive = path.startsWith("/admin/newsletter");
+  const marketingActive = path.startsWith("/admin/marketing");
+  const analyticsActive = path.startsWith("/admin/analytics");
+  const performanceActive = path.startsWith("/admin/performance");
   const ordersActive = path.startsWith("/admin/orders");
   const couponsActive = path.startsWith("/admin/coupons");
   const customersActive = path.startsWith("/admin/customers");
@@ -229,6 +234,30 @@ export default function AdminDashboardShell({
           </div>
           <div className="admin-sidebar-group">
             <div className="admin-sidebar-group-label">Marketing</div>
+            <AdminNavLink
+              href="/admin/marketing"
+              active={marketingActive}
+              onNavigate={closeMenu}
+              icon={<IconImport />}
+            >
+              Ads &amp; ROAS
+            </AdminNavLink>
+            <AdminNavLink
+              href="/admin/analytics"
+              active={analyticsActive}
+              onNavigate={closeMenu}
+              icon={<IconDashboard />}
+            >
+              Live analytics
+            </AdminNavLink>
+            <AdminNavLink
+              href="/admin/performance"
+              active={performanceActive}
+              onNavigate={closeMenu}
+              icon={<IconCheck />}
+            >
+              PageSpeed
+            </AdminNavLink>
             <AdminNavLink
               href="/admin/newsletter"
               active={newsletterActive}

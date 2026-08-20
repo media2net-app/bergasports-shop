@@ -18,6 +18,7 @@ import {
 } from "@/lib/products";
 import {
   productSlugBase,
+  productSlugLookupCandidates,
   resolveProductSlug,
   uniqueProductSlug,
   withProductSlug,
@@ -316,19 +317,20 @@ export async function loadProductBySlug(slug: string): Promise<Product | null> {
     return null;
   }
 
+  const candidates = productSlugLookupCandidates(normalized);
   const prisma = requirePrisma();
   const row = await prisma.product.findFirst({
-    where: { slug: normalized },
+    where: { slug: { in: candidates } },
     select: productSelect,
   });
 
   const locale = await localeForCatalog();
   if (row) {
     const raw = rowToProduct(row);
-    if (!isProductVisibleOnShop(raw)) {
-      return null;
+    if (isProductVisibleOnShop(raw)) {
+      return localizeProduct(mapTrendyolJsonToProduct(raw), locale);
     }
-    return localizeProduct(mapTrendyolJsonToProduct(raw), locale);
+    // Invisible row matched a slug candidate — keep scanning for a published twin.
   }
 
   const all = await fetchAllProductsRaw();

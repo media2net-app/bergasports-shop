@@ -38,6 +38,8 @@ const nextConfig = {
   transpilePackages: ["quill", "lodash-es"],
   images: {
     formats: ["image/avif", "image/webp"],
+    // Next 16 defaults to [75] only; allow qualities used by hero + product images.
+    qualities: [75, 78, 82, 88, 92],
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2560],
     imageSizes: [48, 64, 80, 96, 128, 256, 384, 400],
     remotePatterns: [

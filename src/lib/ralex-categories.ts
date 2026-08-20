@@ -45,9 +45,9 @@ export function filterShopCategoryRecords(categories: RalexCategoryRecord[]): Ra
   return categories.filter((c) => !isExcludedShopCategory(c));
 }
 
-/** Strip legacy "* " prefix; map Woo/EN namen naar NL shop-labels. */
-export function formatRalexCategoryName(name: string, slug?: string) {
-  return categoryDisplayName(slug, stripCategoryNamePrefix(name));
+/** Strip legacy "* " prefix; map Woo/EN namen naar shop-labels voor de locale. */
+export function formatRalexCategoryName(name: string, slug?: string, locale: string = "nl") {
+  return categoryDisplayName(slug, stripCategoryNamePrefix(name), locale);
 }
 
 /** Publieke NL-naam op een DB/JSON-record (slug blijft Woo/canoniek). */

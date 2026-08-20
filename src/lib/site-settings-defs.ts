@@ -100,7 +100,8 @@ export const SITE_SETTING_GROUPS: {
     section: "email",
     title: "Verzenden (SMTP / Resend)",
     navLabel: "Verzenden",
-    intro: "Mailserver of Resend-key. Zonder dit gaan ordermails niet de deur uit.",
+    intro:
+      "Primair SMTP (host, gebruiker, wachtwoord). Resend alleen als SMTP niet is ingevuld. Zonder een van beide gaan order- en nieuwsbriefmails niet de deur uit.",
   },
   {
     id: "notifications",
@@ -135,7 +136,8 @@ export const SITE_SETTING_GROUPS: {
     section: "integrations",
     title: "Instagram",
     navLabel: "Instagram",
-    intro: "Live feed op de homepage, of eigen winkelfoto’s als fallback. Profiel-URL voor header, footer en JSON-LD.",
+    intro:
+      "Follow Bergasports toont recente posts: standaard via Instagram-embed (alleen profiel-URL). Optioneel Graph-token voor de gestylede grid, of handmatige berichten.",
   },
   {
     id: "google",
@@ -156,21 +158,24 @@ export const SITE_SETTING_GROUPS: {
     section: "integrations",
     title: "OpenAI / ChatGPT",
     navLabel: "OpenAI",
-    intro: "API-key voor AI-tekst en productfoto’s (eendracht, visualiseer, AI-beelden).",
-  },
-  {
-    id: "analytics",
-    section: "marketing",
-    title: "Analytics",
-    navLabel: "Analytics",
-    intro: "Google Analytics / Tag Manager voor bezoekersstatistieken.",
+    intro:
+      "Zelfde API-key voor productfoto-eendracht, AI-beelden en in-ruimte-previews. Plak sk-… en klik Opslaan — de key moet in de database staan (leeg veld behoudt de bestaande key).",
   },
   {
     id: "pixels",
     section: "marketing",
     title: "Pixels & ads",
     navLabel: "Pixels",
-    intro: "Meta, TikTok, Google Ads en Merchant Center.",
+    intro:
+      "Meta, TikTok, Google Ads-tag én Google Ads API (developer token + OAuth) voor ROAS/ROI in /admin/marketing.",
+  },
+  {
+    id: "analytics",
+    section: "marketing",
+    title: "Analytics",
+    navLabel: "Analytics",
+    intro:
+      "Google Analytics / Tag Manager. Optioneel GA4 Property ID + dezelfde OAuth als Ads voor omzet in het marketing-dashboard.",
   },
   {
     id: "seo",
@@ -265,6 +270,24 @@ export const SITE_SETTING_DEFS: SiteSettingDef[] = [
     },
   },
   {
+    key: "INSTAGRAM_PUBLIC_URL",
+    envKey: "INSTAGRAM_PUBLIC_URL",
+    label: "Instagram profiel-URL",
+    group: "instagram",
+    secret: false,
+    optional: true,
+    placeholder: "https://www.instagram.com/bergasportsnl/",
+    manual: {
+      summary: "Publieke Instagram-link voor ‘Volg ons’ in header, footer en homepage.",
+      steps: [
+        "Open Instagram → profiel Bergasports.",
+        "Kopieer de URL (bijv. https://www.instagram.com/bergasportsnl/).",
+        "Plak hier en sla op.",
+      ],
+      whereUsed: "Header, footer, homepage Follow-CTA, JSON-LD sameAs.",
+    },
+  },
+  {
     key: "INSTAGRAM_ACCESS_TOKEN",
     envKey: "INSTAGRAM_ACCESS_TOKEN",
     label: "Instagram Access Token",
@@ -274,12 +297,12 @@ export const SITE_SETTING_DEFS: SiteSettingDef[] = [
     placeholder: "IGAAxxxx…",
     manual: {
       summary:
-        "Optionele long-lived token via Instagram Login (instagram_business_basic). Zonder token toont de homepage eigen winkelfoto’s die naar het profiel linken.",
+        "Optioneel maar nodig voor automatisch de laatste berichten in de homepage-grid (geen iframe; gecached 1 uur).",
       steps: [
         "Maak (of gebruik) een Meta Developer-app voor @bergasportsnl.",
         "Voeg Instagram Login toe met het recht instagram_business_basic.",
         "Genereer een User access token en wissel om naar een long-lived token (60 dagen).",
-        "Plak de token hier. De shop ververst hem automatisch als de feed-aanvraag faalt.",
+        "Plak de token hier. Daarna: Laatste berichten ophalen. De shop vernieuwt de token automatisch bij falen.",
       ],
       links: [
         { label: "Meta for Developers", href: "https://developers.facebook.com/" },
@@ -288,7 +311,7 @@ export const SITE_SETTING_DEFS: SiteSettingDef[] = [
           href: "https://developers.facebook.com/docs/instagram-platform/instagram-api-with-instagram-login",
         },
       ],
-      whereUsed: "Homepage-feed via GET graph.instagram.com/me/media.",
+      whereUsed: "Homepage-grid via GET graph.instagram.com/me/media.",
     },
   },
   {
@@ -317,21 +340,23 @@ export const SITE_SETTING_DEFS: SiteSettingDef[] = [
     },
   },
   {
-    key: "INSTAGRAM_PUBLIC_URL",
-    envKey: "INSTAGRAM_PUBLIC_URL",
-    label: "Instagram profiel-URL",
+    key: "INSTAGRAM_POSTS_JSON",
+    envKey: "INSTAGRAM_POSTS_JSON",
+    label: "Instagram-berichten",
     group: "instagram",
     secret: false,
     optional: true,
-    placeholder: "https://www.instagram.com/bergasportsnl/",
+    hidden: true,
+    multiline: true,
     manual: {
-      summary: "Publieke link die bezoekers zien bij ‘Volg ons op Instagram’.",
+      summary:
+        "Optionele handmatige grid (foto + link) als er geen Graph-token is. Live Graph heeft voorrang; zonder beide toont de homepage een korte empty state met profiellink.",
       steps: [
-        "Open Instagram → profiel Bergasports.",
-        "Kopieer de URL (bijv. https://www.instagram.com/bergasportsnl/).",
-        "Plak hier en sla op.",
+        "Ga naar Instagram → open een post → Deel → Link kopiëren.",
+        "Upload of plak de foto in Instellingen → Instagram.",
+        "Sla de berichten op.",
       ],
-      whereUsed: "Header, footer, homepage-CTA’s, JSON-LD sameAs.",
+      whereUsed: "HomeInstagramSection grid (als er geen live Graph-feed is).",
     },
   },
   {
@@ -479,6 +504,27 @@ export const SITE_SETTING_DEFS: SiteSettingDef[] = [
     },
   },
   {
+    key: "GA4_PROPERTY_ID",
+    envKey: "GA4_PROPERTY_ID",
+    label: "GA4 Property ID (Data API)",
+    group: "analytics",
+    secret: false,
+    optional: true,
+    placeholder: "123456789",
+    manual: {
+      summary:
+        "Numerieke property-ID voor het admin ROAS/ROI-dashboard (omzet/sessies uit GA4). Niet hetzelfde als Measurement ID G-…",
+      steps: [
+        "Ga naar analytics.google.com → Beheer → Property-instellingen.",
+        "Kopieer het Property ID (alleen cijfers).",
+        "Gebruik dezelfde Google OAuth-client + refresh token als bij Google Ads API (scope o.a. analytics.readonly).",
+        "Plak hier en open daarna /admin/marketing voor live cijfers.",
+      ],
+      links: [{ label: "GA4 Data API", href: "https://developers.google.com/analytics/devguides/reporting/data/v1" }],
+      whereUsed: "Admin marketing performance dashboard (GA4 revenue/sessies).",
+    },
+  },
+  {
     key: "GOOGLE_SITE_VERIFICATION",
     envKey: "GOOGLE_SITE_VERIFICATION",
     label: "Google Search Console verificatiecode",
@@ -526,15 +572,16 @@ export const SITE_SETTING_DEFS: SiteSettingDef[] = [
     group: "email",
     secret: false,
     optional: true,
-    placeholder: "smtp.example.com",
+    placeholder: "smtp.hostinger.com",
     manual: {
-      summary: "Mailserver voor orderbevestigingen. Alternatief: alleen Resend API-key.",
+      summary:
+        "Mailserver voor order- en nieuwsbriefmails. Verplicht voor SMTP (samen met gebruiker + wachtwoord).",
       steps: [
-        "Vraag SMTP-gegevens op bij je mailprovider (of Microsoft 365 / Google Workspace).",
-        "Vul host, poort, gebruiker en wachtwoord in.",
-        "Stuur een testorder of vraag Media2Net een testmail te sturen.",
+        "Hostinger: smtp.hostinger.com. Anders: SMTP-host van je provider.",
+        "Vul ook poort, gebruiker en wachtwoord in (zie velden hieronder).",
+        "SMTP heeft voorrang: als host+user+wachtwoord gezet zijn, wordt Resend niet gebruikt.",
       ],
-      whereUsed: "Transactionele mails na bestelling.",
+      whereUsed: "Alle outbound mail (orders, nieuwsbrief, contact).",
     },
   },
   {
@@ -546,9 +593,13 @@ export const SITE_SETTING_DEFS: SiteSettingDef[] = [
     optional: true,
     placeholder: "465",
     manual: {
-      summary: "Meestal 465 (SSL) of 587 (STARTTLS).",
-      steps: ["Vul 465 of 587 in volgens je provider.", "Laat leeg om standaard 465 te gebruiken."],
-      whereUsed: "SMTP-verbinding voor ordermails.",
+      summary: "Meestal 465 (SSL) of 587 (STARTTLS). Leeg = 465.",
+      steps: [
+        "Hostinger / de meeste providers: 465.",
+        "Gebruik 587 alleen als je provider STARTTLS voorschrijft.",
+        "Laat SMTP SSL/TLS leeg — de poort bepaalt dan automatisch SSL vs STARTTLS.",
+      ],
+      whereUsed: "SMTP-verbinding.",
     },
   },
   {
@@ -560,9 +611,12 @@ export const SITE_SETTING_DEFS: SiteSettingDef[] = [
     optional: true,
     placeholder: "info@bergasports.com",
     manual: {
-      summary: "Inlognaam voor de mailbox die mails verstuurt.",
-      steps: ["Meestal het volledige e-mailadres van de verzendmailbox."],
-      whereUsed: "SMTP-auth.",
+      summary: "Inlognaam voor SMTP — meestal het volledige e-mailadres van de mailbox.",
+      steps: [
+        "Niet alleen ‘info’, maar info@jouwdomein.com.",
+        "Moet overeenkomen met een bestaande mailbox bij je host.",
+      ],
+      whereUsed: "SMTP-auth (AUTH).",
     },
   },
   {
@@ -574,12 +628,14 @@ export const SITE_SETTING_DEFS: SiteSettingDef[] = [
     optional: true,
     placeholder: "••••••••",
     manual: {
-      summary: "Wachtwoord of app-wachtwoord van de SMTP-mailbox.",
+      summary:
+        "Wachtwoord van die mailbox (of app-wachtwoord). Dit is géén Resend API-key (re_…).",
       steps: [
-        "Gebruik bij voorkeur een app-wachtwoord (Google/Microsoft) i.p.v. je normale login.",
-        "Plak hier; de waarde blijft verborgen na opslaan.",
+        "Hostinger: wachtwoord van de e-mailaccount in hPanel → Emails.",
+        "Google/Microsoft: gebruik een app-wachtwoord.",
+        "Plak zonder aanhalingstekens; leeg laten bij opslaan behoudt het huidige wachtwoord.",
       ],
-      whereUsed: "SMTP-auth (samen met SMTP_USER).",
+      whereUsed: "SMTP-auth (samen met SMTP gebruiker).",
     },
   },
   {
@@ -591,12 +647,12 @@ export const SITE_SETTING_DEFS: SiteSettingDef[] = [
     optional: true,
     placeholder: "Bergasports <info@bergasports.com>",
     manual: {
-      summary: "Naam + adres die klanten zien als afzender.",
+      summary: "Naam + adres die klanten zien als afzender. Optioneel (valt terug op SMTP gebruiker).",
       steps: [
         "Voorbeeld: Bergasports <info@bergasports.com>",
-        "Moet een adres zijn dat je provider mag versturen.",
+        "Moet een adres zijn dat je provider mag versturen (vaak gelijk aan SMTP gebruiker).",
       ],
-      whereUsed: "From-header van ordermails.",
+      whereUsed: "From-header van outbound mails via SMTP.",
     },
   },
   {
@@ -608,14 +664,15 @@ export const SITE_SETTING_DEFS: SiteSettingDef[] = [
     optional: true,
     placeholder: "re_…",
     manual: {
-      summary: "Alternatief voor SMTP. Als Resend gezet is, kan dat als mailprovider dienen.",
+      summary:
+        "Optioneel. Alleen gebruikt als SMTP host/gebruiker/wachtwoord níet volledig zijn gezet. Voor SMTP-only: leeg laten.",
       steps: [
         "Account op resend.com → API Keys → Create.",
-        "Verifieer het verzenddomein bergasports.com.",
-        "Plak de key hier (begint met re_).",
+        "Verifieer het verzenddomein.",
+        "Plak de key hier (begint met re_). Zet dit nooit in het veld SMTP wachtwoord.",
       ],
       links: [{ label: "Resend dashboard", href: "https://resend.com/api-keys" }],
-      whereUsed: "Ordermails (als SMTP niet volledig is geconfigureerd).",
+      whereUsed: "Outbound mail alleen wanneer SMTP niet is geconfigureerd.",
     },
   },
   {
@@ -816,7 +873,8 @@ export const SITE_SETTING_DEFS: SiteSettingDef[] = [
     group: "store",
     secret: false,
     optional: true,
-    placeholder: "Di t/m vr 12:30 – 17:30 · do tot 21:00 · za 12:00 – 16:00",
+    placeholder: "Di–wo 12:30 – 17:30 · do 12:30 – 17:00 · vr 12:30 – 17:30 · 19:00 – 21:00 · za 12:00 – 16:00",
+
     multiline: true,
     manual: {
       summary: "Eénregelige samenvatting van de openingstijden op product- en contactpagina’s.",
@@ -846,10 +904,14 @@ export const SITE_SETTING_DEFS: SiteSettingDef[] = [
     group: "email",
     secret: false,
     optional: true,
-    placeholder: "true of false",
+    placeholder: "leeg = automatisch",
     manual: {
-      summary: "true = SSL (poort 465). false = STARTTLS (poort 587). Leeg = automatisch op basis van de poort.",
-      steps: ["Laat leeg tenzij je provider iets anders voorschrijft.", "Sla op."],
+      summary:
+        "Laat leeg (aanbevolen): poort 465 → SSL, poort 587 → STARTTLS. true/false alleen bij afwijkende provider-eisen.",
+      steps: [
+        "Bij EAUTH of verbindingsfouten: controleer of poort en SSL bij elkaar passen.",
+        "Wis dit veld (leeg) als .env per ongeluk true heeft terwijl je poort 587 gebruikt.",
+      ],
       whereUsed: "SMTP-verbinding.",
     },
   },
@@ -890,9 +952,14 @@ export const SITE_SETTING_DEFS: SiteSettingDef[] = [
     optional: true,
     placeholder: "https://www.bergasports.com/bergasports-logo.png",
     manual: {
-      summary: "Optionele absolute URL van het logo in ordermails. Leeg = standaard Bergasports-logo.",
-      steps: ["Plak een https-URL naar een PNG/JPG.", "Sla op en stuur een testmail."],
-      whereUsed: "Transactionele e-mails.",
+      summary:
+        "Optionele absolute https-URL van het logo voor e-mailpreviews. Bij SMTP-verzenden wordt public/bergasports-logo.png als inline CID meegestuurd (werkt ook zonder publieke URL / zonder localhost).",
+      steps: [
+        "Optioneel: plak een https-URL naar een PNG/JPG voor admin-previews.",
+        "Lokaal of als www nog WordPress is: laat leeg — SMTP embedt het logo uit /public.",
+        "Sla op en stuur een testmail.",
+      ],
+      whereUsed: "Transactionele e-mails, marketing en nieuwsbrief.",
     },
   },
   {
@@ -1085,9 +1152,121 @@ export const SITE_SETTING_DEFS: SiteSettingDef[] = [
     optional: true,
     placeholder: "AW-XXXXXXXX",
     manual: {
-      summary: "Conversietag voor Google Ads.",
+      summary: "Conversietag voor Google Ads (browser).",
       steps: ["In Google Ads → Tools → Conversies.", "Kopieer het AW-nummer."],
-      whereUsed: "Advertentieconversies.",
+      whereUsed: "Advertentieconversies op de shop.",
+    },
+  },
+  {
+    key: "GOOGLE_ADS_DEVELOPER_TOKEN",
+    envKey: "GOOGLE_ADS_DEVELOPER_TOKEN",
+    label: "Google Ads Developer Token",
+    group: "pixels",
+    secret: true,
+    optional: true,
+    placeholder: "developer token",
+    manual: {
+      summary: "API-toegang voor spend/ROAS in het admin-dashboard.",
+      steps: [
+        "Ga naar ads.google.com → Tools → API Center (of aanvraag via Google Ads API).",
+        "Kopieer de Developer Token (test of production).",
+        "Plak hier samen met OAuth-client, refresh token en Customer ID hieronder.",
+      ],
+      links: [
+        {
+          label: "Google Ads API",
+          href: "https://developers.google.com/google-ads/api/docs/get-started/introduction",
+        },
+      ],
+      whereUsed: "Admin → Marketing (ROAS/ROI) en Google Ads-kanaal sync.",
+    },
+  },
+  {
+    key: "GOOGLE_ADS_CLIENT_ID",
+    envKey: "GOOGLE_ADS_CLIENT_ID",
+    label: "Google OAuth Client ID",
+    group: "pixels",
+    secret: false,
+    optional: true,
+    placeholder: "….apps.googleusercontent.com",
+    manual: {
+      summary: "OAuth 2.0 Client ID uit Google Cloud Console (Desktop of Web).",
+      steps: [
+        "Maak in console.cloud.google.com een OAuth-client aan.",
+        "Schakel Google Ads API (+ optioneel Google Analytics Data API) in.",
+        "Plak hier het Client ID.",
+      ],
+      links: [{ label: "Google Cloud Console", href: "https://console.cloud.google.com/apis/credentials" }],
+      whereUsed: "OAuth voor Google Ads + GA4 Data API in admin.",
+    },
+  },
+  {
+    key: "GOOGLE_ADS_CLIENT_SECRET",
+    envKey: "GOOGLE_ADS_CLIENT_SECRET",
+    label: "Google OAuth Client Secret",
+    group: "pixels",
+    secret: true,
+    optional: true,
+    placeholder: "GOCSPX-…",
+    manual: {
+      summary: "Client secret bij de OAuth-client hierboven.",
+      steps: ["Kopieer het client secret uit Cloud Console.", "Plak hier."],
+      whereUsed: "OAuth token refresh voor Ads/GA4.",
+    },
+  },
+  {
+    key: "GOOGLE_ADS_REFRESH_TOKEN",
+    envKey: "GOOGLE_ADS_REFRESH_TOKEN",
+    label: "Google OAuth Refresh Token",
+    group: "pixels",
+    secret: true,
+    optional: true,
+    placeholder: "1//…",
+    manual: {
+      summary:
+        "Refresh token van een Google-account met toegang tot Ads (en GA4). Eenmalig via OAuth playground of eigen consent-flow.",
+      steps: [
+        "Autoriseer met scopes: https://www.googleapis.com/auth/adwords en optioneel analytics.readonly.",
+        "Sla het refresh token hier op (niet het korte access token).",
+      ],
+      links: [
+        { label: "OAuth 2.0 Playground", href: "https://developers.google.com/oauthplayground/" },
+      ],
+      whereUsed: "Live Ads spend + GA4 revenue in /admin/marketing.",
+    },
+  },
+  {
+    key: "GOOGLE_ADS_CUSTOMER_ID",
+    envKey: "GOOGLE_ADS_CUSTOMER_ID",
+    label: "Google Ads Customer ID",
+    group: "pixels",
+    secret: false,
+    optional: true,
+    placeholder: "123-456-7890",
+    manual: {
+      summary: "Het Ads-accountnummer (met of zonder streepjes).",
+      steps: [
+        "Rechtsboven in ads.google.com staat het Customer ID.",
+        "Plak hier (streepjes mogen).",
+      ],
+      whereUsed: "Welk Ads-account het dashboard uitleest.",
+    },
+  },
+  {
+    key: "GOOGLE_ADS_LOGIN_CUSTOMER_ID",
+    envKey: "GOOGLE_ADS_LOGIN_CUSTOMER_ID",
+    label: "Google Ads Login Customer ID (MCC)",
+    group: "pixels",
+    secret: false,
+    optional: true,
+    placeholder: "alleen bij manager-account",
+    manual: {
+      summary: "Optioneel. Alleen nodig als je via een Manager (MCC) account inlogt.",
+      steps: [
+        "Vul het MCC Customer ID in als de API via een manager-account loopt.",
+        "Laat leeg bij direct account-toegang.",
+      ],
+      whereUsed: "login-customer-id header voor Google Ads API.",
     },
   },
   {
@@ -1151,6 +1330,16 @@ export function maskSecretValue(value: string): string {
   if (!t) return "";
   if (t.length <= 8) return "••••••••";
   return `${"•".repeat(8)}${t.slice(-4)}`;
+}
+
+/** True when the client re-submitted a masked placeholder instead of a real secret. */
+export function isMaskedSecretInput(value: string): boolean {
+  const t = value.trim();
+  if (!t) return false;
+  // Bullet mask from our UI, or common password-manager dots.
+  if (/^[•·●\.…]{4,}/u.test(t)) return true;
+  if (/^\*{4,}/.test(t)) return true;
+  return false;
 }
 
 export type AdminSettingFieldView = {

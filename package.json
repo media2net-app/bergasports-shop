@@ -33,6 +33,7 @@
     "admin:user": "npx tsx scripts/create-admin-user.ts",
     "stock:init": "npx tsx scripts/set-initial-stock.ts",
     "cat:assign": "npx tsx scripts/recategorize-products.ts",
+    "cat:skeelers": "npx tsx scripts/seed-skeeler-subcategories.ts",
     "migrate:prisma": "node scripts/run-prisma-migration.mjs",
     "mirror:all-images": "BASE_URL=http://localhost:3060 node scripts/mirror-all-product-images.mjs"
   },

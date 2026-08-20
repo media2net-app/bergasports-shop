@@ -15,6 +15,7 @@ import {
   SITE_KVK,
   type OpeningHoursRow,
 } from "@/lib/site-content";
+import { periodsForOpeningHoursRow } from "@/lib/opening-hours";
 
 /** Fallback-afbeelding voor Open Graph / Twitter wanneer een pagina geen eigen beeld heeft. */
 export const DEFAULT_OG_IMAGE = {
@@ -106,12 +107,14 @@ const STORE_ID = `${SITE_DEFAULT_URL}/#store`;
 const ORGANIZATION_ID = `${SITE_DEFAULT_URL}/#organization`;
 
 function openingHoursSpecification(hours: OpeningHoursRow[]) {
-  return hours.filter((row) => row.opens && row.closes).map((row) => ({
-    "@type": "OpeningHoursSpecification",
-    dayOfWeek: `https://schema.org/${row.schemaDay}`,
-    opens: row.opens,
-    closes: row.closes,
-  }));
+  return hours.flatMap((row) =>
+    periodsForOpeningHoursRow(row).map((period) => ({
+      "@type": "OpeningHoursSpecification",
+      dayOfWeek: `https://schema.org/${row.schemaDay}`,
+      opens: period.opens,
+      closes: period.closes,
+    })),
+  );
 }
 
 export type LocalBusinessRating = {

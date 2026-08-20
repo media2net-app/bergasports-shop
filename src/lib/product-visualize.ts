@@ -1,7 +1,7 @@
 import "server-only";
 
+import { formatMissingOpenAiKeyError, getOpenAiApiKey } from "@/lib/openai-admin-status";
 import { formatOpenAiImageError } from "@/lib/ai-image-openai";
-import { getOpenAiApiKey } from "@/lib/openai-admin-status";
 import { productVisualizeScene } from "@/lib/product-visualize-config";
 
 type OpenAiImageItem = {
@@ -99,7 +99,7 @@ export async function visualizeProductInRoom(
 ): Promise<VisualizeProductInRoomResult> {
   const key = await getOpenAiApiKey();
   if (!key) {
-    throw new Error("OPENAI_API_KEY is not configured.");
+    throw new Error(await formatMissingOpenAiKeyError());
   }
 
   const productRef = await imageRefForApi(input.productImageUrl, input.siteOrigin);

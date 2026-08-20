@@ -4,6 +4,7 @@ import {
   formatProductCardPrice,
   type Product,
 } from "@/lib/products";
+import { DEFAULT_LOCALE } from "@/lib/i18n/locale-codes";
 import { SITE_BRAND_SHORT } from "@/lib/site-brand";
 
 function stripHtml(html: string): string {
@@ -13,8 +14,8 @@ function stripHtml(html: string): string {
     .trim();
 }
 
-/** Zoekterm per categorie, voor een titel die verder komt dan alleen de productnaam. */
-const CATEGORY_KEYWORDS: { match: RegExp; keyword: string }[] = [
+/** Zoekterm per categorie — NL vs EN voor SEO-titels zonder verkeerde locale-woorden. */
+const CATEGORY_KEYWORDS_NL: { match: RegExp; keyword: string }[] = [
   { match: /road|race/i, keyword: "racefiets" },
   { match: /gravel/i, keyword: "gravelbike" },
   { match: /mtb|mountain/i, keyword: "mountainbike" },
@@ -28,9 +29,24 @@ const CATEGORY_KEYWORDS: { match: RegExp; keyword: string }[] = [
   { match: /group|groepset/i, keyword: "groepset" },
 ];
 
-function productKeyword(product: Product): string | null {
+const CATEGORY_KEYWORDS_EN: { match: RegExp; keyword: string }[] = [
+  { match: /road|race/i, keyword: "road bike" },
+  { match: /gravel/i, keyword: "gravel bike" },
+  { match: /mtb|mountain/i, keyword: "mountain bike" },
+  { match: /skate|skeeler/i, keyword: "speed skates" },
+  { match: /wheel|wiel|scope/i, keyword: "wheelset" },
+  { match: /shoe|schoen/i, keyword: "cycling shoes" },
+  { match: /helmet|helm/i, keyword: "cycling helmet" },
+  { match: /glass|bril/i, keyword: "sports glasses" },
+  { match: /wear|kleding|lafuga/i, keyword: "cycling apparel" },
+  { match: /cleat|schoenplaat/i, keyword: "cleats" },
+  { match: /group|groepset/i, keyword: "groupset" },
+];
+
+function productKeyword(product: Product, locale: string): string | null {
   const haystack = `${product.category ?? ""} ${product.name}`;
-  for (const { match, keyword } of CATEGORY_KEYWORDS) {
+  const list = locale === "en" ? CATEGORY_KEYWORDS_EN : CATEGORY_KEYWORDS_NL;
+  for (const { match, keyword } of list) {
     if (match.test(haystack)) {
       return keyword;
     }
@@ -53,12 +69,12 @@ function shortenToWords(text: string, maxLength: number): string {
   return `${(lastSpace > 20 ? cut.slice(0, lastSpace) : cut).trim()}…`;
 }
 
-export function productSeoTitle(product: Product): string {
+export function productSeoTitle(product: Product, locale: string = DEFAULT_LOCALE): string {
   const custom = product.seoTitle?.trim();
   if (custom) {
     return custom;
   }
-  const name = decodeImportedProductTitle(product.name).trim() || product.name;
+  const name = decodeImportedProductTitle(product.name, locale).trim() || product.name;
   const brand = product.brand?.trim();
   /* Het eigen merk voegt niets toe: dat staat al in de suffix. */
   const useBrand =
@@ -66,14 +82,15 @@ export function productSeoTitle(product: Product): string {
     !name.toLowerCase().includes(brand.toLowerCase()) &&
     brand.toLowerCase() !== SITE_BRAND_SHORT.toLowerCase();
   const withBrand = useBrand ? `${name} ${brand}` : name;
-  const keyword = productKeyword(product);
+  const keyword = productKeyword(product, locale);
   const suffix = ` | ${SITE_BRAND_SHORT}`;
+  const buySuffix = locale === "en" ? "" : " kopen";
 
   const candidates = [
     keyword && !withBrand.toLowerCase().includes(keyword)
-      ? `${withBrand} ${keyword} kopen${suffix}`
+      ? `${withBrand} ${keyword}${buySuffix}${suffix}`
       : null,
-    `${withBrand} kopen${suffix}`,
+    buySuffix ? `${withBrand}${buySuffix}${suffix}` : null,
     `${withBrand}${suffix}`,
   ].filter((v): v is string => Boolean(v));
 
@@ -84,7 +101,7 @@ export function productSeoTitle(product: Product): string {
   return `${shortenToWords(withBrand, MAX_TITLE_LENGTH - suffix.length)}${suffix}`;
 }
 
-export function productMetaDescription(product: Product): string {
+export function productMetaDescription(product: Product, locale: string = DEFAULT_LOCALE): string {
   const custom = product.seoDescription?.trim();
   if (custom) {
     return custom.slice(0, 160);
@@ -96,6 +113,9 @@ export function productMetaDescription(product: Product): string {
     return fromShort.slice(0, 155);
   }
   const price = formatProductCardPrice(product);
+  if (locale === "en") {
+    return `${product.name} — ${price}. Order online at ${SITE_BRAND_SHORT} with delivery in the Netherlands and Belgium.`;
+  }
   return `${product.name} — ${price}. Bestel online bij ${SITE_BRAND_SHORT} met levering in Nederland en België.`;
 }
 
@@ -103,6 +123,7 @@ export type ProductJsonLdOptions = {
   variationId?: number;
   categoryName?: string;
   path?: string;
+  locale?: string;
 };
 
 export function productJsonLd(product: Product, siteUrl: string, options?: ProductJsonLdOptions) {
@@ -124,7 +145,7 @@ export function productJsonLd(product: Product, siteUrl: string, options?: Produ
     "@type": "Product",
     name: product.name,
     image: images,
-    description: productMetaDescription(product),
+    description: productMetaDescription(product, options?.locale),
     sku: offerSku,
     brand: product.brand
       ? { "@type": "Brand", name: product.brand }

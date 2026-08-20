@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import AdminMarketingPerformancePanel from "@/components/admin/AdminMarketingPerformancePanel";
 import AdminMetricCard from "@/components/admin/AdminMetricCard";
 import {
   IconCheck,
@@ -71,10 +72,13 @@ export default function AdminMarketingView({ data, winBackExpiryDays }: Props) {
         <div>
           <h1 className="admin-page-title">Marketing</h1>
           <p className="admin-page-lead">
-            E-mail, TikTok, paid ads en retention — live metrics uit catalog, orders en env.
+            Gecombineerd ROAS/ROI-dashboard (Google Ads + shop-omzet), kanalen, e-mail en pixels.
           </p>
         </div>
         <div className="admin-marketing-head-actions">
+          <Link href="/admin/settings/pixels" className="admin-btn admin-btn-secondary">
+            Ads API instellingen
+          </Link>
           <Link href="/admin/one-million-plan" className="admin-btn admin-btn-secondary">
             1 Million Plan
           </Link>
@@ -83,6 +87,8 @@ export default function AdminMarketingView({ data, winBackExpiryDays }: Props) {
           </Link>
         </div>
       </div>
+
+      <AdminMarketingPerformancePanel />
 
       <section className="admin-dash-section" aria-label="Overview">
         <div className="admin-metric-grid-hero">

@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
 import { adminSessionCookieName, verifyAdminSessionToken } from "@/lib/admin-auth";
 import { markAiGeneratedImageInstalled, saveAiGeneratedImage } from "@/lib/ai-generated-images-db";
 import { emptyAiImageOverlayValues } from "@/lib/ai-image-overlay";
+import { probeOpenAiApiKeySources } from "@/lib/openai-admin-status";
 import {
   normalizeProductImage,
   PRODUCT_IMAGE_NORMALIZE_TEMPLATE_ID,
@@ -148,7 +149,22 @@ export async function POST(request: Request, { params }: RouteParams) {
     });
   } catch (e) {
     const message = e instanceof Error ? e.message : "Normalisatie mislukt";
-    return NextResponse.json({ error: message }, { status: statusForNormalizeError(message) });
+    const status = statusForNormalizeError(message);
+    // Temporary admin debug: boolean presence only (no secrets) when key is missing.
+    if (status === 503 && /ontbreekt|not configured|openai_api_key/i.test(message)) {
+      const probe = await probeOpenAiApiKeySources();
+      return NextResponse.json(
+        {
+          error: message,
+          debug: {
+            hint: "Alleen of-gevuld (geen secrets). Key hoort in Instellingen → OpenAI (site_settings.OPENAI_API_KEY).",
+            probe,
+          },
+        },
+        { status },
+      );
+    }
+    return NextResponse.json({ error: message }, { status });
   }
 }
 
@@ -160,6 +176,7 @@ function statusForNormalizeError(message: string): number {
     m.includes("openai_api_key") ||
     m.includes("not configured") ||
     m.includes("ontbreekt") ||
+    m.includes("getruntimesetting") ||
     m.includes("site_settings") ||
     m.includes("billing") ||
     m.includes("spending limit") ||

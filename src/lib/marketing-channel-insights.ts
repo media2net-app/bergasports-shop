@@ -3,11 +3,8 @@ import "server-only";
 import type { Prisma } from "@/generated/prisma/client";
 
 import { requirePrisma } from "@/lib/database";
-import {
-  MARKETING_CHANNELS,
-  marketingChannelEnvStatus,
-  type MarketingChannelId,
-} from "@/lib/marketing-channels";
+import { MARKETING_CHANNELS, type MarketingChannelId } from "@/lib/marketing-channels";
+import { marketingChannelEnvStatusAsync } from "@/lib/marketing-channels-server";
 import {
   computeChannelRoi,
   type MarketingCampaignRow,
@@ -174,7 +171,7 @@ export async function getMarketingChannelSummaries(): Promise<MarketingChannelSu
   return Promise.all(
     MARKETING_CHANNELS.map(async (ch) => {
       const insight = await getMarketingChannelInsight(ch.id);
-      const env = marketingChannelEnvStatus(ch.envKeys);
+      const env = await marketingChannelEnvStatusAsync(ch.envKeys);
       const roi = computeChannelRoi(insight);
       return {
         channel: ch.id,

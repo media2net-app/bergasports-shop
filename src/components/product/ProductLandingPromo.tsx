@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useCart } from "@/components/cart/CartProvider";
+import { useShopLocale } from "@/components/locale/ShopLanguagesProvider";
+import { ui } from "@/lib/i18n/ui";
 import { SHOP_PHONE_LABEL, shopPhoneTelHref } from "@/lib/site-contact";
 import { SHOP_OPENING_HOURS_SHORT } from "@/lib/site-content";
 import { formatProductPrice, type Product, type WcVariationJson } from "@/lib/products";
@@ -43,6 +45,8 @@ function pickDefaultVariation(product: Product): WcVariationJson | undefined {
 }
 
 export default function ProductLandingPromo({ product }: ProductLandingPromoProps) {
+  const { locale } = useShopLocale();
+  const t = ui(locale);
   const promo = product.landingPromo;
   const [hms, setHms] = useState({ h: 0, m: 0, s: 0 });
   const { addItem } = useCart();
@@ -80,14 +84,14 @@ export default function ProductLandingPromo({ product }: ProductLandingPromoProp
     <div className="mt-8 w-full font-sans">
       <div className="w-full space-y-3 text-center">
         <div className="w-full rounded-md bg-[#fce7ec] px-3 py-2 text-sm font-medium text-[var(--foreground)]">
-          OUDE PRIJS: {formatPromoPrice(promo.oldPrice, product.currency)}
+          {t.promoOldPrice} {formatPromoPrice(promo.oldPrice, product.currency)}
         </div>
         <div className="w-full rounded-md bg-[#dff0d8] px-3 py-3 text-base font-bold text-[#1b5e20] md:text-lg">
-          ACTIEPRIJS: {formatPromoPrice(promo.price, product.currency)}
+          {t.promoSalePrice} {formatPromoPrice(promo.price, product.currency)}
         </div>
         {promo.oldPrice > promo.price ? (
           <p className="text-center text-sm font-semibold text-red-600">
-            Je bespaart: {formatProductPrice(promo.oldPrice - promo.price, product.currency)}
+            {t.promoYouSave(formatProductPrice(promo.oldPrice - promo.price, product.currency))}
           </p>
         ) : null}
       </div>
@@ -95,9 +99,9 @@ export default function ProductLandingPromo({ product }: ProductLandingPromoProp
       <div className="mt-6 flex w-full justify-center gap-6 md:gap-10">
         {(
           [
-            { value: pad(hms.h), label: "UUR" },
-            { value: pad(hms.m), label: "MIN" },
-            { value: pad(hms.s), label: "SEC" },
+            { value: pad(hms.h), label: t.promoHours },
+            { value: pad(hms.m), label: t.promoMinutes },
+            { value: pad(hms.s), label: t.promoSeconds },
           ] as const
         ).map((cell) => (
           <div key={cell.label} className="flex min-w-[4.5rem] flex-col items-center">
@@ -112,8 +116,8 @@ export default function ProductLandingPromo({ product }: ProductLandingPromoProp
       </div>
 
       <div className="mt-6 space-y-1 text-center text-sm font-semibold text-red-600">
-        <p>• Op voorraad — laatste stuks!</p>
-        <p>Wees er snel bij!</p>
+        <p>{t.promoLastPieces}</p>
+        <p>{t.promoHurry}</p>
       </div>
 
       <button
@@ -123,18 +127,18 @@ export default function ProductLandingPromo({ product }: ProductLandingPromoProp
       >
         <span className="flex items-center gap-2 text-lg font-bold">
           <BagIcon className="h-6 w-6 shrink-0" />
-          Nu bestellen
+          {t.promoOrderNow}
         </span>
-        <span className="text-sm font-medium text-white/95">Rembours bij aflevering</span>
+        <span className="text-sm font-medium text-white/95">{t.promoCod}</span>
       </button>
 
-      <p className="mt-4 text-center text-sm font-semibold text-[var(--foreground)]">OF</p>
+      <p className="mt-4 text-center text-sm font-semibold text-[var(--foreground)]">{t.promoOr}</p>
 
       <a
         href={phoneHref}
         className="mt-3 flex w-full flex-col items-center rounded-2xl bg-[#b8b8f0] px-4 py-4 text-center text-white shadow-sm transition hover:bg-[#a6a6e8]"
       >
-        <span className="text-sm font-bold leading-snug">TELEFOONBESTELLING {phone}</span>
+        <span className="text-sm font-bold leading-snug">{t.promoPhoneOrder(phone)}</span>
         <span className="mt-1 text-xs font-medium text-white/95">{phoneHours}</span>
       </a>
     </div>

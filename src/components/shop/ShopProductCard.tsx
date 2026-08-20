@@ -7,7 +7,7 @@ import OptimizedProductImage, {
   type OptimizedProductImageVariant,
 } from "@/components/ui/OptimizedProductImage";
 import { useShopLocale } from "@/components/locale/ShopLanguagesProvider";
-import { dutchLabelFromImportedName } from "@/lib/category-meta";
+import { dutchLabelFromImportedName, englishLabelFromImportedName } from "@/lib/category-meta";
 import { isShopNameBrand } from "@/lib/brands-shared";
 import { ui } from "@/lib/i18n/ui";
 import { productPath } from "@/lib/product-slug";
@@ -72,7 +72,9 @@ export default function ShopProductCard({
           <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--foreground)]/60">
             {product.brand && !isShopNameBrand(product.brand)
               ? product.brand
-              : dutchLabelFromImportedName(product.category)}
+              : locale === "en"
+                ? englishLabelFromImportedName(null, product.category)
+                : dutchLabelFromImportedName(product.category)}
           </p>
 
           {catalogBadge ? (

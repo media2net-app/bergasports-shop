@@ -87,12 +87,14 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       categoriesFile.tree,
       category.slug,
     );
+    const locale = await getRequestLocale();
     const seo = buildCategorySeoContent({
       categoryNode: category,
       categoryTree: categoriesFile.tree,
       productsInCategory: filteredProducts,
       customIntro: overrides?.seoIntro,
       customFooterHtml: overrides?.seoFooterHtml,
+      locale,
     });
     const seoTitle = overrides?.seoMetaTitle?.trim() || defaults?.seoTitle;
     return buildPageMetadata({

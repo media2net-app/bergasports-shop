@@ -1,10 +1,15 @@
 import "server-only";
 
 import { requirePrisma } from "@/lib/database";
-import { getEmailLogoUrlSetting } from "@/lib/shop-runtime";
-import { sendOutboundEmail, isOutboundEmailConfigured } from "@/lib/outbound-email";
+import { EMAIL_LOGO_CID_SRC } from "@/lib/site-brand";
+import {
+  sendOutboundEmailResult,
+  isOutboundEmailConfigured,
+  verifyOutboundEmail,
+} from "@/lib/outbound-email";
 import {
   transactionalEmailSiteUrl,
+  transactionalEmailTextFooter,
   wrapTransactionalEmailHtml,
 } from "@/lib/transactional-email-layout";
 import { htmlToPlainText } from "@/lib/email-template-render";
@@ -482,7 +487,8 @@ export async function sendNewsletterCampaign(id: string): Promise<SendCampaignRe
     return {
       ok: false,
       campaign: existing,
-      error: "E-mail is niet geconfigureerd (SMTP of Resend).",
+      error:
+        "E-mail is niet geconfigureerd. Vul SMTP host, gebruiker en wachtwoord in onder Admin → Instellingen → Verzenden.",
     };
   }
 
@@ -512,6 +518,16 @@ export async function sendNewsletterCampaign(id: string): Promise<SendCampaignRe
     };
   }
 
+  // Fail fast on SMTP AUTH / connection before marking the campaign as sending.
+  const verified = await verifyOutboundEmail();
+  if (!verified.ok) {
+    return {
+      ok: false,
+      campaign: mapCampaign(campaign),
+      error: verified.error,
+    };
+  }
+
   await prisma.newsletterCampaign.update({
     where: { id },
     data: {
@@ -523,32 +539,38 @@ export async function sendNewsletterCampaign(id: string): Promise<SendCampaignRe
     },
   });
 
-  const logoUrl = await getEmailLogoUrlSetting();
+  // Inline CID: smtp-email attaches public/bergasports-logo.png (localhost/www 404-safe).
+  const logoUrl = EMAIL_LOGO_CID_SRC;
   const siteUrl = transactionalEmailSiteUrl();
   const title = campaign.title?.trim() || campaign.subject.trim();
+  // `newsletter` variant: marketing unsubscribe footer + richer campaign chrome.
   const html = wrapTransactionalEmailHtml({
     title,
     preheader: campaign.subject,
     innerHtml: campaign.bodyHtml,
     siteUrl,
     logoUrl,
-    variant: "marketing",
+    variant: "newsletter",
     locale: "nl",
   });
-  const text = `${title}\n\n${htmlToPlainText(campaign.bodyHtml)}\n\n${siteUrl}`;
+  const text = `${title}\n\n${htmlToPlainText(campaign.bodyHtml)}\n\n${transactionalEmailTextFooter(siteUrl, "nl", "newsletter")}`;
 
   let sentCount = 0;
   let failCount = 0;
+  let lastError: string | undefined;
 
   for (const { email } of recipients) {
-    const ok = await sendOutboundEmail({
+    const result = await sendOutboundEmailResult({
       to: email,
       subject: campaign.subject,
       text,
       html,
     });
-    if (ok) sentCount += 1;
-    else failCount += 1;
+    if (result.ok) sentCount += 1;
+    else {
+      failCount += 1;
+      lastError = result.error;
+    }
   }
 
   const finalStatus: NewsletterCampaignStatus = sentCount === 0 ? "failed" : "sent";
@@ -570,9 +592,10 @@ export async function sendNewsletterCampaign(id: string): Promise<SendCampaignRe
     campaign: mapCampaign(updated),
     error:
       sentCount === 0
-        ? "Geen e-mails verstuurd. Controleer SMTP/Resend."
+        ? lastError ??
+          "Geen e-mails verstuurd. Controleer SMTP onder Admin → Instellingen → Verzenden."
         : failCount > 0
-          ? `${sentCount} verstuurd, ${failCount} mislukt.`
+          ? `${sentCount} verstuurd, ${failCount} mislukt.${lastError ? ` ${lastError}` : ""}`
           : undefined,
   };
 }

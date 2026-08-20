@@ -121,6 +121,13 @@ export const MARKETING_ENV_LABELS: Record<string, string> = {
   TIKTOK_EVENTS_API_ACCESS_TOKEN: "Events API",
   NEXT_PUBLIC_META_PIXEL_ID: "Meta Pixel",
   NEXT_PUBLIC_GOOGLE_ADS_ID: "Google Ads tag",
+  GOOGLE_ADS_DEVELOPER_TOKEN: "Ads Developer Token",
+  GOOGLE_ADS_CLIENT_ID: "Google OAuth Client ID",
+  GOOGLE_ADS_CLIENT_SECRET: "Google OAuth Secret",
+  GOOGLE_ADS_REFRESH_TOKEN: "Google OAuth Refresh Token",
+  GOOGLE_ADS_CUSTOMER_ID: "Ads Customer ID",
+  GOOGLE_ADS_LOGIN_CUSTOMER_ID: "Ads Login Customer (MCC)",
+  GA4_PROPERTY_ID: "GA4 Property ID",
   GOOGLE_MERCHANT_CENTER_ID: "Merchant Center ID",
 };
 

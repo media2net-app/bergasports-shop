@@ -6,11 +6,17 @@ import { requirePrisma } from "@/lib/database";
 import {
   SITE_SETTING_DEFS,
   getSettingDef,
+  isMaskedSecretInput,
   maskSecretValue,
   type AdminSettingFieldView,
 } from "@/lib/site-settings-defs";
 
 export type { AdminSettingFieldView } from "@/lib/site-settings-defs";
+
+export type SiteSettingSkip = {
+  key: string;
+  reason: "keep_existing" | "masked_placeholder" | "unknown_key" | "undefined";
+};
 
 async function loadAllDbSettingsUncached(): Promise<Map<string, string>> {
   const prisma = requirePrisma();
@@ -48,11 +54,39 @@ export async function getRuntimeSetting(key: string): Promise<string> {
   return envValue(envKey);
 }
 
+/** Fresh DB read (no React cache) — use after writes or when a key must not be stale. */
+export async function getRuntimeSettingFresh(key: string): Promise<string> {
+  const def = getSettingDef(key);
+  const envKey = def?.envKey ?? key;
+  const db = await loadAllDbSettingsUncached();
+  const fromDb = db.get(key)?.trim() ?? "";
+  if (fromDb) return fromDb;
+  return envValue(envKey);
+}
+
 export async function getRuntimeSettingOrEnv(key: string, envKey?: string): Promise<string> {
   const db = await loadAllDbSettings();
   const fromDb = db.get(key)?.trim() ?? "";
   if (fromDb) return fromDb;
   return envValue(envKey ?? key);
+}
+
+/** Key names only — never values. */
+export async function listSiteSettingKeys(): Promise<string[]> {
+  const prisma = requirePrisma();
+  try {
+    const rows = await prisma.siteSetting.findMany({
+      select: { key: true },
+      orderBy: { key: "asc" },
+    });
+    return rows.map((r) => r.key);
+  } catch (e) {
+    console.error(
+      "[site-settings] list keys failed:",
+      e instanceof Error ? e.message : e,
+    );
+    return [];
+  }
 }
 
 export async function buildAdminSettingsView(options?: {
@@ -93,23 +127,27 @@ export async function buildAdminSettingsView(options?: {
 export async function upsertSiteSettings(
   updates: Record<string, string | null | undefined>,
   updatedBy?: string,
-): Promise<{ saved: string[]; cleared: string[] }> {
+): Promise<{ saved: string[]; cleared: string[]; skipped: SiteSettingSkip[] }> {
   const prisma = requirePrisma();
   const saved: string[] = [];
   const cleared: string[] = [];
+  const skipped: SiteSettingSkip[] = [];
 
   for (const [key, raw] of Object.entries(updates)) {
     const def = getSettingDef(key);
     if (!def) {
+      skipped.push({ key, reason: "unknown_key" });
       continue;
     }
     if (raw === undefined) {
+      skipped.push({ key, reason: "undefined" });
       continue;
     }
     const trimmed = typeof raw === "string" ? raw.trim() : "";
 
     // Lege string bij geheim = niet overschrijven (laat bestaande staan).
     if (def.secret && trimmed === "") {
+      skipped.push({ key, reason: "keep_existing" });
       continue;
     }
 
@@ -119,8 +157,9 @@ export async function upsertSiteSettings(
       continue;
     }
 
-    // Zelfde mask opnieuw opslaan negeren
-    if (def.secret && /^•{4,}/.test(trimmed)) {
+    // Zelfde mask / placeholder opnieuw opslaan negeren — nooit wissen.
+    if (def.secret && isMaskedSecretInput(trimmed)) {
+      skipped.push({ key, reason: "masked_placeholder" });
       continue;
     }
 
@@ -132,5 +171,5 @@ export async function upsertSiteSettings(
     saved.push(key);
   }
 
-  return { saved, cleared };
+  return { saved, cleared, skipped };
 }

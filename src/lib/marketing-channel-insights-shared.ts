@@ -52,6 +52,8 @@ export type MarketingChannelSummary = {
 
 export function computeChannelRoi(insight: MarketingChannelInsightRow): {
   roas: number | null;
+  /** (revenue − spend) / spend */
+  roi: number | null;
   cpaRon: number | null;
   profitRon: number;
 } {
@@ -60,6 +62,7 @@ export function computeChannelRoi(insight: MarketingChannelInsightRow): {
   const profitRon = Math.round((revenue - spend) * 100) / 100;
   return {
     roas: spend > 0 ? Math.round((revenue / spend) * 100) / 100 : null,
+    roi: spend > 0 ? Math.round(((revenue - spend) / spend) * 100) / 100 : null,
     cpaRon:
       insight.conversions > 0 && spend > 0
         ? Math.round((spend / insight.conversions) * 100) / 100

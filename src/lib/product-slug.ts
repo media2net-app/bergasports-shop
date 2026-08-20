@@ -1,8 +1,34 @@
 import { decodeImportedProductTitle, type Product, type TrendyolJsonProduct } from "@/lib/products";
 
-/** SEO slug from product title (Romanian diacritics → ASCII). */
+const KEBAB_SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/i;
+
+/** True when input is already a URL slug (no spaces) — skip locale title rewrites. */
+export function isKebabProductSlug(value: string): boolean {
+  return KEBAB_SLUG_RE.test(value.trim());
+}
+
+/**
+ * WC / import slugs often use `and` in size pairs (`52-cm-and-54-cm`) while Dutch title
+ * normalization rewrites that to `en`. Accept both when resolving URLs.
+ */
+export function productSlugLookupCandidates(slug: string): string[] {
+  const s = slug.trim().toLowerCase();
+  if (!s) return [];
+  const out = new Set<string>([s]);
+  out.add(s.replace(/(\d+-cm-)and-(\d+-cm)/g, "$1en-$2"));
+  out.add(s.replace(/(\d+-cm-)en-(\d+-cm)/g, "$1and-$2"));
+  return [...out];
+}
+
+/** SEO slug from product title (diacritics → ASCII). */
 export function slugifyProductTitle(title: string): string {
-  return decodeImportedProductTitle(title)
+  const raw = String(title || "").trim();
+  if (!raw) return "";
+  // Stored/WC kebab slugs must not run through NL title word swaps (and→en, Blue→Blauw, …).
+  if (isKebabProductSlug(raw)) {
+    return raw.toLowerCase().slice(0, 120);
+  }
+  return decodeImportedProductTitle(raw)
     .normalize("NFD")
     .replace(/\p{M}/gu, "")
     .toLowerCase()

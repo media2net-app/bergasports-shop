@@ -65,14 +65,34 @@ export const CATEGORY_META: Record<string, CategoryMeta> = {
     seoDescription: `Scope carbon wielsets met outletvoordeel, met volledige garantie. ${ADVICE_TAIL}`,
   },
   "cycling-shoes": {
-    name: "Nimbl",
-    seoTitle: `Wielrenschoenen kopen: Nimbl & meer | ${SITE_BRAND_NAME}`,
-    seoDescription: `Wielrenschoenen van Nimbl en andere topmerken, met aandacht voor pasvorm en voetstand. ${ADVICE_TAIL}`,
+    name: "Fietsschoenen",
+    seoTitle: `Fietsschoenen kopen: Nimbl & meer | ${SITE_BRAND_NAME}`,
+    seoDescription: `Fietsschoenen van Nimbl en andere topmerken, met aandacht voor pasvorm en voetstand. ${ADVICE_TAIL}`,
   },
   "lafuga-wear": {
-    name: "LaFuga kleding",
-    seoTitle: `LaFuga kleding | ${SITE_BRAND_NAME}`,
+    name: "Kleding",
+    seoTitle: `Fietskleding | ${SITE_BRAND_NAME}`,
     seoDescription: LAFUGA_META_DESCRIPTION,
+  },
+  "skate-bearings": {
+    name: "Lagers",
+    seoTitle: `Skeelerlagers kopen | ${SITE_BRAND_NAME}`,
+    seoDescription: `Keramische en stalen skeelerlagers. ${ADVICE_TAIL}`,
+  },
+  "skate-shoes": {
+    name: "Schoenen",
+    seoTitle: `Skeelerschoenen kopen | ${SITE_BRAND_NAME}`,
+    seoDescription: `Skeelerschoenen en raceboots voor inline speed skating. ${ADVICE_TAIL}`,
+  },
+  "skate-wheels": {
+    name: "Skeelerwielen",
+    seoTitle: `Skeelerwielen kopen | ${SITE_BRAND_NAME}`,
+    seoDescription: `Skeelerwielen voor training en wedstrijd. ${ADVICE_TAIL}`,
+  },
+  "complete-skates": {
+    name: "Complete skeelers",
+    seoTitle: `Complete skeelers kopen | ${SITE_BRAND_NAME}`,
+    seoDescription: `Complete skeelersets, klaar om te rijden. ${ADVICE_TAIL}`,
   },
   glasses: {
     name: "Brillen",
@@ -101,8 +121,8 @@ export const CATEGORY_META: Record<string, CategoryMeta> = {
   },
   "schoenen-kleding": {
     name: "Schoenen & kleding",
-    seoTitle: `Wielrenschoenen & fietskleding | ${SITE_BRAND_NAME}`,
-    seoDescription: `Nimbl wielrenschoenen en LaFuga fietskleding, te passen in Dedemsvaart. ${ADVICE_TAIL}`,
+    seoTitle: `Fietsschoenen & fietskleding | ${SITE_BRAND_NAME}`,
+    seoDescription: `Fietsschoenen en fietskleding, te passen in Dedemsvaart. ${ADVICE_TAIL}`,
   },
 };
 
@@ -114,14 +134,15 @@ const IMPORTED_NAME_TO_NL: Record<string, string> = {
   fietsen: "Fietsen",
   cleats: "Schoenplaatjes",
   schoenplaatjes: "Schoenplaatjes",
-  clothing: "LaFuga kleding",
-  "cycling clothing": "LaFuga kleding",
+  clothing: "Kleding",
+  "cycling clothing": "Kleding",
   "cycling helmets": "Helmen",
   helmets: "Helmen",
   helmen: "Helmen",
-  "cycling shoes": "Nimbl",
-  wielrenschoenen: "Nimbl",
-  nimbl: "Nimbl",
+  "cycling shoes": "Fietsschoenen",
+  wielrenschoenen: "Fietsschoenen",
+  fietsschoenen: "Fietsschoenen",
+  nimbl: "Fietsschoenen",
   glasses: "Brillen",
   brillen: "Brillen",
   gravel: "Gravel",
@@ -139,17 +160,31 @@ const IMPORTED_NAME_TO_NL: Record<string, string> = {
   "scope outlet": "Scope Outlet",
   "speed skates": "Skeelers",
   skeelers: "Skeelers",
+  "skate bearings": "Lagers",
+  "skate-bearings": "Lagers",
+  lagers: "Lagers",
+  skeelerlagers: "Lagers",
+  "skate shoes": "Schoenen",
+  "skate-shoes": "Schoenen",
+  skeelerschoenen: "Schoenen",
+  "skate wheels": "Wielen",
+  "skate-wheels": "Wielen",
+  skeelerwielen: "Skeelerwielen",
+  "complete skates": "Complete skeelers",
+  "complete-skates": "Complete skeelers",
+  "complete skeelers": "Complete skeelers",
   "used bikes": "Tweedehands fietsen",
   tweedehands: "Tweedehands fietsen",
   "tweedehands fietsen": "Tweedehands fietsen",
   wheels: "Wielen",
   wielen: "Wielen",
-  "lafuga wear": "LaFuga kleding",
-  "lafuga fietskleding": "LaFuga kleding",
-  "lafuga kleding": "LaFuga kleding",
-  "lafuga-kleding": "LaFuga kleding",
-  "lafuga-collectie": "LaFuga kleding",
-  lafuga: "LaFuga kleding",
+  "lafuga wear": "Kleding",
+  "lafuga fietskleding": "Kleding",
+  "lafuga kleding": "Kleding",
+  "lafuga-kleding": "Kleding",
+  "lafuga-collectie": "Kleding",
+  lafuga: "Kleding",
+  kleding: "Kleding",
 };
 
 /** Originele Woo-namen per canonieke slug — nodig om filters te matchen. */
@@ -160,12 +195,16 @@ const WC_IMPORTED_NAMES: Record<string, string[]> = {
   "gravel-bike": ["Gravel bike", "Gravel"],
   mtb: ["Mtb", "MTB"],
   "speed-skates": ["Speed skates", "Skeelers"],
+  "skate-bearings": ["Skate bearings", "Lagers", "Skeelerlagers"],
+  "skate-shoes": ["Skate shoes", "Schoenen", "Skeelerschoenen"],
+  "skate-wheels": ["Skate wheels", "Skeelerwielen"],
+  "complete-skates": ["Complete skates", "Complete skeelers"],
   "used-bikes": ["Used bikes", "Tweedehands fietsen"],
   wheels: ["Wheels", "Wielen"],
   "scope-outlet": ["Scope outlet", "Scope Outlet"],
-  "cycling-shoes": ["Cycling shoes", "Wielrenschoenen", "Nimbl"],
-  "lafuga-wear": ["Cycling clothing", "LaFuga", "LaFuga fietskleding", "LaFuga kleding", "LaFuga custom kleding"],
-  "schoenen-kleding": ["Schoenen & kleding", "Cycling shoes", "Cycling clothing", "Nimbl", "LaFuga"],
+  "cycling-shoes": ["Cycling shoes", "Wielrenschoenen", "Fietsschoenen", "Nimbl"],
+  "lafuga-wear": ["Cycling clothing", "LaFuga", "LaFuga fietskleding", "LaFuga kleding", "Kleding"],
+  "schoenen-kleding": ["Schoenen & kleding", "Cycling shoes", "Cycling clothing", "Fietsschoenen", "Kleding"],
   glasses: ["Glasses", "Brillen"],
   accessories: ["Accessories", "Accessoires"],
   "cycling-helmets": ["Cycling helmets", "Helmen", "Helmets"],
@@ -188,9 +227,41 @@ function metaForSlug(slug: string | null | undefined): CategoryMeta | undefined 
   return CATEGORY_META[raw] ?? CATEGORY_META[toCanonicalWcSlug(raw)];
 }
 
-/** Nederlandse categorienaam, met de geïmporteerde naam als terugval. */
-export function categoryDisplayName(slug: string | null | undefined, fallback = ""): string {
+/** Engelse shop-labels (afgestemd op nav/ui), per canonieke slug. */
+const CATEGORY_NAME_EN: Record<string, string> = {
+  bikes: "Bikes",
+  "road-bike": "Road bikes",
+  gravelbike: "Gravel",
+  "gravel-bike": "Gravel",
+  mtb: "MTB",
+  "speed-skates": "Speed skates",
+  "skate-bearings": "Bearings",
+  "skate-shoes": "Skate shoes",
+  "skate-wheels": "Skate wheels",
+  "complete-skates": "Complete skates",
+  "used-bikes": "Used bikes",
+  wheels: "Wheels",
+  "scope-outlet": "Scope Outlet",
+  "cycling-shoes": "Cycling shoes",
+  "lafuga-wear": "Apparel",
+  glasses: "Glasses",
+  accessories: "Accessories",
+  "cycling-helmets": "Helmets",
+  cleats: "Cleats",
+  "group-sets": "Groupsets",
+  "schoenen-kleding": "Shoes & apparel",
+};
+
+/** Categorienaam voor de actieve locale (NL default; EN via vaste labels of Woo-alias). */
+export function categoryDisplayName(
+  slug: string | null | undefined,
+  fallback = "",
+  locale: string = "nl",
+): string {
   const cleaned = stripCategoryNamePrefix(fallback);
+  if (locale === "en") {
+    return englishLabelFromImportedName(slug, cleaned);
+  }
   const meta = metaForSlug(slug);
   if (meta) return meta.name;
   return dutchLabelFromImportedName(cleaned);
@@ -201,6 +272,35 @@ export function dutchLabelFromImportedName(name: string): string {
   const cleaned = stripCategoryNamePrefix(name);
   if (!cleaned) return cleaned;
   return IMPORTED_NAME_TO_NL[normalizeLabelKey(cleaned)] ?? cleaned;
+}
+
+/** Map slug/naam naar EN shop-label (nav-consistent). */
+export function englishLabelFromImportedName(slug: string | null | undefined, fallback = ""): string {
+  const cleaned = stripCategoryNamePrefix(fallback);
+  if (slug) {
+    const raw = slug.trim().toLowerCase();
+    const canonical = toCanonicalWcSlug(raw);
+    const fromMeta = CATEGORY_NAME_EN[raw] ?? CATEGORY_NAME_EN[canonical];
+    if (fromMeta) return fromMeta;
+    const aliases = WC_IMPORTED_NAMES[canonical];
+    if (aliases?.[0]) return aliases[0];
+  }
+  if (cleaned) {
+    const dutch = dutchLabelFromImportedName(cleaned);
+    for (const [s, enName] of Object.entries(CATEGORY_NAME_EN)) {
+      if (CATEGORY_META[s]?.name === dutch || CATEGORY_META[s]?.name === cleaned) {
+        return enName;
+      }
+    }
+    const key = normalizeLabelKey(cleaned);
+    const aliasesHit = Object.entries(WC_IMPORTED_NAMES).find(([, aliases]) =>
+      aliases.some((a) => normalizeLabelKey(a) === key || a === dutch),
+    );
+    if (aliasesHit) {
+      return CATEGORY_NAME_EN[aliasesHit[0]] ?? aliasesHit[1][0];
+    }
+  }
+  return cleaned;
 }
 
 /**

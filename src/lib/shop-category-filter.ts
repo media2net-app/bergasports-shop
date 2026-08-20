@@ -159,6 +159,7 @@ export type ProductShopCategoryLink = {
 export function resolveProductShopCategory(
   product: { category?: string; wcCategories?: { slug: string }[] },
   categoryTree: RalexCategoryNode[],
+  locale: string = "nl",
 ): ProductShopCategoryLink | null {
   const flat = flattenRalexCategoryTree(categoryTree);
   const byId = new Map(flat.map((node) => [node.id, node]));
@@ -206,7 +207,7 @@ export function resolveProductShopCategory(
 
   return {
     slug: best.slug,
-    label: formatRalexCategoryName(best.name, best.slug),
+    label: formatRalexCategoryName(best.name, best.slug, locale),
     href: shopCategoryPath(best.slug),
   };
 }

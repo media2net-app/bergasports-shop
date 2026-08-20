@@ -119,6 +119,38 @@
       "link": "/speed-skates"
     },
     {
+      "id": 100000,
+      "name": "Complete skeelers",
+      "slug": "complete-skates",
+      "parent": 66,
+      "count": 2,
+      "link": "/complete-skates"
+    },
+    {
+      "id": 100001,
+      "name": "Schoenen",
+      "slug": "skate-shoes",
+      "parent": 66,
+      "count": 3,
+      "link": "/skate-shoes"
+    },
+    {
+      "id": 100002,
+      "name": "Skeelerwielen",
+      "slug": "skate-wheels",
+      "parent": 66,
+      "count": 5,
+      "link": "/skate-wheels"
+    },
+    {
+      "id": 100003,
+      "name": "Lagers",
+      "slug": "skate-bearings",
+      "parent": 66,
+      "count": 1,
+      "link": "/skate-bearings"
+    },
+    {
       "id": 204,
       "name": "Used bikes",
       "slug": "used-bikes",

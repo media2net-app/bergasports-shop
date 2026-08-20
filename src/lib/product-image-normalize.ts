@@ -1,7 +1,7 @@
 import "server-only";
 
 import { formatOpenAiImageError } from "@/lib/ai-image-openai";
-import { getOpenAiApiKey } from "@/lib/openai-admin-status";
+import { formatMissingOpenAiKeyError, getOpenAiApiKey } from "@/lib/openai-admin-status";
 import {
   buildProductImageNormalizePrompt,
   resolveProductImageNormalizeRule,
@@ -107,9 +107,7 @@ export async function normalizeProductImage(
 ): Promise<NormalizeProductImageResult> {
   const key = await getOpenAiApiKey();
   if (!key) {
-    throw new Error(
-      "OPENAI_API_KEY ontbreekt in site_settings én env. Ga naar Admin → Instellingen → OpenAI, plak je sk-… key, klik Opslaan, en probeer opnieuw. (ChatGPT in de browser telt niet — dit is de OpenAI API-key.)",
-    );
+    throw new Error(await formatMissingOpenAiKeyError());
   }
 
   const rule = resolveProductImageNormalizeRule(input.product);

@@ -1,14 +1,32 @@
 import "server-only";
 
-import { CONTENT_PHOTOS } from "@/lib/content-photos";
-import type { InstagramConnectionStatus, InstagramFeedCache, InstagramPreviewPost } from "@/lib/instagram-types";
+import type {
+  InstagramConnectionStatus,
+  InstagramFeedCache,
+  InstagramFeedSource,
+  InstagramPreviewPost,
+} from "@/lib/instagram-types";
+import {
+  INSTAGRAM_POST_LIMIT,
+  instagramUsernameFromUrl,
+  parseInstagramPostsJson,
+} from "@/lib/instagram-shared";
 import { getPrisma } from "@/lib/prisma";
 import { INSTAGRAM_HANDLE, INSTAGRAM_URL as DEFAULT_INSTAGRAM_URL } from "@/lib/site-content";
 import { getRuntimeSetting } from "@/lib/site-settings-db";
 
 export type { InstagramConnectionStatus, InstagramFeedCache, InstagramPreviewPost };
+export {
+  draftsFromInstagramPostsJson,
+  INSTAGRAM_POST_LIMIT,
+  instagramUsernameFromUrl,
+  isInstagramPostUrl,
+  parseInstagramPostsJson,
+  serializeInstagramPosts,
+} from "@/lib/instagram-shared";
 
 const FEED_CACHE_KEY = "INSTAGRAM_FEED_CACHE";
+const POSTS_SETTING_KEY = "INSTAGRAM_POSTS_JSON";
 const FEED_TTL_MS = 60 * 60 * 1000;
 const MEDIA_FIELDS = "id,caption,media_type,media_url,permalink,thumbnail_url,timestamp,username";
 
@@ -18,13 +36,8 @@ function normalizeProfileUrl(raw: string): string {
 }
 
 export function instagramHandleFromUrl(url: string): string {
-  try {
-    const path = new URL(url).pathname.replace(/\//g, "");
-    if (path) return `@${path}`;
-  } catch {
-    // ignore
-  }
-  return INSTAGRAM_HANDLE;
+  const username = instagramUsernameFromUrl(url, INSTAGRAM_HANDLE.replace(/^@/, ""));
+  return `@${username}`;
 }
 
 export async function getInstagramPublicUrl(): Promise<string> {
@@ -37,17 +50,7 @@ export async function getInstagramHandle(): Promise<string> {
   return instagramHandleFromUrl(url);
 }
 
-function fallbackPosts(profileUrl: string): InstagramPreviewPost[] {
-  return Object.values(CONTENT_PHOTOS).map((photo, index) => ({
-    id: `shop-${index}`,
-    imageUrl: photo.src,
-    permalink: profileUrl,
-    alt: photo.alt,
-    caption: photo.alt,
-  }));
-}
-
-function asPost(
+function asGraphPost(
   item: {
     id?: string;
     caption?: string;
@@ -72,6 +75,14 @@ function asPost(
   };
 }
 
+function isLiveFeedCache(parsed: InstagramFeedCache): boolean {
+  // Ignore legacy "fallback" shop-photo caches — those are not Instagram posts.
+  if (parsed.source !== "live") return false;
+  if (!Array.isArray(parsed.posts) || !parsed.posts.length) return false;
+  if (!parsed.fetchedAt) return false;
+  return parsed.posts.every((post) => Boolean(post.imageUrl?.trim()) && !String(post.id).startsWith("shop-"));
+}
+
 async function readFeedCache(): Promise<InstagramFeedCache | null> {
   const prisma = getPrisma();
   if (!prisma) return null;
@@ -79,7 +90,7 @@ async function readFeedCache(): Promise<InstagramFeedCache | null> {
     const row = await prisma.siteSetting.findUnique({ where: { key: FEED_CACHE_KEY } });
     if (!row?.value) return null;
     const parsed = JSON.parse(row.value) as InstagramFeedCache;
-    if (!Array.isArray(parsed.posts) || !parsed.fetchedAt) return null;
+    if (!isLiveFeedCache(parsed)) return null;
     return parsed;
   } catch {
     return null;
@@ -146,7 +157,7 @@ async function fetchGraphMedia(path: string, token: string, limit: number): Prom
 }
 
 export async function fetchInstagramLiveFeed(
-  limit = 6,
+  limit = INSTAGRAM_POST_LIMIT,
 ): Promise<{ posts: InstagramPreviewPost[]; username?: string; error?: string }> {
   const [token, userId, profileUrl] = await Promise.all([
     getRuntimeSetting("INSTAGRAM_ACCESS_TOKEN"),
@@ -170,7 +181,7 @@ export async function fetchInstagramLiveFeed(
           continue;
         }
         const posts = (data.data ?? [])
-          .map((item, index) => asPost(item, profileUrl, index))
+          .map((item, index) => asGraphPost(item, profileUrl, index))
           .filter((post): post is InstagramPreviewPost => Boolean(post))
           .slice(0, limit);
         if (posts.length) {
@@ -192,61 +203,91 @@ export async function fetchInstagramLiveFeed(
   return { posts: [], error: lastError || "Geen berichten ontvangen van Instagram" };
 }
 
-export async function getInstagramPreviewPosts(limit = 6): Promise<InstagramPreviewPost[]> {
+async function loadCuratedPosts(profileUrl: string): Promise<InstagramPreviewPost[]> {
+  const raw = await getRuntimeSetting(POSTS_SETTING_KEY);
+  return parseInstagramPostsJson(raw, profileUrl);
+}
+
+/**
+ * Latest posts for the homepage grid (native images, never an iframe).
+ * Priority: fresh Graph cache → live Graph (optional token) → curated JSON → stale cache.
+ * Empty result → HomeInstagramSection shows a short empty state with profile link.
+ */
+export async function getInstagramPreviewPosts(limit = INSTAGRAM_POST_LIMIT): Promise<InstagramPreviewPost[]> {
   const profileUrl = await getInstagramPublicUrl();
   const cache = await readFeedCache();
-  const cacheAge = cache ? Date.now() - new Date(cache.fetchedAt).getTime() : Number.POSITIVE_INFINITY;
+  const cacheAge = cache?.fetchedAt
+    ? Date.now() - new Date(cache.fetchedAt).getTime()
+    : Number.POSITIVE_INFINITY;
+
   if (cache?.posts.length && cache.source === "live" && cacheAge < FEED_TTL_MS) {
     return cache.posts.slice(0, limit);
   }
 
-  const live = await fetchInstagramLiveFeed(limit);
-  if (live.posts.length) {
-    await writeFeedCache({
-      fetchedAt: new Date().toISOString(),
-      username: live.username,
-      source: "live",
-      posts: live.posts,
-    });
-    return live.posts.slice(0, limit);
+  const token = await getRuntimeSetting("INSTAGRAM_ACCESS_TOKEN");
+  if (token) {
+    const live = await fetchInstagramLiveFeed(limit);
+    if (live.posts.length) {
+      await writeFeedCache({
+        fetchedAt: new Date().toISOString(),
+        username: live.username,
+        source: "live",
+        posts: live.posts,
+      });
+      return live.posts.slice(0, limit);
+    }
   }
 
-  if (cache?.posts.length) {
-    return cache.posts.slice(0, limit);
-  }
+  const curated = await loadCuratedPosts(profileUrl);
+  if (curated.length) return curated.slice(0, limit);
 
-  const fallback = fallbackPosts(profileUrl).slice(0, limit);
-  await writeFeedCache({
-    fetchedAt: new Date().toISOString(),
-    source: "fallback",
-    posts: fallback,
-  });
-  return fallback;
+  if (cache?.posts.length) return cache.posts.slice(0, limit);
+
+  return [];
 }
 
 export async function getInstagramConnectionStatus(): Promise<InstagramConnectionStatus> {
-  const [token, profileUrl, cache] = await Promise.all([
+  const [token, profileUrl, cache, curated] = await Promise.all([
     getRuntimeSetting("INSTAGRAM_ACCESS_TOKEN"),
     getInstagramPublicUrl(),
     readFeedCache(),
+    getRuntimeSetting(POSTS_SETTING_KEY).then((raw) => parseInstagramPostsJson(raw, "")),
   ]);
-  const handle = cache?.username ? `@${cache.username}` : instagramHandleFromUrl(profileUrl);
-  const posts = cache?.posts.length ? cache.posts.slice(0, 6) : fallbackPosts(profileUrl).slice(0, 6);
+
+  let source: InstagramFeedSource = "none";
+  let posts: InstagramPreviewPost[] = [];
+  let fetchedAt = cache?.fetchedAt;
+  let username = cache?.username;
+
+  if (cache?.posts.length && cache.source === "live") {
+    source = "live";
+    posts = cache.posts.slice(0, INSTAGRAM_POST_LIMIT);
+  } else if (curated.length) {
+    source = "curated";
+    posts = curated.slice(0, INSTAGRAM_POST_LIMIT);
+  } else if (cache?.posts.length) {
+    source = "cache";
+    posts = cache.posts.slice(0, INSTAGRAM_POST_LIMIT);
+  }
+
+  const handle = username ? `@${username}` : instagramHandleFromUrl(profileUrl);
+
   return {
     configured: Boolean(token),
     profileUrl,
     handle,
-    username: cache?.username,
-    fetchedAt: cache?.fetchedAt,
-    source: cache?.source ?? "none",
-    postCount: cache?.posts.length ?? 0,
+    username,
+    fetchedAt,
+    source,
+    postCount: posts.length,
     posts,
   };
 }
 
-export async function syncInstagramFeed(limit = 6): Promise<InstagramConnectionStatus> {
+export async function syncInstagramFeed(limit = INSTAGRAM_POST_LIMIT): Promise<InstagramConnectionStatus> {
   const profileUrl = await getInstagramPublicUrl();
   const live = await fetchInstagramLiveFeed(limit);
+
   if (live.posts.length) {
     const cache: InstagramFeedCache = {
       fetchedAt: new Date().toISOString(),
@@ -266,20 +307,19 @@ export async function syncInstagramFeed(limit = 6): Promise<InstagramConnectionS
       posts: live.posts,
     };
   }
-  const fallback = fallbackPosts(profileUrl).slice(0, limit);
-  await writeFeedCache({
-    fetchedAt: new Date().toISOString(),
-    source: "fallback",
-    posts: fallback,
-  });
+
+  const curated = await loadCuratedPosts(profileUrl);
+  const cache = await readFeedCache();
+  const posts = curated.length ? curated : cache?.posts.slice(0, limit) ?? [];
+
   return {
     configured: Boolean(await getRuntimeSetting("INSTAGRAM_ACCESS_TOKEN")),
     profileUrl,
     handle: instagramHandleFromUrl(profileUrl),
-    fetchedAt: new Date().toISOString(),
-    source: "fallback",
-    postCount: fallback.length,
-    posts: fallback,
+    fetchedAt: cache?.fetchedAt ?? new Date().toISOString(),
+    source: curated.length ? "curated" : posts.length ? "cache" : "none",
+    postCount: posts.length,
+    posts,
     error: live.error,
   };
 }

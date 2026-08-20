@@ -196,6 +196,7 @@ export default async function ShopListingPage({ pathCategorySlug, searchParams }
           productsInCategory: catResolved.filteredProducts,
           customIntro: seoOverrides?.seoIntro,
           customFooterHtml: seoOverrides?.seoFooterHtml,
+          locale,
         })
       : null;
 

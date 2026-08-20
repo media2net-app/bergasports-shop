@@ -5,7 +5,7 @@ import { useState, type FormEvent } from "react";
 import AdminMoneyInput from "@/components/admin/AdminMoneyInput";
 import { formatMoneyInput } from "@/lib/money-input";
 import type { AdminSettingFieldView } from "@/lib/site-settings-defs";
-import { getSettingGroup } from "@/lib/site-settings-defs";
+import { getSettingGroup, isMaskedSecretInput } from "@/lib/site-settings-defs";
 
 type AdminSettingsFormProps = {
   groupId: string;
@@ -27,12 +27,14 @@ export default function AdminSettingsForm({ groupId, initialFields }: AdminSetti
   const [drafts, setDrafts] = useState<Record<string, string>>(() => {
     const next: Record<string, string> = {};
     for (const f of initialFields) {
+      // Secrets always start blank so we never re-submit a mask and wipe/skip silently.
       const raw = f.secret ? "" : f.displayValue;
       next[f.key] = fieldIsMoney(f) ? formatMoneyInput(raw, { allowEmpty: true }) : raw;
     }
     return next;
   });
   const [saving, setSaving] = useState(false);
+  const [testing, setTesting] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
@@ -51,8 +53,27 @@ export default function AdminSettingsForm({ groupId, initialFields }: AdminSetti
     setSaving(true);
     const values: Record<string, string> = {};
     for (const f of fields) {
-      values[f.key] = drafts[f.key] ?? "";
+      const draft = drafts[f.key] ?? "";
+      if (f.secret) {
+        // Never send blank or masked placeholders — server keeps the existing secret.
+        if (!draft.trim() || isMaskedSecretInput(draft)) {
+          continue;
+        }
+        values[f.key] = draft.trim();
+        continue;
+      }
+      values[f.key] = draft;
     }
+
+    const openAiDraft = drafts.OPENAI_API_KEY?.trim() ?? "";
+    if (groupId === "openai" && openAiDraft && isMaskedSecretInput(openAiDraft)) {
+      setError(
+        "Plak de echte sk-… key, niet het gemaskeerde ••••-voorbeeld. Leeg laten behoudt de huidige key.",
+      );
+      setSaving(false);
+      return;
+    }
+
     try {
       const res = await fetch("/api/admin/settings", {
         method: "PATCH",
@@ -64,6 +85,7 @@ export default function AdminSettingsForm({ groupId, initialFields }: AdminSetti
         error?: string;
         saved?: string[];
         cleared?: string[];
+        skipped?: { key: string; reason: string }[];
         fields?: AdminSettingFieldView[];
       };
       if (!res.ok || !data.ok) {
@@ -87,15 +109,32 @@ export default function AdminSettingsForm({ groupId, initialFields }: AdminSetti
       }
       const n = data.saved?.length ?? 0;
       const cleared = data.cleared?.length ?? 0;
-      if (n > 0) {
-        const openAiReady = nextFields.some((f) => f.key === "OPENAI_API_KEY" && f.configured);
+      const openAiReady = nextFields.some((f) => f.key === "OPENAI_API_KEY" && f.configured);
+      const openAiSaved = data.saved?.includes("OPENAI_API_KEY");
+      const openAiSkippedMask = data.skipped?.some(
+        (s) => s.key === "OPENAI_API_KEY" && s.reason === "masked_placeholder",
+      );
+
+      if (groupId === "openai" && openAiDraft && !openAiSaved) {
+        setError(
+          openAiSkippedMask
+            ? "OpenAI-key niet opgeslagen: het veld bevatte een masker (••••). Plak de echte sk-… key."
+            : "OpenAI-key is niet in de database gezet. Plak sk-… en probeer opnieuw.",
+        );
+      } else if (n > 0) {
         setMessage(
           `${n} waarde(n) opgeslagen.${
-            openAiReady ? " OpenAI-key staat klaar voor foto-eendracht / AI-beelden." : ""
+            openAiReady || openAiSaved
+              ? " OpenAI-key staat in de database — klaar voor foto-eendracht / AI-beelden."
+              : ""
           }`,
         );
       } else if (cleared > 0) {
         setMessage(`${cleared} waarde(n) gewist.`);
+      } else if (groupId === "openai" && openAiReady) {
+        setMessage(
+          "Geen wijzigingen — bestaande OpenAI-key behouden. Gebruik “Test OpenAI-verbinding” om te controleren.",
+        );
       } else {
         setMessage(
           "Geen wijzigingen. Voor API-keys: plak de nieuwe sk-… waarde in het veld en klik Opslaan (leeg laten behoudt de oude key).",
@@ -105,6 +144,28 @@ export default function AdminSettingsForm({ groupId, initialFields }: AdminSetti
       setError("Netwerkfout");
     }
     setSaving(false);
+  }
+
+  async function onTestOpenAi() {
+    setError("");
+    setMessage("");
+    setTesting(true);
+    try {
+      const res = await fetch("/api/admin/openai/test", { method: "POST" });
+      const data = (await res.json()) as {
+        ok?: boolean;
+        label?: string;
+        detail?: string;
+      };
+      if (data.ok) {
+        setMessage(`${data.label ?? "OK"}. ${data.detail ?? ""}`.trim());
+      } else {
+        setError(`${data.label ?? "Mislukt"}. ${data.detail ?? "Geen details."}`.trim());
+      }
+    } catch {
+      setError("Netwerkfout bij OpenAI-test.");
+    }
+    setTesting(false);
   }
 
   return (
@@ -142,7 +203,12 @@ export default function AdminSettingsForm({ groupId, initialFields }: AdminSetti
                   {field.label}
                 </label>
                 {field.secret && field.configured ? (
-                  <span className="admin-settings-field-meta">Huidig: {field.displayValue}</span>
+                  <span className="admin-settings-field-meta">
+                    Huidig: {field.displayValue}
+                    {field.source === "database" ? " (database)" : field.source === "env" ? " (env)" : ""}
+                  </span>
+                ) : field.secret ? (
+                  <span className="admin-settings-field-meta">Nog niet opgeslagen</span>
                 ) : null}
               </div>
 
@@ -171,7 +237,9 @@ export default function AdminSettingsForm({ groupId, initialFields }: AdminSetti
                   id={inputId}
                   className="admin-field admin-field--flush"
                   type={field.secret ? "password" : "text"}
-                  autoComplete="off"
+                  autoComplete={field.secret ? "new-password" : "off"}
+                  data-1p-ignore={field.secret ? "true" : undefined}
+                  data-lpignore={field.secret ? "true" : undefined}
                   spellCheck={false}
                   placeholder={placeholder}
                   value={drafts[field.key] ?? ""}
@@ -197,11 +265,22 @@ export default function AdminSettingsForm({ groupId, initialFields }: AdminSetti
       </div>
 
       <footer className="admin-settings-form-foot">
-        <button type="submit" className="admin-btn-primary" disabled={saving}>
+        <button type="submit" className="admin-btn-primary" disabled={saving || testing}>
           {saving ? "Opslaan…" : "Opslaan"}
         </button>
+        {groupId === "openai" ? (
+          <button
+            type="button"
+            className="admin-btn-secondary"
+            disabled={saving || testing}
+            onClick={() => void onTestOpenAi()}
+          >
+            {testing ? "Testen…" : "Test OpenAI-verbinding"}
+          </button>
+        ) : null}
         <p className="admin-muted admin-m-0">
-          Geheimen (API-keys): leeg laten behoudt de huidige waarde.
+          Geheimen (API-keys): leeg laten behoudt de huidige waarde. Een nieuw sk-… plakken + Opslaan
+          schrijft naar de database.
         </p>
       </footer>
     </form>

@@ -1,4 +1,9 @@
-import { hoursForJsWeekday, isShopOpenOnJsWeekday, type OpeningHoursRow } from "@/lib/opening-hours";
+import {
+  hoursForJsWeekday,
+  isShopOpenOnJsWeekday,
+  periodsForOpeningHoursRow,
+  type OpeningHoursRow,
+} from "@/lib/opening-hours";
 
 export type DateTimePickerMode = "date" | "datetime" | "time";
 
@@ -122,8 +127,10 @@ export function appointmentSlotsForDate(
 ): string[] {
   const date = parseYmd(ymd);
   const row = hoursForJsWeekday(hours, date.getDay());
-  if (!row?.opens || !row.closes || row.hours === "Gesloten") return [];
-  let slots = buildTimeSlots(row.opens, row.closes, stepMinutes);
+  if (!row) return [];
+  const periods = periodsForOpeningHoursRow(row);
+  if (periods.length === 0) return [];
+  let slots = periods.flatMap((period) => buildTimeSlots(period.opens, period.closes, stepMinutes));
   if (ymd === todayYmd(now)) {
     const cutoff = now.getHours() * 60 + now.getMinutes() + 30;
     slots = slots.filter((slot) => timeToMinutes(slot) >= cutoff);

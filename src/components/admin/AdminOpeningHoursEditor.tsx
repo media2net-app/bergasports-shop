@@ -36,7 +36,13 @@ export default function AdminOpeningHoursEditor({ initialJson }: AdminOpeningHou
         }
         const next = { ...row, ...patch };
         if (next.opens && next.closes) {
-          next.hours = `${next.opens} – ${next.closes}`;
+          // Preserve multi-slot labels (e.g. koopavond) unless open/close times changed.
+          const multiSlot = row.hours.includes("·");
+          const timesUnchanged =
+            (!patch.opens || patch.opens === row.opens) && (!patch.closes || patch.closes === row.closes);
+          if (!(multiSlot && timesUnchanged)) {
+            next.hours = `${next.opens} – ${next.closes}`;
+          }
         }
         return next;
       }),

@@ -54,6 +54,7 @@ export async function getShopOpeningHours() {
 
 export async function getEmailLogoUrlSetting(): Promise<string> {
   const fromSettings = (await getRuntimeSetting("NEXT_PUBLIC_EMAIL_LOGO_URL")).trim();
+  // Always an absolute public URL suitable for <img> in SMTP e-mail clients.
   return usableEmailLogoUrl(fromSettings) || resolveSiteEmailLogoUrl();
 }
 

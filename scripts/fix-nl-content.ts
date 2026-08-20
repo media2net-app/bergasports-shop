@@ -1,6 +1,7 @@
 /**
  * NL-content opschonen na Engelse Woo/WP-import:
- * - producttitels (maten, GRX, kleuren, cycling shoes, …)
+ * - producttitels → vaste opbouw `{Brand} {Model} – {Type} – {Variant}` (structuur + NL-woorden)
+ * - translations.en.name →zelfde structuur, zonder NL-vertaling
  * - nieuws: Uncategorized/news → Nieuws + bekende Engelse titels vertalen
  *
  *   npx tsx scripts/fix-nl-content.ts
@@ -105,16 +106,39 @@ async function main() {
     for (const row of products) {
       const data = row.data as TrendyolJsonProduct;
       const rawName = row.name || data.name || "";
-      const nextName = decodeImportedProductTitle(rawName);
-      if (!nextName || nextName === rawName) continue;
+      const nextName = decodeImportedProductTitle(rawName, "nl");
+      const enRaw = data.translations?.en?.name;
+      const nextEn =
+        typeof enRaw === "string" && enRaw.trim()
+          ? decodeImportedProductTitle(enRaw, "en")
+          : undefined;
+      const nameChanged = Boolean(nextName && nextName !== rawName);
+      const enChanged = Boolean(nextEn && nextEn !== enRaw);
+      if (!nameChanged && !enChanged) continue;
       productsChanged += 1;
-      console.log(`product ${row.id}: ${rawName.slice(0, 70)} → ${nextName.slice(0, 70)}`);
+      if (nameChanged) {
+        console.log(`product ${row.id}: ${rawName.slice(0, 70)} → ${nextName.slice(0, 70)}`);
+      }
+      if (enChanged && nextEn) {
+        console.log(`product ${row.id} en: ${String(enRaw).slice(0, 70)} → ${nextEn.slice(0, 70)}`);
+      }
       if (dryRun) continue;
+      const nextData: TrendyolJsonProduct = {
+        ...data,
+        name: nameChanged ? nextName : rawName,
+        id: Number(row.id),
+      };
+      if (enChanged && nextEn) {
+        nextData.translations = {
+          ...nextData.translations,
+          en: { ...(nextData.translations?.en ?? {}), name: nextEn },
+        };
+      }
       await prisma.product.update({
         where: { id: row.id },
         data: {
-          name: nextName,
-          data: { ...data, name: nextName, id: Number(row.id) } as Prisma.InputJsonValue,
+          name: nameChanged ? nextName : rawName,
+          data: nextData as Prisma.InputJsonValue,
         },
       });
     }

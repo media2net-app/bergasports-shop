@@ -7,21 +7,33 @@ export type InstagramPreviewPost = {
   mediaType?: string;
 };
 
+export type InstagramPostDraft = {
+  permalink: string;
+  imageUrl: string;
+  caption: string;
+};
+
+export type InstagramFeedSource = "live" | "curated" | "cache" | "none";
+
+export type InstagramFeedStatus = {
+  profileUrl: string;
+  handle: string;
+  postCount: number;
+  posts: InstagramPreviewPost[];
+  /** True when Graph token is set (custom grid can sync live). */
+  configured: boolean;
+  username?: string;
+  fetchedAt?: string;
+  source: InstagramFeedSource;
+  error?: string;
+};
+
+/** @deprecated Use InstagramFeedStatus */
+export type InstagramConnectionStatus = InstagramFeedStatus;
+
 export type InstagramFeedCache = {
   fetchedAt: string;
   username?: string;
-  source: "live" | "fallback";
+  source: "live" | "curated" | "cache";
   posts: InstagramPreviewPost[];
-};
-
-export type InstagramConnectionStatus = {
-  configured: boolean;
-  profileUrl: string;
-  handle: string;
-  username?: string;
-  fetchedAt?: string;
-  source: "live" | "fallback" | "none";
-  postCount: number;
-  posts: InstagramPreviewPost[];
-  error?: string;
 };

@@ -322,7 +322,9 @@ export default function AdminAiImagesPanel() {
   return (
     <div className="admin-ai-wizard">
       {openAiOk === false ? (
-        <div className="admin-banner warn admin-m-0">Add OPENAI_API_KEY in .env.local to enable generation (OpenAI gpt-image-1).</div>
+        <div className="admin-banner warn admin-m-0">
+          Zet OPENAI_API_KEY onder Instellingen → OpenAI (sk-… + Opslaan) om te genereren.
+        </div>
       ) : null}
 
       {/* Step 1 */}

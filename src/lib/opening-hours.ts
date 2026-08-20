@@ -2,6 +2,32 @@ import type { OpeningHoursRow } from "@/lib/site-content";
 
 export type { OpeningHoursRow };
 
+export type OpeningHoursPeriod = { opens: string; closes: string };
+
+const PERIOD_RE = /^(\d{1,2}:\d{2})\s*[–-]\s*(\d{1,2}:\d{2})$/;
+
+/** Parse open slots from `hours` (supports `12:30 – 17:30 · 19:00 – 21:00`) or opens/closes. */
+export function periodsForOpeningHoursRow(row: OpeningHoursRow): OpeningHoursPeriod[] {
+  if (row.hours === "Gesloten" || row.hours === "Closed") {
+    return [];
+  }
+  const fromLabel = row.hours
+    .split("·")
+    .map((part) => part.trim())
+    .map((part) => {
+      const match = part.match(PERIOD_RE);
+      return match ? { opens: match[1], closes: match[2] } : null;
+    })
+    .filter((period): period is OpeningHoursPeriod => Boolean(period));
+  if (fromLabel.length > 0) {
+    return fromLabel;
+  }
+  if (row.opens && row.closes) {
+    return [{ opens: row.opens, closes: row.closes }];
+  }
+  return [];
+}
+
 export function parseOpeningHoursJson(raw: string, fallback: OpeningHoursRow[]): OpeningHoursRow[] {
   const trimmed = raw.trim();
   if (!trimmed) {
@@ -26,6 +52,12 @@ export function parseOpeningHoursJson(raw: string, fallback: OpeningHoursRow[]):
       if (hours !== "Gesloten" && opens && closes) {
         next.opens = opens;
         next.closes = closes;
+      } else if (hours !== "Gesloten") {
+        const periods = periodsForOpeningHoursRow({ ...next, opens, closes });
+        if (periods[0]) {
+          next.opens = periods[0].opens;
+          next.closes = periods[0].closes;
+        }
       }
       return next;
     });
@@ -54,5 +86,5 @@ export function hoursForJsWeekday(hours: OpeningHoursRow[], jsDay: number): Open
 
 export function isShopOpenOnJsWeekday(hours: OpeningHoursRow[], jsDay: number): boolean {
   const row = hoursForJsWeekday(hours, jsDay);
-  return Boolean(row && row.hours !== "Gesloten" && row.opens && row.closes);
+  return Boolean(row && periodsForOpeningHoursRow(row).length > 0);
 }

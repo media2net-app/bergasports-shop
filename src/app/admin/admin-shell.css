@@ -3454,6 +3454,26 @@ select.admin-field:focus-visible {
   align-items: center;
 }
 
+.admin-marketing-perf-head {
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.admin-marketing-perf-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  align-items: center;
+}
+
+.admin-marketing-perf-connections {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.85rem;
+  align-items: center;
+}
+
 .admin-marketing-columns {
   display: grid;
   grid-template-columns: 1fr;
