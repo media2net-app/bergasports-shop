@@ -71,6 +71,12 @@ export function paymentStatusLabel(status: string | null | undefined): string {
   return PAYMENT_STATUS_LABEL[status] ?? status;
 }
 
+/** True for bare `mollie` and method-specific ids like `mollie:ideal`. */
+export function isMolliePaymentMethod(method: string | null | undefined): boolean {
+  const m = method?.trim().toLowerCase() ?? "";
+  return m === "mollie" || m.startsWith("mollie:");
+}
+
 export function paymentMethodLabel(method: string): string {
   if (method === "cash_on_delivery") return "Rembours";
   if (method === "mollie") return "Online (Mollie)";

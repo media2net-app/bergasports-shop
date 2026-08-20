@@ -3,15 +3,19 @@ import {
   type RalexCategoryNode,
 } from "@/lib/ralex-categories";
 
-/** Virtueel winkel-ouder: Fietsschoenen + Kleding, geen Woo-categorie. */
+/**
+ * Legacy virtueel ouder (pre-split). Blijft voor redirects / image-config;
+ * niet meer in de publieke boom.
+ */
 export const SHOES_CLOTHING_NAV_SLUG = "schoenen-kleding";
-const SHOES_CLOTHING_NAV_ID = -9001;
 
+/** Publieke top-order: Fietsen · Skeelers · Schoenen · Kleding · Wielen · Accessoires */
 const NAV_ROOT_ORDER = [
   "bikes",
   "speed-skates",
+  "cycling-shoes",
+  "lafuga-wear",
   "wheels",
-  SHOES_CLOTHING_NAV_SLUG,
   "accessories",
 ];
 
@@ -20,15 +24,12 @@ const CHILD_ORDER: Record<string, string[]> = {
   "speed-skates": ["complete-skates", "skate-shoes", "skate-wheels", "skate-bearings"],
   wheels: ["scope-outlet"],
   accessories: ["cycling-helmets", "glasses", "group-sets", "cleats"],
-  [SHOES_CLOTHING_NAV_SLUG]: ["cycling-shoes", "lafuga-wear"],
 };
 
-/** Woo top-level → gewenste NL-ouder (slug). */
+/** Woo top-level → gewenste NL-ouder (slug). Schoenen/Kleding blijven topniveau. */
 const REPARENT: Record<string, string> = {
   glasses: "accessories",
   "scope-outlet": "wheels",
-  "cycling-shoes": SHOES_CLOTHING_NAV_SLUG,
-  "lafuga-wear": SHOES_CLOTHING_NAV_SLUG,
   "used-bikes": "bikes",
 };
 
@@ -93,25 +94,19 @@ export function toPublicShopNavTree(tree: RalexCategoryNode[]): RalexCategoryNod
     bySlug.set(slugKey(node.slug), { ...node, children: [] });
   }
 
-  const shoes = bySlug.get("cycling-shoes");
-  const clothing = bySlug.get("lafuga-wear");
-  if ((shoes || clothing) && !bySlug.has(SHOES_CLOTHING_NAV_SLUG)) {
-    bySlug.set(SHOES_CLOTHING_NAV_SLUG, {
-      id: SHOES_CLOTHING_NAV_ID,
-      name: "Schoenen & kleding",
-      slug: SHOES_CLOTHING_NAV_SLUG,
-      parent: 0,
-      count: (shoes?.count ?? 0) + (clothing?.count ?? 0),
-      link: `/${SHOES_CLOTHING_NAV_SLUG}`,
-      children: [],
-    });
-  }
-
   for (const [childSlug, parentSlug] of Object.entries(REPARENT)) {
     const child = bySlug.get(childSlug);
     const parent = bySlug.get(parentSlug);
     if (child && parent) {
       child.parent = parent.id;
+    }
+  }
+
+  // Schoenen + Kleding altijd topniveau (ook als Woo ze onder iets anders had).
+  for (const slug of ["cycling-shoes", "lafuga-wear"] as const) {
+    const node = bySlug.get(slug);
+    if (node) {
+      node.parent = 0;
     }
   }
 

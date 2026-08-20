@@ -58,7 +58,7 @@
       "id": 63,
       "name": "Glasses",
       "slug": "glasses",
-      "parent": 0,
+      "parent": 171,
       "count": 9,
       "link": "/glasses"
     },
@@ -106,7 +106,7 @@
       "id": 216,
       "name": "Scope outlet",
       "slug": "scope-outlet",
-      "parent": 0,
+      "parent": 62,
       "count": 29,
       "link": "/scope-outlet"
     },
@@ -154,7 +154,7 @@
       "id": 204,
       "name": "Used bikes",
       "slug": "used-bikes",
-      "parent": 0,
+      "parent": 72,
       "count": 0,
       "link": "/used-bikes"
     },

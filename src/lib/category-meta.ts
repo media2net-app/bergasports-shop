@@ -71,7 +71,7 @@ export const CATEGORY_META: Record<string, CategoryMeta> = {
   },
   "lafuga-wear": {
     name: "Kleding",
-    seoTitle: `Fietskleding | ${SITE_BRAND_NAME}`,
+    seoTitle: `Fietskleding kopen | ${SITE_BRAND_NAME}`,
     seoDescription: LAFUGA_META_DESCRIPTION,
   },
   "skate-bearings": {
@@ -182,9 +182,9 @@ const IMPORTED_NAME_TO_NL: Record<string, string> = {
   "lafuga fietskleding": "Kleding",
   "lafuga kleding": "Kleding",
   "lafuga-kleding": "Kleding",
+  kleding: "Kleding",
   "lafuga-collectie": "Kleding",
   lafuga: "Kleding",
-  kleding: "Kleding",
 };
 
 /** Originele Woo-namen per canonieke slug — nodig om filters te matchen. */

@@ -12,9 +12,9 @@ export default function HomeShopCategories() {
         Webshop
       </h2>
       <p className="mt-1 text-sm text-[var(--foreground)]/70">
-        Fietsen, wielen, schoenen, kleding en accessoires.
+        Fietsen, skeelers, schoenen, kleding, wielen en accessoires.
       </p>
-      <ul className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <ul className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
         {WEBSHOP_MENU_LINKS.map((item) => (
           <li key={item.href}>
             <LocalizedLink

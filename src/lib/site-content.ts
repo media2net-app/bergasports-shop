@@ -79,23 +79,25 @@ export const BERGASPORTS_CATEGORY_PATHS = {
   wheels: "/wielen",
   scopeOutlet: "/scope-outlet",
   cyclingShoes: "/wielrenschoenen",
+  /** @deprecated Gebruik cyclingShoes / lafugaWear — 301 via seo-redirects. */
   shoesClothing: "/schoenen-kleding",
-  lafugaWear: "/lafuga-kleding",
+  lafugaWear: "/kleding",
   lafugaCustom: "/lafuga",
   glasses: "/brillen",
   accessories: "/accessoires",
   cyclingHelmets: "/helmen",
   cleats: "/schoenplaatjes",
   groupSets: "/groepsets",
+  usedBikes: "/tweedehands",
 } as const;
 
-/** Flat links for search / mobile quick list. */
+/** Flat links for search / mobile quick list — 6 toppen CTA/SEO. */
 export const WEBSHOP_MENU_LINKS: ShopMenuLink[] = [
   { href: BERGASPORTS_CATEGORY_PATHS.bikes, label: "Fietsen" },
   { href: BERGASPORTS_CATEGORY_PATHS.speedSkates, label: "Skeelers" },
-  { href: BERGASPORTS_CATEGORY_PATHS.wheels, label: "Wielen" },
-  { href: BERGASPORTS_CATEGORY_PATHS.cyclingShoes, label: "Fietsschoenen" },
+  { href: BERGASPORTS_CATEGORY_PATHS.cyclingShoes, label: "Schoenen" },
   { href: BERGASPORTS_CATEGORY_PATHS.lafugaWear, label: "Kleding" },
+  { href: BERGASPORTS_CATEGORY_PATHS.wheels, label: "Wielen" },
   { href: BERGASPORTS_CATEGORY_PATHS.accessories, label: "Accessoires" },
 ];
 
@@ -128,19 +130,21 @@ export const WEBSHOP_MEGA_MENU = {
       ],
     },
     {
+      title: "Schoenen",
+      href: BERGASPORTS_CATEGORY_PATHS.cyclingShoes,
+      links: [],
+    },
+    {
+      title: "Kleding",
+      href: BERGASPORTS_CATEGORY_PATHS.lafugaWear,
+      links: [],
+    },
+    {
       title: "Wielen",
       href: BERGASPORTS_CATEGORY_PATHS.wheels,
       links: [
-        { href: BERGASPORTS_CATEGORY_PATHS.wheels, label: "Wielen" },
+        { href: BERGASPORTS_CATEGORY_PATHS.wheels, label: "Wielsets" },
         { href: BERGASPORTS_CATEGORY_PATHS.scopeOutlet, label: "Scope Outlet" },
-      ],
-    },
-    {
-      title: "Schoenen & kleding",
-      href: BERGASPORTS_CATEGORY_PATHS.shoesClothing,
-      links: [
-        { href: BERGASPORTS_CATEGORY_PATHS.cyclingShoes, label: "Fietsschoenen" },
-        { href: BERGASPORTS_CATEGORY_PATHS.lafugaWear, label: "Kleding" },
       ],
     },
     {
@@ -154,14 +158,6 @@ export const WEBSHOP_MEGA_MENU = {
       ],
     },
   ] satisfies ShopMegaMenuColumn[],
-  promo: {
-    title: "Persoonlijk advies in Dedemsvaart",
-    text: "Van racefiets tot wielrenschoenen — met persoonlijk advies helpen we je de juiste keuze te maken.",
-    cta: "Plan een afspraak",
-    ctaHref: "/afspraak#formulier",
-    shopCta: "Bekijk alle producten",
-    shopHref: "/shop",
-  },
 } as const;
 
 /** Alle categorie-URL's uit het webshop-menu (mega + mobiel). */
@@ -266,19 +262,19 @@ export const HOME_PILLARS = [
     href: BERGASPORTS_CATEGORY_PATHS.bikes,
   },
   {
-    title: "Wielen",
-    text: "De juiste wielset voor jouw fiets en rijstijl.",
-    href: BERGASPORTS_CATEGORY_PATHS.wheels,
+    title: "Skeelers",
+    text: "Complete skeelers, schoenen, wielen en lagers — advies van topsport.",
+    href: BERGASPORTS_CATEGORY_PATHS.speedSkates,
   },
   {
-    title: "Schoenen & kleding",
-    text: "Hoogwaardig materiaal voor training en wedstrijden.",
-    href: BERGASPORTS_CATEGORY_PATHS.shoesClothing,
+    title: "Schoenen",
+    text: "Fietsschoenen van Nimbl en meer — te passen in Dedemsvaart.",
+    href: BERGASPORTS_CATEGORY_PATHS.cyclingShoes,
   },
   {
-    title: "Accessoires",
-    text: "De details die het verschil maken.",
-    href: BERGASPORTS_CATEGORY_PATHS.accessories,
+    title: "Kleding",
+    text: "LaFuga shopcollectie — en custom kits via /lafuga.",
+    href: BERGASPORTS_CATEGORY_PATHS.lafugaWear,
   },
 ] as const;
 

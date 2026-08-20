@@ -48,6 +48,8 @@ const STRINGS = {
     gravel: "Gravel",
     mtb: "MTB",
     skates: "Skeelers",
+    shoes: "Schoenen",
+    clothing: "Kleding",
     shoesClothing: "Schoenen & kleding",
     accessories: "Accessoires",
     helmets: "Helmen",
@@ -101,9 +103,6 @@ const STRINGS = {
     planRoute: "Plan je route",
     callPhone: (phone: string) => `Bel ${phone}`,
     viewProducts: "Bekijk alle producten",
-    personalAdvice: "Persoonlijk advies in Dedemsvaart",
-    megaPromoText:
-      "Van racefiets tot wielrenschoenen — met persoonlijk advies helpen we je de juiste keuze te maken.",
     newBadge: "NIEUW",
     view: "Bekijken",
     workshopAdvice: "Werkplaats & advies",
@@ -455,6 +454,8 @@ const STRINGS = {
     gravel: "Gravel",
     mtb: "MTB",
     skates: "Speed skates",
+    shoes: "Shoes",
+    clothing: "Apparel",
     shoesClothing: "Shoes & apparel",
     accessories: "Accessories",
     helmets: "Helmets",
@@ -508,8 +509,6 @@ const STRINGS = {
     planRoute: "Get directions",
     callPhone: (phone: string) => `Call ${phone}`,
     viewProducts: "View all products",
-    personalAdvice: "Personal advice in Dedemsvaart",
-    megaPromoText: "From road bikes to cycling shoes — personal advice to help you choose the right setup.",
     newBadge: "NEW",
     view: "View",
     workshopAdvice: "Workshop & advice",
@@ -911,19 +910,21 @@ export function localizedMegaMenu(locale: string): typeof WEBSHOP_MEGA_MENU {
         ],
       },
       {
+        title: t.shoes,
+        href: BERGASPORTS_CATEGORY_PATHS.cyclingShoes,
+        links: [],
+      },
+      {
+        title: t.clothing,
+        href: BERGASPORTS_CATEGORY_PATHS.lafugaWear,
+        links: [],
+      },
+      {
         title: t.wheels,
         href: BERGASPORTS_CATEGORY_PATHS.wheels,
         links: [
-          { href: BERGASPORTS_CATEGORY_PATHS.wheels, label: t.wheels },
+          { href: BERGASPORTS_CATEGORY_PATHS.wheels, label: "Wheelsets" },
           { href: BERGASPORTS_CATEGORY_PATHS.scopeOutlet, label: "Scope Outlet" },
-        ],
-      },
-      {
-        title: t.shoesClothing,
-        href: BERGASPORTS_CATEGORY_PATHS.shoesClothing,
-        links: [
-          { href: BERGASPORTS_CATEGORY_PATHS.cyclingShoes, label: "Cycling shoes" },
-          { href: BERGASPORTS_CATEGORY_PATHS.lafugaWear, label: "Apparel" },
         ],
       },
       {
@@ -937,14 +938,6 @@ export function localizedMegaMenu(locale: string): typeof WEBSHOP_MEGA_MENU {
         ],
       },
     ] satisfies ShopMegaMenuColumn[],
-    promo: {
-      title: t.personalAdvice,
-      text: t.megaPromoText,
-      cta: t.planAppointment,
-      ctaHref: "/afspraak#formulier",
-      shopCta: t.viewProducts,
-      shopHref: "/shop",
-    },
   };
 }
 
@@ -1014,13 +1007,21 @@ export function localizedHomePillars(locale: string) {
   if (toUiLocale(locale) === "nl") return HOME_PILLARS;
   return [
     { ...HOME_PILLARS[0], title: "Bikes", text: "Road, gravel and mountain bike — brands we ride ourselves." },
-    { ...HOME_PILLARS[1], title: "Wheels", text: "The right wheelset for your bike and riding style." },
+    {
+      ...HOME_PILLARS[1],
+      title: "Speed skates",
+      text: "Complete skates, boots, wheels and bearings — elite-level advice.",
+    },
     {
       ...HOME_PILLARS[2],
-      title: "Shoes & apparel",
-      text: "High-quality gear for training and racing.",
+      title: "Shoes",
+      text: "Cycling shoes from Nimbl and more — fit in Dedemsvaart.",
     },
-    { ...HOME_PILLARS[3], title: "Accessories", text: "The details that make the difference." },
+    {
+      ...HOME_PILLARS[3],
+      title: "Apparel",
+      text: "LaFuga shop collection — custom kits via /lafuga.",
+    },
   ] as const;
 }
 

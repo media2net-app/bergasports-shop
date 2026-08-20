@@ -12,6 +12,14 @@ function loadRedirectFile(filename) {
     const rows = Array.isArray(data.redirects) ? data.redirects : [];
     return rows
       .filter((row) => row?.source && row?.destination && row.source !== row.destination)
+      // Product-/nieuws-permalinks blijven in DB + proxy; next.config alleen pad-regels
+      // die op de CDN moeten (anders Vercel 2048-limiet).
+      .filter((row) => {
+        const kind = typeof row.kind === "string" ? row.kind : "";
+        if (kind === "product" || kind === "news") return false;
+        if (String(row.source).startsWith("/?")) return false;
+        return true;
+      })
       .map((row) => ({
         source: row.source,
         destination: row.destination,
@@ -51,7 +59,18 @@ const nextConfig = {
   },
   async redirects() {
     return mergeRedirects([
-      [{ source: "/room-match", destination: "/shop", statusCode: 301 }],
+      [
+        { source: "/room-match", destination: "/shop", statusCode: 301 },
+        { source: "/lafuga-kleding", destination: "/kleding", statusCode: 301 },
+        { source: "/lafuga-collectie", destination: "/kleding", statusCode: 301 },
+        { source: "/lafuga-wear", destination: "/kleding", statusCode: 301 },
+        { source: "/product-category/lafuga-wear", destination: "/kleding", statusCode: 301 },
+        { source: "/product-categorie/lafuga-wear", destination: "/kleding", statusCode: 301 },
+        { source: "/product-category/lafuga", destination: "/kleding", statusCode: 301 },
+        { source: "/product-categorie/lafuga", destination: "/kleding", statusCode: 301 },
+        { source: "/schoenen-kleding", destination: "/wielrenschoenen", statusCode: 301 },
+        { source: "/schoenen", destination: "/wielrenschoenen", statusCode: 301 },
+      ],
       loadRedirectFile("redirect-map.json"),
       loadRedirectFile("redirect-map.generated.json"),
       [

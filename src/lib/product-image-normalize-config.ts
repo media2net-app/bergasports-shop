@@ -58,6 +58,7 @@ const SLUG_TO_FAMILY: Record<string, ProductImageNormalizeFamily> = {
 
   "lafuga-wear": "apparel",
   "lafuga-kleding": "apparel",
+  kleding: "apparel",
   clothing: "apparel",
 
   accessories: "accessories",

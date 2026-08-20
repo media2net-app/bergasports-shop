@@ -157,7 +157,7 @@ export default function HeaderShopMegaMenu({ label }: Props) {
                 {t.allProducts} →
               </LocalizedLink>
             </div>
-            <div className="grid grid-cols-2 gap-x-8 gap-y-8 px-6 py-7 md:grid-cols-3 xl:grid-cols-5 xl:px-10 xl:py-8">
+            <div className="grid grid-cols-2 gap-x-6 gap-y-8 px-6 py-7 md:grid-cols-3 xl:grid-cols-6 xl:gap-x-5 xl:px-8 xl:py-8">
               {menu.columns.map((column) => {
                 const titleActive = column.href ? pathMatches(pathname, column.href) : false;
                 const columnTitle = column.title;
@@ -198,34 +198,6 @@ export default function HeaderShopMegaMenu({ label }: Props) {
                   </div>
                 );
               })}
-
-              <div className="col-span-2 rounded-xl bg-gradient-to-br from-[#f5f0e6] via-[#faf8f5] to-[#e8f4e8] p-5 text-[var(--foreground)] xl:col-span-1">
-                <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[var(--brand-hover)]">
-                  Bergasports
-                </p>
-                <p className="mt-2 font-[family-name:var(--font-heading)] text-base font-bold leading-snug">
-                  {menu.promo.title}
-                </p>
-                <p className="mt-2 text-sm leading-relaxed text-[var(--foreground)]/75">
-                  {menu.promo.text}
-                </p>
-                <div className="mt-4 flex flex-col gap-2">
-                  <LocalizedLink
-                    href={menu.promo.ctaHref}
-                    className="inline-flex w-fit rounded-full bg-[var(--topbar)] px-4 py-2 text-xs font-bold text-white transition hover:bg-[#333]"
-                    onClick={() => setOpen(false)}
-                  >
-                    {menu.promo.cta}
-                  </LocalizedLink>
-                  <LocalizedLink
-                    href={menu.promo.shopHref}
-                    className="text-xs font-semibold text-[var(--brand-hover)] underline underline-offset-2"
-                    onClick={() => setOpen(false)}
-                  >
-                    {menu.promo.shopCta} →
-                  </LocalizedLink>
-                </div>
-              </div>
             </div>
 
             {brands.length > 0 ? (

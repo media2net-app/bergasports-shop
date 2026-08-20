@@ -201,13 +201,9 @@ export async function deductStockForOrderItems(
 
       results.push({ productId: product.id, deducted: deduct, newStock, easySalesPush });
     } else {
-      const patched: TrendyolJsonProduct = {
-        ...product,
-        inStock: false,
-        stockSyncedAt: new Date().toISOString(),
-      };
-      await saveProductRawWithoutImageMirror(patched);
-      results.push({ productId: product.id, deducted: deduct, newStock: 0 });
+      // Unmanaged stock (no stockQuantity): keep the manual inStock flag.
+      // Flipping to false here caused false OOS after unpaid Mollie attempts.
+      results.push({ productId: product.id, deducted: 0, newStock: null });
     }
   }
 

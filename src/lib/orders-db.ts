@@ -12,6 +12,7 @@ import { pushOrderToEasySalesAfterCreate } from "@/lib/easy-sales-sync";
 import type { CreateOrderInput, OrderBillingAddress, OrderRow, OrderStatus, OrderWithItems } from "@/lib/orders";
 import {
   ORDER_STATUSES,
+  isMolliePaymentMethod,
   isPickupShippingLabel,
   mergeOrderCheckoutNotes,
   orderShippingTotal,
@@ -160,8 +161,9 @@ export async function createOrder(
   const prisma = requirePrisma();
   const orderNumber = generateOrderNumber();
   const paymentMethod = input.paymentMethod ?? "cash_on_delivery";
+  // Method-specific Mollie ids are stored as `mollie:ideal` etc. — must defer stock/fulfillment until paid.
   const initialStatus: OrderStatus =
-    input.status ?? (paymentMethod === "mollie" ? "awaiting_payment" : "pending");
+    input.status ?? (isMolliePaymentMethod(paymentMethod) ? "awaiting_payment" : "pending");
 
   const order = await prisma.$transaction(async (tx) => {
     const created = await tx.order.create({

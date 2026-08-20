@@ -3,7 +3,13 @@
  * Geen server-only — gebruikt door next.config, proxy én import.
  */
 
-import { publicCategoryPath, WC_TO_EN_SLUG, WC_TO_NL_SLUG } from "@/lib/category-slugs";
+import {
+  EN_TO_WC_SLUG,
+  NL_TO_WC_SLUG,
+  publicCategoryPath,
+  WC_TO_EN_SLUG,
+  WC_TO_NL_SLUG,
+} from "@/lib/category-slugs";
 
 /** Canonieke shop-paden die we nooit als bron van een redirect stelen. */
 export const CANONICAL_LIVE_PATHS = new Set([
@@ -25,7 +31,7 @@ export const CANONICAL_LIVE_PATHS = new Set([
   "/checkout",
   "/account",
   "/lafuga",
-  "/lafuga-kleding",
+  "/kleding",
   "/nimbl",
 ]);
 
@@ -108,6 +114,10 @@ const EXACT_STATIC: Record<string, string> = {
   "/speedskates": "/skeelers",
   "/scope-wheels": "/wielen",
   "/scope-wheels-2": "/wielen",
+  "/lafuga-kleding": "/kleding",
+  "/lafuga-collectie": "/kleding",
+  "/schoenen-kleding": "/wielrenschoenen",
+  "/schoenen": "/wielrenschoenen",
   "/bike-repair": "/onderhoud",
   "/about-bergasports": "/over-ons",
   "/verzendkosten-en-levertijd": "/verzending",
@@ -130,6 +140,16 @@ const EXACT_STATIC: Record<string, string> = {
   "/wachtwoord-vergeten": "/account",
   "/author/ingmar": "/over-ons",
   "/author/admin": "/over-ons",
+  "/uncategorized": "/shop",
+  "/uncategorized-2": "/shop",
+  "/product-category/uncategorized": "/shop",
+  "/product-categorie/uncategorized": "/shop",
+  "/nl/product-categorie/uncategorized": "/shop",
+  "/nl/product-category/uncategorized": "/shop",
+  "/product-category/uncategorized-2": "/shop",
+  "/product-categorie/uncategorized-2": "/shop",
+  "/nl/product-categorie/uncategorized-2": "/shop",
+  "/nl/product-category/uncategorized-2": "/shop",
 };
 
 for (const [wcSlug, nlSlug] of Object.entries(WC_TO_NL_SLUG)) {
@@ -158,6 +178,27 @@ for (const [wcSlug, enSlug] of Object.entries(WC_TO_EN_SLUG)) {
   }
   for (const prefix of ["/product-category", "/product-categorie", "/nl/product-category", "/en/product-category"]) {
     const source = `${prefix}/${enSlug}`;
+    if (source !== dest) EXACT_STATIC[source] = dest;
+  }
+}
+
+/** Extra aliases (apparel, shoes, lafuga, …) → canonieke shop-URL. Bare canonicals zoals /lafuga blijven merkpagina. */
+const CATEGORY_PREFIXES = [
+  "/product-category",
+  "/product-categorie",
+  "/nl/product-categorie",
+  "/nl/product-category",
+  "/en/product-category",
+] as const;
+
+for (const [alias, wcSlug] of Object.entries({ ...NL_TO_WC_SLUG, ...EN_TO_WC_SLUG })) {
+  const dest = publicCategoryPath(wcSlug, "nl");
+  const bare = `/${alias}`;
+  if (!CANONICAL_LIVE_PATHS.has(bare) && bare !== dest) {
+    EXACT_STATIC[bare] = dest;
+  }
+  for (const prefix of CATEGORY_PREFIXES) {
+    const source = `${prefix}/${alias}`;
     if (source !== dest) EXACT_STATIC[source] = dest;
   }
 }

@@ -20,7 +20,7 @@ export const LAFUGA_HEADING = "LaFuga custom kleding";
 export const LAFUGA_META_DESCRIPTION =
   "LaFuga custom kleding van Bergasports: maatwerk voor clubs, bedrijven en teams, plus een selectie in de shop. Designed by Ingmar Berga.";
 
-/** Korte intro boven de productlijst op /lafuga-kleding. */
+/** Korte intro boven de productlijst op /kleding (LaFuga shopcollectie). */
 export const LAFUGA_SEO_INTRO =
   "LaFuga custom kleding — designed by Ingmar Berga. Standaard collectie in de shop, maatwerk voor jouw team.";
 
