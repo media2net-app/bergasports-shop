@@ -285,6 +285,16 @@ async function runOrderPaidSideEffects(orderId: number, input: OrderPaidSideEffe
       }
     });
   }
+
+  // Paid + shippable → create Sendcloud label and link tracking/label on the order.
+  void getOrderById(orderId).then(async (full) => {
+    if (!full) return;
+    const { createAndAttachSendcloudLabelForOrder } = await import("@/lib/sendcloud-order");
+    const result = await createAndAttachSendcloudLabelForOrder(full);
+    if (!result.ok && !result.skipped) {
+      console.error("[sendcloud] auto-label failed", full.order_number, result.error);
+    }
+  });
 }
 
 export async function attachMolliePaymentId(orderId: number, molliePaymentId: string): Promise<void> {

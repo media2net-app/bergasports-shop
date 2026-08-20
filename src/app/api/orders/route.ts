@@ -218,6 +218,7 @@ export async function POST(request: Request) {
       notes: [
         body.notes?.trim(),
         shipQuote ? `Verzending: ${shipQuote.label} (€ ${shippingCost.toFixed(2)})` : null,
+        `Land: ${country}`,
         body.couponCode?.trim() ? `Coupon: ${body.couponCode.trim().toUpperCase()}` : null,
       ]
         .filter(Boolean)

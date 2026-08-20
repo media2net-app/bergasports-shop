@@ -168,6 +168,7 @@ export type OrderBillingAddress = {
 
 export type OrderCheckoutMeta = {
   shippingLabel: string | null;
+  shippingCountry: string | null;
   couponCode: string | null;
   customerNote: string | null;
   internalNote: string | null;
@@ -176,6 +177,7 @@ export type OrderCheckoutMeta = {
 
 const NOTE_PREFIX = {
   shipping: /^Verzending:\s*/i,
+  land: /^Land:\s*/i,
   coupon: /^Coupon:\s*/i,
   intern: /^Intern:\s*/i,
   billAddr: /^Factuuradres:\s*/i,
@@ -198,6 +200,7 @@ export function parseOrderCheckoutNotes(notes: string | null | undefined): Order
     .map((line) => line.trim())
     .filter(Boolean);
   const shippingLine = lines.find((line) => NOTE_PREFIX.shipping.test(line));
+  const landLine = lines.find((line) => NOTE_PREFIX.land.test(line));
   const couponLine = lines.find((line) => NOTE_PREFIX.coupon.test(line));
   const internLines = lines.filter((line) => NOTE_PREFIX.intern.test(line)).map((line) => stripPrefix(line, NOTE_PREFIX.intern));
   const billAddr = lines.find((line) => NOTE_PREFIX.billAddr.test(line));
@@ -220,6 +223,7 @@ export function parseOrderCheckoutNotes(notes: string | null | undefined): Order
       : null;
   return {
     shippingLabel: shippingLine ? stripPrefix(shippingLine, NOTE_PREFIX.shipping) || null : null,
+    shippingCountry: landLine ? stripPrefix(landLine, NOTE_PREFIX.land).toUpperCase() || null : null,
     couponCode: couponLine ? stripPrefix(couponLine, NOTE_PREFIX.coupon) || null : null,
     customerNote: customerNote || null,
     internalNote: internLines.join("\n").trim() || null,
@@ -231,6 +235,7 @@ export function serializeOrderCheckoutNotes(meta: OrderCheckoutMeta): string | n
   const lines: string[] = [];
   if (meta.customerNote?.trim()) lines.push(meta.customerNote.trim());
   if (meta.shippingLabel?.trim()) lines.push(`Verzending: ${meta.shippingLabel.trim()}`);
+  if (meta.shippingCountry?.trim()) lines.push(`Land: ${meta.shippingCountry.trim().toUpperCase()}`);
   if (meta.couponCode?.trim()) lines.push(`Coupon: ${meta.couponCode.trim()}`);
   if (meta.internalNote?.trim()) {
     for (const part of meta.internalNote.split("\n")) {
@@ -248,12 +253,13 @@ export function serializeOrderCheckoutNotes(meta: OrderCheckoutMeta): string | n
 
 export function mergeOrderCheckoutNotes(
   notes: string | null | undefined,
-  patch: Partial<Pick<OrderCheckoutMeta, "internalNote" | "billing" | "shippingLabel">>,
+  patch: Partial<Pick<OrderCheckoutMeta, "internalNote" | "billing" | "shippingLabel" | "shippingCountry">>,
 ): string | null {
   const meta = parseOrderCheckoutNotes(notes);
   if (patch.internalNote !== undefined) meta.internalNote = patch.internalNote?.trim() || null;
   if (patch.billing !== undefined) meta.billing = patch.billing;
   if (patch.shippingLabel !== undefined) meta.shippingLabel = patch.shippingLabel?.trim() || null;
+  if (patch.shippingCountry !== undefined) meta.shippingCountry = patch.shippingCountry?.trim().toUpperCase() || null;
   return serializeOrderCheckoutNotes(meta);
 }
 

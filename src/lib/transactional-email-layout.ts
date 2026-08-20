@@ -579,13 +579,20 @@ function productImageCell(imageUrl: string | null | undefined, name: string): st
 /** Product rows with thumbnail, unit price and line total. */
 export function emailOrderItemsBlock(
   items: OrderItemRow[],
-  totals: { subtotal: number; discountTotal: number; total: number; currency: string },
+  totals: {
+    subtotal: number;
+    discountTotal: number;
+    shippingTotal?: number;
+    total: number;
+    currency: string;
+  },
 ): string {
   if (!items.length) {
     return "";
   }
 
   const B = TRANSACTIONAL_EMAIL_BRAND;
+  const shippingTotal = totals.shippingTotal ?? 0;
 
   const rows = items
     .map((item) => {
@@ -619,6 +626,19 @@ export function emailOrderItemsBlock(
       </tr>`
       : "";
 
+  const shippingRow =
+    shippingTotal > 0.004
+      ? `
+      <tr>
+        <td colspan="2" style="padding:6px 8px 6px 0;text-align:right;font-size:14px;color:${B.muted};">Verzending</td>
+        <td style="padding:6px 0;text-align:right;font-size:14px;font-weight:600;color:${B.text};">${escapeHtml(formatEmailMoney(shippingTotal, totals.currency))}</td>
+      </tr>`
+      : `
+      <tr>
+        <td colspan="2" style="padding:6px 8px 6px 0;text-align:right;font-size:14px;color:${B.muted};">Verzending</td>
+        <td style="padding:6px 0;text-align:right;font-size:14px;font-weight:600;color:${B.text};">Gratis</td>
+      </tr>`;
+
   return `
   <p style="margin:20px 0 10px;font-weight:700;font-size:14px;color:${B.text};">Bestelde producten</p>
   <table role="presentation" width="100%" cellPadding="0" cellSpacing="0" style="margin:0 0 8px;border-collapse:collapse;">
@@ -628,8 +648,9 @@ export function emailOrderItemsBlock(
       <td style="padding:10px 0 6px;text-align:right;font-size:14px;font-weight:600;color:${B.text};">${escapeHtml(formatEmailMoney(totals.subtotal, totals.currency))}</td>
     </tr>
     ${discountRow}
+    ${shippingRow}
     <tr>
-      <td colspan="2" style="padding:8px 8px 4px 0;text-align:right;font-size:15px;font-weight:700;color:${B.text};">Totaal te betalen</td>
+      <td colspan="2" style="padding:8px 8px 4px 0;text-align:right;font-size:15px;font-weight:700;color:${B.text};">Totaal</td>
       <td style="padding:8px 0 4px;text-align:right;font-size:16px;font-weight:700;color:${B.gold};">${escapeHtml(formatEmailMoney(totals.total, totals.currency))}</td>
     </tr>
   </table>`;

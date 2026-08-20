@@ -267,7 +267,28 @@ export const SITE_SETTING_DEFS: SiteSettingDef[] = [
         "Plak hier. De waarde blijft na opslaan verborgen.",
       ],
       links: [{ label: "Sendcloud API", href: "https://panel.sendcloud.sc/" }],
-      whereUsed: "Aanmaken van parcels en labels via `/api/admin/orders/[id]/sendcloud`.",
+      whereUsed: "Automatisch label na betaling + `/api/admin/orders/[id]/sendcloud`.",
+    },
+  },
+  {
+    key: "SENDCLOUD_SHIPPING_METHOD_ID",
+    envKey: "SENDCLOUD_SHIPPING_METHOD_ID",
+    label: "Sendcloud Shipping Method ID",
+    group: "shipping",
+    secret: false,
+    optional: true,
+    placeholder: "bijv. 8",
+    manual: {
+      summary:
+        "Optioneel. Vast verzendmethode-ID in Sendcloud. Leeg = Sendcloud past je shipping rules toe (apply_shipping_rules).",
+      steps: [
+        "In Sendcloud: Settings → Shipping → Shipping methods.",
+        "Open de methode die je standaard wilt (bijv. PostNL).",
+        "Kopieer het numerieke ID uit de URL of API.",
+        "Plak hier en sla op.",
+      ],
+      links: [{ label: "Sendcloud panel", href: "https://panel.sendcloud.sc/" }],
+      whereUsed: "Label aanmaken na betaalde bestelling.",
     },
   },
   {

@@ -1,6 +1,7 @@
 import "server-only";
 
 import { getRuntimeSetting } from "@/lib/site-settings-db";
+import { parseOrderCheckoutNotes, type OrderWithItems } from "@/lib/orders";
 
 const SENDCLOUD_API = "https://panel.sendcloud.sc/api/v2";
 
@@ -11,6 +12,21 @@ export type SendcloudParcel = {
   carrier?: { code?: string; name?: string } | null;
   label?: { label_printer?: string; normal_printer?: string[] } | null;
 };
+
+export type SendcloudLabelAttachResult =
+  | {
+      ok: true;
+      parcelId: number;
+      trackingCode: string | null;
+      trackingUrl: string | null;
+      labelUrl: string | null;
+      carrier: string | null;
+    }
+  | {
+      ok: false;
+      skipped?: boolean;
+      error: string;
+    };
 
 async function sendcloudAuthHeader(): Promise<string | null> {
   const publicKey = (await getRuntimeSetting("SENDCLOUD_PUBLIC_KEY")).trim();
@@ -56,6 +72,21 @@ function splitHouseNumber(address: string): { address: string; house_number: str
   return { address: match[1].trim(), house_number: match[2].trim() };
 }
 
+async function resolveShippingMethodId(): Promise<number | null> {
+  const raw = (await getRuntimeSetting("SENDCLOUD_SHIPPING_METHOD_ID")).trim();
+  if (/^\d+$/.test(raw)) return Number(raw);
+  return null;
+}
+
+export function shippingCountryFromOrder(order: Pick<OrderWithItems, "notes" | "shipping_county">): string {
+  const meta = parseOrderCheckoutNotes(order.notes);
+  const fromNotes = meta.shippingCountry?.trim().toUpperCase();
+  if (fromNotes && /^[A-Z]{2}$/.test(fromNotes)) return fromNotes;
+  const county = order.shipping_county?.trim().toUpperCase() ?? "";
+  if (/^[A-Z]{2}$/.test(county)) return county;
+  return "NL";
+}
+
 export async function createSendcloudParcel(input: {
   name: string;
   address: string;
@@ -67,23 +98,27 @@ export async function createSendcloudParcel(input: {
   country?: string;
 }): Promise<SendcloudParcel> {
   const split = splitHouseNumber(input.address);
+  const methodId = await resolveShippingMethodId();
+  const parcel: Record<string, unknown> = {
+    name: input.name,
+    address: split.address,
+    house_number: split.house_number,
+    city: input.city,
+    postal_code: input.postalCode.replace(/\s+/g, ""),
+    country: (input.country ?? "NL").toUpperCase(),
+    email: input.email || undefined,
+    telephone: input.telephone || undefined,
+    order_number: input.orderNumber,
+    weight: "1.000",
+    request_label: true,
+    apply_shipping_rules: true,
+  };
+  if (methodId != null) {
+    parcel.shipment = { id: methodId };
+  }
   const data = await sendcloudFetch<{ parcel: SendcloudParcel }>("/parcels", {
     method: "POST",
-    body: JSON.stringify({
-      parcel: {
-        name: input.name,
-        address: split.address,
-        house_number: split.house_number,
-        city: input.city,
-        postal_code: input.postalCode.replace(/\s+/g, ""),
-        country: input.country ?? "NL",
-        email: input.email || undefined,
-        telephone: input.telephone || undefined,
-        order_number: input.orderNumber,
-        weight: "1.000",
-        request_label: true,
-      },
-    }),
+    body: JSON.stringify({ parcel }),
   });
   return data.parcel;
 }

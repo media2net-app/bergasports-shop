@@ -12,11 +12,13 @@ export const SHOP_MOLLIE_METHOD_ORDER = [
   "bancontact",
   "creditcard",
   "applepay",
+  "googlepay",
   "paypal",
   "in3",
   "klarnapaylater",
   "klarnapaynow",
   "klarnasliceit",
+  "riverty",
   "banktransfer",
   "kbc",
   "belfius",
@@ -29,6 +31,7 @@ const METHOD_LABELS: Record<string, string> = {
   bancontact: "Bancontact",
   creditcard: "Creditcard",
   applepay: "Apple Pay",
+  googlepay: "Google Pay",
   paypal: "PayPal",
   in3: "iDEAL in3",
   klarnapaylater: "Klarna Achteraf betalen",
@@ -71,14 +74,16 @@ export function mollieMethodImageUrl(method: MollieMethodPublic): string | undef
   return method.image?.svg || method.image?.size2x || method.image?.size1x;
 }
 
-/** Keep NL/BE-relevant methods in a stable order. Never invent IDs that Mollie did not return. */
+/** Keep NL/BE-relevant methods in a stable order; append any extra methods Mollie returned. */
 export function filterShopMollieMethods(methods: MollieMethodPublic[]): MollieMethodPublic[] {
   const byId = new Map(methods.map((m) => [m.id, m]));
   const preferred = SHOP_MOLLIE_METHOD_ORDER.map((id) => byId.get(id)).filter(
     (m): m is MollieMethodPublic => Boolean(m),
   );
-  if (preferred.length > 0) return preferred;
-  return methods.filter((m) => Boolean(m.id));
+  const preferredIds = new Set(preferred.map((m) => m.id));
+  const rest = methods.filter((m) => Boolean(m?.id) && !preferredIds.has(m.id));
+  if (preferred.length === 0 && rest.length === 0) return [];
+  return [...preferred, ...rest];
 }
 
 /** Shown in checkout when Mollie is down or not configured, so customers can still pick a method. */
@@ -87,6 +92,7 @@ const FALLBACK_SHOP_METHOD_IDS = [
   "bancontact",
   "creditcard",
   "applepay",
+  "googlepay",
   "paypal",
   "in3",
   "banktransfer",

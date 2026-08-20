@@ -118,6 +118,8 @@ export default function AdminOrderFulfillment({
   const [trackingUrl, setTrackingUrl] = useState(order.tracking_url ?? "");
   const [carrier, setCarrier] = useState(order.shipping_carrier ?? "");
   const [shipAsk, setShipAsk] = useState(false);
+  const [sendcloudBusy, setSendcloudBusy] = useState(false);
+  const [sendcloudMsg, setSendcloudMsg] = useState("");
   const [refundAmount, setRefundAmount] = useState(() => formatMoneyInput(remaining, { min: 0.01, max: remaining }));
   const [refundOpen, setRefundOpen] = useState(false);
   const [emailKind, setEmailKind] = useState<OrderStatusEmailKind>(emailKindForFulfillmentStatus(order.status));
@@ -241,6 +243,29 @@ export default function AdminOrderFulfillment({
       setError("Geen verbinding");
     }
     setBusy(false);
+  }
+
+  async function createSendcloudLabel() {
+    setSendcloudBusy(true);
+    setSendcloudMsg("");
+    setError("");
+    try {
+      const res = await fetch(`/api/admin/orders/${order.id}/sendcloud`, { method: "POST" });
+      const data = (await res.json()) as { error?: string; label_url?: string | null; tracking_code?: string };
+      if (!res.ok) {
+        setError(data.error ?? "Sendcloud-label mislukt");
+      } else {
+        setSendcloudMsg(
+          data.tracking_code
+            ? `Label aangemaakt · ${data.tracking_code}`
+            : "Sendcloud-label aangemaakt en gekoppeld.",
+        );
+        router.refresh();
+      }
+    } catch {
+      setError("Geen verbinding");
+    }
+    setSendcloudBusy(false);
   }
 
   async function cancel() {
@@ -520,6 +545,34 @@ export default function AdminOrderFulfillment({
         ) : (
           <p className="admin-muted admin-m-0">Nog geen tracking</p>
         )}
+
+        {!pickup ? (
+          <div className="admin-form-actions">
+            {order.sendcloud_label_url ? (
+              <a
+                href={order.sendcloud_label_url}
+                target="_blank"
+                rel="noreferrer"
+                className="admin-link-action"
+              >
+                Label PDF
+              </a>
+            ) : null}
+            {order.sendcloud_parcel_id ? (
+              <span className="admin-muted">Sendcloud #{order.sendcloud_parcel_id}</span>
+            ) : (
+              <button
+                type="button"
+                className="admin-link-action"
+                disabled={busy || sendcloudBusy || !paid}
+                onClick={() => void createSendcloudLabel()}
+              >
+                {sendcloudBusy ? "Label…" : "Sendcloud-label"}
+              </button>
+            )}
+          </div>
+        ) : null}
+        {sendcloudMsg ? <p className="admin-muted admin-m-0">{sendcloudMsg}</p> : null}
 
         {shipAsk && step?.needsTracking ? (
           <>

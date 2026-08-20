@@ -43,6 +43,7 @@ export const EMAIL_PLACEHOLDERS: EmailPlaceholder[] = [
   { token: "total", label: "Totaal", hint: "Inclusief valuta" },
   { token: "subtotal", label: "Subtotaal", hint: "" },
   { token: "discount", label: "Korting", hint: "" },
+  { token: "shipping", label: "Verzendkosten", hint: "0 bij gratis/ophalen" },
   { token: "tracking_code", label: "Trackingcode", hint: "" },
   { token: "tracking_url", label: "Trackinglink", hint: "" },
   { token: "tracking_line", label: "Trackingtekst", hint: "Zin over zending of bezorger" },
@@ -82,8 +83,8 @@ export const DEFAULT_EMAIL_TEMPLATES: Record<EmailTemplateKey, EmailTemplateDraf
     title: "Je bestelling is ontvangen",
     bodyHtml: [
       "<p>Hallo {{customer_name}},</p>",
-      "<p>Bedankt voor je bestelling! We hebben je order geregistreerd en verwerken deze zo snel mogelijk.</p>",
-      "<p>Je betaalt rembours bij aflevering van het pakket.</p>",
+      "<p>Bedankt voor je bestelling! We hebben je betaling ontvangen en verwerken je order zo snel mogelijk.</p>",
+      "<p>Betaalmethode: <strong>{{payment_method}}</strong>.</p>",
       "{{order_summary}}",
       "{{order_items}}",
       "{{button_shop}}",

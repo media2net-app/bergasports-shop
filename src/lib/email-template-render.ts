@@ -1,4 +1,5 @@
 import type { OrderItemRow, OrderWithItems } from "@/lib/orders";
+import { orderShippingTotal } from "@/lib/orders";
 import { LEGAL_PAGE_PATHS } from "@/lib/site-content";
 import type { EmailTemplateDraft, EmailTemplateKey } from "@/lib/email-template-defs";
 import { DEFAULT_EMAIL_TEMPLATES } from "@/lib/email-template-defs";
@@ -96,8 +97,11 @@ function orderLinesPlain(order: Pick<OrderWithItems, "items" | "currency">): str
   });
 }
 
-function orderProductsPlain(order: Pick<OrderWithItems, "items" | "currency" | "subtotal" | "discount_total" | "total">): string {
+function orderProductsPlain(
+  order: Pick<OrderWithItems, "items" | "currency" | "subtotal" | "discount_total" | "total">,
+): string {
   if (!order.items.length) return "";
+  const shipping = orderShippingTotal(order);
   return [
     "Producten:",
     ...orderLinesPlain(order).map((l) => `• ${l}`),
@@ -105,6 +109,7 @@ function orderProductsPlain(order: Pick<OrderWithItems, "items" | "currency" | "
     ...(order.discount_total > 0.005
       ? [`Korting: −${formatEmailMoney(order.discount_total, order.currency)}`]
       : []),
+    `Verzending: ${shipping > 0.004 ? formatEmailMoney(shipping, order.currency) : "Gratis"}`,
     `Totaal: ${formatEmailMoney(order.total, order.currency)}`,
   ].join("\n");
 }
@@ -201,9 +206,11 @@ export function buildEmailVars(
   const adminUrl = `${shop}/admin/orders`;
   const currency = order?.currency ?? "EUR";
   const items = order?.items ?? [];
+  const shippingTotal = order ? orderShippingTotal(order) : 0;
   const totals = {
     subtotal: order?.subtotal ?? 0,
     discountTotal: order?.discount_total ?? 0,
+    shippingTotal,
     total: order?.total ?? 0,
     currency,
   };
@@ -222,6 +229,13 @@ export function buildEmailVars(
     total: textVar(order ? formatEmailMoney(order.total, currency) : ""),
     subtotal: textVar(order ? formatEmailMoney(order.subtotal, currency) : ""),
     discount: textVar(order && order.discount_total > 0.005 ? formatEmailMoney(order.discount_total, currency) : ""),
+    shipping: textVar(
+      order
+        ? shippingTotal > 0.004
+          ? formatEmailMoney(shippingTotal, currency)
+          : "Gratis"
+        : "",
+    ),
     tracking_code: textVar(trackCode),
     tracking_url: textVar(trackUrl),
     tracking_line: textVar(order ? trackingLine(order) : ""),

@@ -54,21 +54,40 @@ export async function ensureEmailTemplates(): Promise<void> {
     const existing = await prisma.emailTemplate.findMany({ select: { key: true } });
     const have = new Set(existing.map((row) => row.key));
     const missing = EMAIL_TEMPLATE_KEYS.filter((key) => !have.has(key));
-    if (!missing.length) return;
-    await prisma.emailTemplate.createMany({
-      data: missing.map((key) => {
-        const def = DEFAULT_EMAIL_TEMPLATES[key];
-        return {
-          key: def.key,
-          category: def.category,
-          name: def.name,
-          description: def.description,
+    if (missing.length) {
+      await prisma.emailTemplate.createMany({
+        data: missing.map((key) => {
+          const def = DEFAULT_EMAIL_TEMPLATES[key];
+          return {
+            key: def.key,
+            category: def.category,
+            name: def.name,
+            description: def.description,
+            subject: def.subject,
+            title: def.title,
+            bodyHtml: def.bodyHtml,
+          };
+        }),
+      });
+    }
+
+    // One-time repair: old COD copy must not go out for Mollie checkouts.
+    const received = await prisma.emailTemplate.findUnique({
+      where: { key: "order.received" },
+      select: { bodyHtml: true },
+    });
+    if (received?.bodyHtml && /rembours/i.test(received.bodyHtml)) {
+      const def = DEFAULT_EMAIL_TEMPLATES["order.received"];
+      await prisma.emailTemplate.update({
+        where: { key: "order.received" },
+        data: {
           subject: def.subject,
           title: def.title,
           bodyHtml: def.bodyHtml,
-        };
-      }),
-    });
+          description: def.description,
+        },
+      });
+    }
   } catch {
     // Table may not exist yet.
   }
@@ -97,6 +116,7 @@ export async function listEmailTemplates(): Promise<EmailTemplateRow[]> {
 }
 
 export async function getEmailTemplate(key: EmailTemplateKey): Promise<EmailTemplateRow> {
+  await ensureEmailTemplates();
   const prisma = prismaClient();
   if (prisma) {
     try {
