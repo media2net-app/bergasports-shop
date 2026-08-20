@@ -15,8 +15,12 @@ const PAGE_TITLES: Record<string, string> = {
   "/admin/coupons": "Kortingscodes",
   "/admin/customers": "Klanten",
   "/admin/categories": "Categorieën",
+  "/admin/brands": "Merken",
+  "/admin/attributes": "Eigenschappen",
   "/admin/shipping": "Verzending",
   "/admin/email": "E-mailtemplates",
+  "/admin/newsletter": "Nieuwsbrief",
+  "/admin/leads": "Contact & afspraken",
 };
 
 function titleForPath(path: string): string {
@@ -41,6 +45,12 @@ function titleForPath(path: string): string {
   if (path.startsWith("/admin/categories/")) {
     return "Categorie bewerken";
   }
+  if (path.startsWith("/admin/brands")) {
+    return "Merken";
+  }
+  if (path.startsWith("/admin/attributes")) {
+    return "Eigenschappen";
+  }
   if (path.startsWith("/admin/settings/")) {
     return "Instellingen";
   }
@@ -52,6 +62,9 @@ function titleForPath(path: string): string {
   }
   if (path.startsWith("/admin/email")) {
     return "E-mailtemplate";
+  }
+  if (path.startsWith("/admin/newsletter")) {
+    return "Nieuwsbrief";
   }
   return "Admin";
 }

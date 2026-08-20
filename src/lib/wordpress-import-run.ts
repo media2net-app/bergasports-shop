@@ -6,6 +6,7 @@
 import { randomBytes } from "node:crypto";
 
 import type { Prisma, PrismaClient } from "@/generated/prisma/client";
+import { upsertWooGlobalAttributes, type WooAttributeBundle } from "@/lib/attributes-write";
 import { hashAdminPassword } from "@/lib/admin-password-hash";
 import { assignBrandOnProduct } from "@/lib/brands-write";
 import { publicCategoryPath } from "@/lib/category-slugs";
@@ -314,6 +315,51 @@ export async function upsertWooCommerceOrderRecord(
   return "created";
 }
 
+async function fetchWooGlobalAttributeBundles(
+  creds: WordpressImportCredentials,
+  options: WordpressImportRunOptions,
+  auth: { key: string; secret: string },
+): Promise<WooAttributeBundle[]> {
+  const locale = resolveWordpressImportLocale(options.locale, creds.baseUrl);
+  const { items: globalAttrs } = await fetchWordpressPages<WcRestGlobalAttribute>({
+    urlForPage: (page, perPage) =>
+      wcV3Url(creds.baseUrl, "products/attributes", {
+        page,
+        per_page: perPage,
+        orderby: "id",
+        order: "asc",
+        lang: locale,
+      }),
+    auth,
+    perPage: 100,
+    maxPages: 5,
+    label: "WooCommerce eigenschappen",
+    log: options.log,
+  });
+  options.log?.(`Globale eigenschappen: ${globalAttrs.length}`);
+
+  const bundles: WooAttributeBundle[] = [];
+  for (const attr of globalAttrs) {
+    if (!attr.id) continue;
+    const { items: terms } = await fetchWordpressPages<WcRestAttributeTerm>({
+      urlForPage: (page, perPage) =>
+        wcV3Url(creds.baseUrl, `products/attributes/${attr.id}/terms`, {
+          page,
+          per_page: perPage,
+          orderby: "id",
+          order: "asc",
+          lang: locale,
+        }),
+      auth,
+      perPage: 100,
+      maxPages: 10,
+      label: `Termen ${attr.name || attr.slug || attr.id}`,
+    });
+    bundles.push({ attr, terms });
+  }
+  return bundles;
+}
+
 async function importProducts(
   prisma: PrismaClient,
   creds: WordpressImportCredentials,
@@ -326,6 +372,21 @@ async function importProducts(
   const locale = resolveWordpressImportLocale(options.locale, creds.baseUrl);
   const apiBase = wordpressRestBaseUrl(creds.baseUrl);
   log?.(`Woo REST: ${apiBase} · lang=${locale}`);
+
+  let termsByAttrId = new Map<number, string[]>();
+  try {
+    const bundles = await fetchWooGlobalAttributeBundles(creds, options, auth);
+    const attrCounts = await upsertWooGlobalAttributes(prisma, bundles, { dryRun: options.dryRun });
+    termsByAttrId = attrCounts.termsByAttrId;
+    log?.(
+      `Globale attributen opgeslagen: ${attrCounts.created} nieuw, ${attrCounts.updated} bijgewerkt, ${attrCounts.skipped} ongewijzigd`,
+    );
+  } catch (e) {
+    log?.(
+      `Globale attributen overgeslagen: ${e instanceof Error ? e.message : String(e)} — producten gaan door zonder termen-aanvulling`,
+    );
+  }
+
   const { items, pages } = await fetchWordpressPages<WcRestProduct>({
     urlForPage: (page, perPage) =>
       wcV3Url(creds.baseUrl, "products", {
@@ -380,7 +441,8 @@ async function importProducts(
     if (raw.type === "variable") {
       variations = await fetchWcVariations(creds, raw.id, locale);
     }
-    const incoming = mapWcRestProductToJson(raw, variations);
+    const attrs = applyGlobalAttributeTerms(raw.attributes, termsByAttrId);
+    const incoming = mapWcRestProductToJson({ ...raw, attributes: attrs }, variations);
     const skuKey = incoming.wcSku?.trim().toLowerCase();
     let existing: TrendyolJsonProduct | null = null;
     for (const wpmlId of wpmlTranslationIds({ id: raw.id, translations: raw.translations })) {
@@ -745,46 +807,19 @@ async function importAttributes(
 ): Promise<WordpressImportTypeResult> {
   const auth = requireAuth(creds, "eigenschappen");
   const locale = resolveWordpressImportLocale(options.locale, creds.baseUrl);
-  const termsByAttrId = new Map<number, string[]>();
+  const bundles = await fetchWooGlobalAttributeBundles(creds, options, auth);
+  const attrCounts = await upsertWooGlobalAttributes(prisma, bundles, { dryRun: options.dryRun });
+  const termsByAttrId = attrCounts.termsByAttrId;
 
-  const { items: globalAttrs } = await fetchWordpressPages<WcRestGlobalAttribute>({
-    urlForPage: (page, perPage) =>
-      wcV3Url(creds.baseUrl, "products/attributes", {
-        page,
-        per_page: perPage,
-        orderby: "id",
-        order: "asc",
-        lang: locale,
-      }),
-    auth,
-    perPage: 100,
-    maxPages: 5,
-    label: "WooCommerce eigenschappen",
-    log: options.log,
-  });
-  options.log?.(`Globale eigenschappen: ${globalAttrs.length}`);
-
-  for (const attr of globalAttrs) {
-    if (!attr.id) continue;
-    const { items: terms } = await fetchWordpressPages<WcRestAttributeTerm>({
-      urlForPage: (page, perPage) =>
-        wcV3Url(creds.baseUrl, `products/attributes/${attr.id}/terms`, {
-          page,
-          per_page: perPage,
-          orderby: "id",
-          order: "asc",
-          lang: locale,
-        }),
-      auth,
-      perPage: 100,
-      maxPages: 10,
-      label: `Termen ${attr.name || attr.slug || attr.id}`,
-    });
-    termsByAttrId.set(
-      attr.id,
-      terms.map((term) => decodeHtmlEntities(stripHtml(term.name || term.slug || ""))).filter(Boolean),
-    );
-  }
+  const result = emptyResult();
+  result.fetched = bundles.length;
+  result.created = attrCounts.created;
+  result.updated = attrCounts.updated;
+  result.skipped = attrCounts.skipped;
+  result.pages = 1;
+  options.log?.(
+    `Globale attributen: ${attrCounts.created} nieuw, ${attrCounts.updated} bijgewerkt, ${attrCounts.skipped} ongewijzigd`,
+  );
 
   const { items, pages } = await fetchWordpressPages<WcRestProduct>({
     urlForPage: (page, perPage) =>
@@ -803,9 +838,7 @@ async function importAttributes(
     log: options.log,
   });
 
-  const result = emptyResult();
-  result.fetched = items.length;
-  result.pages = pages;
+  result.pages += pages;
   options.log?.(`Producten voor eigenschappen: ${items.length} · taal ${locale}`);
 
   const existingRows = await prisma.product.findMany({ select: { id: true, data: true } });
@@ -824,7 +857,6 @@ async function importAttributes(
     logProgress(options, 25, i, items.length, "Eigenschappen schrijven");
     const existing = byId.get(raw.id) ?? (raw.sku?.trim() ? bySku.get(raw.sku.trim().toLowerCase()) : undefined);
     if (!existing) {
-      result.skipped += 1;
       continue;
     }
     const attrs: WcRestAttribute[] = applyGlobalAttributeTerms(raw.attributes, termsByAttrId);
@@ -858,7 +890,6 @@ async function importAttributes(
       (next.specsText ?? "") === (existing.data.specsText ?? "") &&
       JSON.stringify(next.translations ?? {}) === JSON.stringify(existing.data.translations ?? {});
     if (unchanged) {
-      result.skipped += 1;
       continue;
     }
     if (options.dryRun) {

@@ -16,7 +16,7 @@ export type { GenerateImageResult };
 
 /** OpenAI when configured; Magnific only if OpenAI is not set. */
 export async function generateProductImage(prompt: string): Promise<GenerateImageResult> {
-  if (getOpenAiApiKey()) {
+  if (await getOpenAiApiKey()) {
     try {
       return await generateProductImageWithOpenAI(prompt);
     } catch (e) {
@@ -34,5 +34,7 @@ export async function generateProductImage(prompt: string): Promise<GenerateImag
     }
   }
 
-  throw new Error("No image API configured. Set OPENAI_API_KEY in .env.local.");
+  throw new Error(
+    "No image API configured. Set OPENAI_API_KEY under Admin → Instellingen → OpenAI (or .env.local).",
+  );
 }

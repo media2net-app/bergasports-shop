@@ -3,8 +3,10 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 
+import { useShopLocale } from "@/components/locale/ShopLanguagesProvider";
 import DateTimePicker from "@/components/ui/DateTimePicker";
 import { appointmentDateRange } from "@/lib/datetime-picker";
+import { ui } from "@/lib/i18n/ui";
 import type { OpeningHoursRow } from "@/lib/opening-hours";
 import { LEGAL_PAGE_PATHS, SHOP_OPENING_HOURS } from "@/lib/site-content";
 
@@ -14,11 +16,13 @@ export default function ContactLeadForm({
   hideHeading = false,
   hours = SHOP_OPENING_HOURS,
 }: {
-  kind?: "contact" | "appointment";
+  kind?: "contact" | "appointment" | "lafuga";
   className?: string;
   hideHeading?: boolean;
   hours?: OpeningHoursRow[];
 }) {
+  const { locale } = useShopLocale();
+  const t = ui(locale);
   const range = useMemo(() => appointmentDateRange(90), []);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -34,7 +38,7 @@ export default function ContactLeadForm({
     e.preventDefault();
     setError("");
     if (!legalAccepted) {
-      setError("Accepteer de algemene voorwaarden en het privacybeleid.");
+      setError(t.errAcceptLegal);
       return;
     }
     setBusy(true);
@@ -54,12 +58,12 @@ export default function ContactLeadForm({
       });
       const data = (await res.json()) as { error?: string };
       if (!res.ok) {
-        setError(data.error ?? "Verzenden mislukt");
+        setError(data.error ?? t.sendFailed);
       } else {
         setOk(true);
       }
     } catch {
-      setError("Geen verbinding");
+      setError(t.noConnection);
     }
     setBusy(false);
   }
@@ -70,10 +74,41 @@ export default function ContactLeadForm({
   if (ok) {
     return (
       <p className="rounded-3xl border border-[var(--brand-border)] bg-white px-5 py-4 text-sm leading-relaxed">
-        Bedankt, we nemen zo snel mogelijk contact op — meestal dezelfde werkdag.
+        {t.leadThanks}
       </p>
     );
   }
+
+  const eyebrow =
+    kind === "appointment"
+      ? t.leadEyebrowAppointment
+      : kind === "lafuga"
+        ? t.leadEyebrowLafuga
+        : t.leadEyebrowContact;
+  const title =
+    kind === "appointment"
+      ? t.leadTitleAppointment
+      : kind === "lafuga"
+        ? t.leadTitleLafuga
+        : t.leadTitleContact;
+  const intro =
+    kind === "appointment"
+      ? t.leadIntroAppointment
+      : kind === "lafuga"
+        ? t.leadIntroLafuga
+        : t.leadIntroContact;
+  const placeholder =
+    kind === "appointment"
+      ? t.placeholderAppointment
+      : kind === "lafuga"
+        ? t.placeholderLafuga
+        : t.placeholderContact;
+  const cta =
+    kind === "appointment"
+      ? t.planAppointmentShort
+      : kind === "lafuga"
+        ? t.requestCustom
+        : t.sendMessage;
 
   return (
     <form
@@ -82,25 +117,17 @@ export default function ContactLeadForm({
     >
       {hideHeading ? null : (
         <>
-          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[var(--brand)]">
-            {kind === "appointment" ? "Afspraak" : "Bericht"}
-          </p>
-          <h2 className="font-[family-name:var(--font-heading)] text-xl tracking-tight">
-            {kind === "appointment" ? "Plan een afspraak" : "Stuur een bericht"}
-          </h2>
+          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[var(--brand)]">{eyebrow}</p>
+          <h2 className="font-[family-name:var(--font-heading)] text-xl tracking-tight">{title}</h2>
         </>
       )}
-      <p className="text-sm leading-relaxed text-[var(--foreground)]/70">
-        {kind === "appointment"
-          ? "Vertel kort waarvoor je komt: advies, passen of onderhoud. We bevestigen per telefoon of e-mail."
-          : "Vragen over een bestelling, de winkel of een product? Vermeld het ordernummer als je die hebt."}
-      </p>
+      <p className="text-sm leading-relaxed text-[var(--foreground)]/70">{intro}</p>
       <label className="block text-sm font-medium">
-        Naam
+        {t.fieldName}
         <input className={fieldClass} value={name} onChange={(e) => setName(e.target.value)} required />
       </label>
       <label className="block text-sm font-medium">
-        E-mail
+        {t.fieldEmail}
         <input
           className={fieldClass}
           type="email"
@@ -110,12 +137,12 @@ export default function ContactLeadForm({
         />
       </label>
       <label className="block text-sm font-medium">
-        Telefoon
+        {t.fieldPhone}
         <input className={fieldClass} value={phone} onChange={(e) => setPhone(e.target.value)} />
       </label>
       {kind === "appointment" ? (
         <label className="block text-sm font-medium" htmlFor="appointment-datetime">
-          Voorkeursdatum en -tijd
+          {t.preferredDateTime}
           <DateTimePicker
             id="appointment-datetime"
             mode="datetime"
@@ -124,23 +151,19 @@ export default function ContactLeadForm({
             hours={hours}
             min={range.min}
             max={range.max}
-            placeholder="Kies een moment in de openingstijden"
+            placeholder={t.pickOpeningHours}
           />
         </label>
       ) : null}
       <label className="block text-sm font-medium">
-        Bericht
+        {t.fieldMessage}
         <textarea
           className={fieldClass}
           rows={4}
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           required
-          placeholder={
-            kind === "appointment"
-              ? "Bijv. Nimbl passen, onderhoudsbeurt of advies over een gravelbike"
-              : "Waarmee kunnen we je helpen?"
-          }
+          placeholder={placeholder}
         />
       </label>
       <label className="flex cursor-pointer items-start gap-2 rounded-2xl border border-[var(--brand-border)] bg-[var(--brand-surface)] px-3 py-2.5 text-xs text-[var(--foreground)]/85">
@@ -152,13 +175,13 @@ export default function ContactLeadForm({
           required
         />
         <span>
-          Ik ga akkoord met de{" "}
+          {t.legalAcceptPrefix}{" "}
           <Link href={LEGAL_PAGE_PATHS.terms} className="underline">
-            algemene voorwaarden
+            {t.termsOfService}
           </Link>{" "}
-          en het{" "}
+          {t.legalAcceptAnd}{" "}
           <Link href={LEGAL_PAGE_PATHS.privacy} className="underline">
-            privacybeleid
+            {t.privacyPolicyShort}
           </Link>
           .
         </span>
@@ -168,12 +191,12 @@ export default function ContactLeadForm({
         type="submit"
         disabled={busy}
         className={
-          kind === "appointment"
+          kind === "appointment" || kind === "lafuga"
             ? "inline-flex min-h-12 w-full items-center justify-center rounded-full bg-[var(--brand-mid)] px-5 text-xs font-bold uppercase tracking-[0.14em] text-[#1a1a1a] transition hover:bg-[#f2d680] disabled:opacity-60"
             : "inline-flex min-h-12 w-full items-center justify-center rounded-full bg-[var(--topbar)] px-5 text-xs font-bold uppercase tracking-[0.14em] text-white transition hover:bg-[#2a2a2a] disabled:opacity-60"
         }
       >
-        {busy ? "Verzenden…" : kind === "appointment" ? "Plan afspraak" : "Bericht versturen"}
+        {busy ? t.sending : cta}
       </button>
     </form>
   );

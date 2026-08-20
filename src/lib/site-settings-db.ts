@@ -12,18 +12,25 @@ import {
 
 export type { AdminSettingFieldView } from "@/lib/site-settings-defs";
 
-const loadAllDbSettings = cache(async (): Promise<Map<string, string>> => {
+async function loadAllDbSettingsUncached(): Promise<Map<string, string>> {
   const prisma = requirePrisma();
   try {
     const rows = await prisma.siteSetting.findMany({
       select: { key: true, value: true },
     });
     return new Map(rows.map((r) => [r.key, r.value]));
-  } catch {
+  } catch (e) {
     // Tabel bestaat nog niet vóór migrate — val terug op env.
+    console.error(
+      "[site-settings] load failed, falling back to env:",
+      e instanceof Error ? e.message : e,
+    );
     return new Map();
   }
-});
+}
+
+/** Per-request cache for reads. Do not use after writes in the same request. */
+const loadAllDbSettings = cache(loadAllDbSettingsUncached);
 
 function envValue(envKey: string): string {
   return process.env[envKey]?.trim() ?? "";
@@ -48,8 +55,11 @@ export async function getRuntimeSettingOrEnv(key: string, envKey?: string): Prom
   return envValue(envKey ?? key);
 }
 
-export async function buildAdminSettingsView(): Promise<AdminSettingFieldView[]> {
-  const db = await loadAllDbSettings();
+export async function buildAdminSettingsView(options?: {
+  /** Skip React cache — required after upsert in the same request. */
+  fresh?: boolean;
+}): Promise<AdminSettingFieldView[]> {
+  const db = options?.fresh ? await loadAllDbSettingsUncached() : await loadAllDbSettings();
   return SITE_SETTING_DEFS.map((def) => {
     const fromDb = db.get(def.key)?.trim() ?? "";
     const fromEnv = envValue(def.envKey);

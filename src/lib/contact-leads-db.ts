@@ -19,7 +19,7 @@ export async function createContactLead(input: {
   email: string;
   phone?: string;
   message: string;
-  kind?: "contact" | "appointment";
+  kind?: "contact" | "appointment" | "lafuga";
   preferredDate?: string;
 }): Promise<ContactLeadRow> {
   const prisma = getPrisma();

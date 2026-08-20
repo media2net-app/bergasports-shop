@@ -1,4 +1,6 @@
 import ContactLeadForm from "@/components/site/ContactLeadForm";
+import { getRequestLocale } from "@/lib/i18n/locale";
+import { ui } from "@/lib/i18n/ui";
 import { shopPhoneTelHref, whatsappHref } from "@/lib/site-contact";
 import { getShopOpeningHours, getShopPublicContact } from "@/lib/shop-runtime";
 import type { CmsPageViewPage } from "@/components/site/CmsPageView";
@@ -8,11 +10,15 @@ type Props = {
 };
 
 export default async function AppointmentPageView({ page }: Props) {
+  const [contact, hours, locale] = await Promise.all([
+    getShopPublicContact(),
+    getShopOpeningHours(),
+    getRequestLocale(),
+  ]);
+  const t = ui(locale);
   const heading = page.heading?.trim() || page.title;
   const hero = page.social_image?.trim() || "";
   const heroAlt = page.image_alt?.trim() || heading;
-  const contact = await getShopPublicContact();
-  const hours = await getShopOpeningHours();
   const wa = contact.whatsappHref ?? whatsappHref(contact.phone);
 
   return (
@@ -25,8 +31,7 @@ export default async function AppointmentPageView({ page }: Props) {
           {heading}
         </h1>
         <p className="mt-4 text-base leading-relaxed text-[var(--foreground)]/75 md:text-lg">
-          Advies, Nimbl of LaFuga passen, onderhoud of een nieuwe fiets. Vul het formulier in — we
-          bevestigen meestal dezelfde werkdag.
+          {t.appointmentIntro}
         </p>
       </div>
 
@@ -37,7 +42,7 @@ export default async function AppointmentPageView({ page }: Props) {
             href={shopPhoneTelHref(contact.phone)}
             className="inline-flex min-h-11 items-center rounded-full border border-[var(--brand-border)] bg-white px-5 text-xs font-bold uppercase tracking-[0.14em] transition hover:border-[var(--brand)] hover:text-[var(--brand)]"
           >
-            Bel {contact.phone}
+            {t.callPhone(contact.phone)}
           </a>
           {wa ? (
             <a

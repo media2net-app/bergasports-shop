@@ -63,6 +63,9 @@ export async function POST(request: Request) {
       },
       buildEmailVars(previewOrder, extra),
       logoUrl,
+      {
+        variant: key.startsWith("marketing.") ? "marketing" : "transactional",
+      },
     );
     return NextResponse.json({ subject, html });
   } catch (e) {

@@ -152,6 +152,7 @@ export function productBreadcrumbJsonLd(
     productPath?: string;
     shopPath?: string;
     homePath?: string;
+    shopName?: string;
   },
 ) {
   const base = siteUrl.replace(/\/$/, "");
@@ -160,7 +161,7 @@ export function productBreadcrumbJsonLd(
   const homeHref = options?.homePath ?? "/";
   const items: { "@type": string; position: number; name: string; item?: string }[] = [
     { "@type": "ListItem", position: 1, name: "Home", item: `${base}${homeHref}` },
-    { "@type": "ListItem", position: 2, name: "Webshop", item: `${base}${shopHref}` },
+    { "@type": "ListItem", position: 2, name: options?.shopName ?? "Webshop", item: `${base}${shopHref}` },
   ];
 
   if (options?.categoryName && options.categoryPath) {

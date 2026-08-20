@@ -3,7 +3,12 @@
 import { useState } from "react";
 import Link from "next/link";
 
+import { useShopLocale } from "@/components/locale/ShopLanguagesProvider";
+import { ui } from "@/lib/i18n/ui";
+
 export default function AccountAuthForm() {
+  const { locale } = useShopLocale();
+  const t = ui(locale);
   const [mode, setMode] = useState<"login" | "register">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -29,12 +34,12 @@ export default function AccountAuthForm() {
       });
       const data = (await res.json()) as { ok?: boolean; error?: string };
       if (!res.ok) {
-        setError(data.error || "Mislukt");
+        setError(data.error || t.failed);
         return;
       }
       setOk(true);
     } catch {
-      setError("Netwerkfout");
+      setError(t.networkError);
     } finally {
       setLoading(false);
     }
@@ -43,21 +48,21 @@ export default function AccountAuthForm() {
   return (
     <>
       <h1 className="font-[family-name:var(--font-heading)] text-3xl">
-        {mode === "login" ? "Inloggen" : "Account aanmaken"}
+        {mode === "login" ? t.login : t.createAccount}
       </h1>
       <p className="mt-2 text-sm text-[var(--foreground)]/70">
-        Guest checkout blijft mogelijk — een account is optioneel.{" "}
+        {t.accountOptional}{" "}
         <Link href="/shop" className="underline">
-          Verder winkelen
+          {t.continueShopping}
         </Link>
       </p>
       {ok ? (
-        <p className="mt-6 text-sm text-emerald-800">Je bent ingelogd.</p>
+        <p className="mt-6 text-sm text-emerald-800">{t.loggedIn}</p>
       ) : (
         <form onSubmit={submit} className="mt-8 space-y-4">
           {mode === "register" ? (
             <label className="block text-sm">
-              Naam
+              {t.fieldName}
               <input
                 className="mt-1 w-full rounded-lg border border-[#e5dcc8] px-3 py-2"
                 value={name}
@@ -66,7 +71,7 @@ export default function AccountAuthForm() {
             </label>
           ) : null}
           <label className="block text-sm">
-            E-mail
+            {t.fieldEmail}
             <input
               type="email"
               required
@@ -76,7 +81,7 @@ export default function AccountAuthForm() {
             />
           </label>
           <label className="block text-sm">
-            Wachtwoord
+            {t.fieldPassword}
             <input
               type="password"
               required
@@ -92,7 +97,7 @@ export default function AccountAuthForm() {
             disabled={loading}
             className="flex min-h-11 w-full items-center justify-center bg-[var(--topbar)] text-xs font-bold uppercase tracking-wider text-white disabled:opacity-60"
           >
-            {loading ? "Bezig…" : mode === "login" ? "Inloggen" : "Registreren"}
+            {loading ? t.busy : mode === "login" ? t.login : t.register}
           </button>
         </form>
       )}
@@ -101,7 +106,7 @@ export default function AccountAuthForm() {
         className="mt-4 text-sm underline"
         onClick={() => setMode(mode === "login" ? "register" : "login")}
       >
-        {mode === "login" ? "Nog geen account? Registreren" : "Heb je al een account? Inloggen"}
+        {mode === "login" ? t.noAccountRegister : t.haveAccountLogin}
       </button>
     </>
   );

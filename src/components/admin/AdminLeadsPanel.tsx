@@ -83,7 +83,13 @@ export default function AdminLeadsPanel({ initialLeads }: { initialLeads: Contac
                       timeStyle: "short",
                     })}
                   </td>
-                  <td>{lead.kind === "appointment" ? "Afspraak" : "Contact"}</td>
+                  <td>
+                    {lead.kind === "appointment"
+                      ? "Afspraak"
+                      : lead.kind === "lafuga"
+                        ? "LaFuga maatwerk"
+                        : "Contact"}
+                  </td>
                   <td>
                     <div>{lead.name}</div>
                     <div className="admin-muted" style={{ fontSize: "0.8rem" }}>

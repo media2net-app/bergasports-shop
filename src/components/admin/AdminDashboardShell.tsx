@@ -108,11 +108,13 @@ export default function AdminDashboardShell({
   const mediaActive = path.startsWith("/admin/media");
   const leadsActive = path.startsWith("/admin/leads");
   const emailActive = path.startsWith("/admin/email");
+  const newsletterActive = path.startsWith("/admin/newsletter");
   const ordersActive = path.startsWith("/admin/orders");
   const couponsActive = path.startsWith("/admin/coupons");
   const customersActive = path.startsWith("/admin/customers");
   const categoriesActive = path.startsWith("/admin/categories");
   const brandsActive = path.startsWith("/admin/brands");
+  const attributesActive = path.startsWith("/admin/attributes");
   const settingsActive = path.startsWith("/admin/settings");
   const usersActive = path.startsWith("/admin/users");
 
@@ -204,6 +206,14 @@ export default function AdminDashboardShell({
             <AdminNavLink href="/admin/brands" active={brandsActive} onNavigate={closeMenu} icon={<IconTag />}>
               Merken
             </AdminNavLink>
+            <AdminNavLink
+              href="/admin/attributes"
+              active={attributesActive}
+              onNavigate={closeMenu}
+              icon={<IconTag />}
+            >
+              Eigenschappen
+            </AdminNavLink>
             <AdminNavLink href="/admin/news" active={newsActive} onNavigate={closeMenu} icon={<IconNews />}>
               Nieuws
             </AdminNavLink>
@@ -215,6 +225,17 @@ export default function AdminDashboardShell({
             </AdminNavLink>
             <AdminNavLink href="/admin/email" active={emailActive} onNavigate={closeMenu} icon={<IconMail />}>
               E-mails
+            </AdminNavLink>
+          </div>
+          <div className="admin-sidebar-group">
+            <div className="admin-sidebar-group-label">Marketing</div>
+            <AdminNavLink
+              href="/admin/newsletter"
+              active={newsletterActive}
+              onNavigate={closeMenu}
+              icon={<IconMail />}
+            >
+              Nieuwsbrief
             </AdminNavLink>
           </div>
           <div className="admin-sidebar-group">

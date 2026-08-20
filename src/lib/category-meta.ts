@@ -70,8 +70,8 @@ export const CATEGORY_META: Record<string, CategoryMeta> = {
     seoDescription: `Wielrenschoenen van Nimbl en andere topmerken, met aandacht voor pasvorm en voetstand. ${ADVICE_TAIL}`,
   },
   "lafuga-wear": {
-    name: "LaFuga",
-    seoTitle: `${LAFUGA_HEADING} | ${SITE_BRAND_NAME}`,
+    name: "LaFuga kleding",
+    seoTitle: `LaFuga kleding | ${SITE_BRAND_NAME}`,
     seoDescription: LAFUGA_META_DESCRIPTION,
   },
   glasses: {
@@ -114,8 +114,8 @@ const IMPORTED_NAME_TO_NL: Record<string, string> = {
   fietsen: "Fietsen",
   cleats: "Schoenplaatjes",
   schoenplaatjes: "Schoenplaatjes",
-  clothing: "LaFuga",
-  "cycling clothing": "LaFuga",
+  clothing: "LaFuga kleding",
+  "cycling clothing": "LaFuga kleding",
   "cycling helmets": "Helmen",
   helmets: "Helmen",
   helmen: "Helmen",
@@ -144,9 +144,12 @@ const IMPORTED_NAME_TO_NL: Record<string, string> = {
   "tweedehands fietsen": "Tweedehands fietsen",
   wheels: "Wielen",
   wielen: "Wielen",
-  "lafuga wear": "LaFuga",
-  "lafuga fietskleding": "LaFuga",
-  lafuga: "LaFuga",
+  "lafuga wear": "LaFuga kleding",
+  "lafuga fietskleding": "LaFuga kleding",
+  "lafuga kleding": "LaFuga kleding",
+  "lafuga-kleding": "LaFuga kleding",
+  "lafuga-collectie": "LaFuga kleding",
+  lafuga: "LaFuga kleding",
 };
 
 /** Originele Woo-namen per canonieke slug — nodig om filters te matchen. */
@@ -161,7 +164,7 @@ const WC_IMPORTED_NAMES: Record<string, string[]> = {
   wheels: ["Wheels", "Wielen"],
   "scope-outlet": ["Scope outlet", "Scope Outlet"],
   "cycling-shoes": ["Cycling shoes", "Wielrenschoenen", "Nimbl"],
-  "lafuga-wear": ["Cycling clothing", "LaFuga", "LaFuga fietskleding"],
+  "lafuga-wear": ["Cycling clothing", "LaFuga", "LaFuga fietskleding", "LaFuga kleding", "LaFuga custom kleding"],
   "schoenen-kleding": ["Schoenen & kleding", "Cycling shoes", "Cycling clothing", "Nimbl", "LaFuga"],
   glasses: ["Glasses", "Brillen"],
   accessories: ["Accessories", "Accessoires"],

@@ -89,6 +89,7 @@ export type SubscribeNewsletterResult =
 export async function subscribeNewsletter(input: {
   email: string;
   source?: string;
+  locale?: string;
 }): Promise<SubscribeNewsletterResult> {
   const email = input.email.trim().toLowerCase();
   if (!email.includes("@") || email.length < 5) {
@@ -102,17 +103,38 @@ export async function subscribeNewsletter(input: {
 
   const promo = await ensureNewsletterCoupon();
   let alreadySubscribed = false;
+  const locale = input.locale?.trim().slice(0, 12) || null;
+  const source = (input.source || "footer").slice(0, 40);
+  const now = new Date();
 
   try {
     const existing = await prisma.newsletterSubscriber.findUnique({ where: { email } });
     if (existing) {
-      alreadySubscribed = true;
+      if (existing.status === "unsubscribed") {
+        await prisma.newsletterSubscriber.update({
+          where: { id: existing.id },
+          data: {
+            status: "active",
+            unsubscribedAt: null,
+            consentAt: now,
+            source,
+            locale: locale ?? existing.locale,
+            couponCode: existing.couponCode || promo.code,
+          },
+        });
+        alreadySubscribed = false;
+      } else {
+        alreadySubscribed = true;
+      }
     } else {
       await prisma.newsletterSubscriber.create({
         data: {
           email,
-          source: (input.source || "footer").slice(0, 40),
+          source,
+          locale,
           couponCode: promo.code,
+          status: "active",
+          consentAt: now,
         },
       });
     }
@@ -131,7 +153,9 @@ export async function subscribeNewsletter(input: {
     }
   }
 
-  const emailSent = await sendNewsletterWelcomeEmail(email, promo.code);
+  const emailSent = alreadySubscribed
+    ? false
+    : await sendNewsletterWelcomeEmail(email, promo.code);
 
   return {
     ok: true,
@@ -178,6 +202,7 @@ export async function sendNewsletterWelcomeEmail(email: string, welcomeCode: str
     template,
     buildEmailVars(customerOnlyOrder(localName), { welcomeCode }),
     logoUrl,
+    { variant: "marketing" },
   );
   const ok = await sendOutboundEmail({ to, subject, text, html });
   if (ok) {

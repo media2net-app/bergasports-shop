@@ -37,6 +37,7 @@ export async function importWordpressFromSettings(
   const result = await runWordpressImport(prisma, creds, options);
   revalidatePath("/admin/settings/woocommerce");
   revalidatePath("/admin/categories");
+  revalidatePath("/admin/attributes");
   revalidatePath("/admin/products");
   revalidatePath("/shop");
   revalidatePath("/categorii");

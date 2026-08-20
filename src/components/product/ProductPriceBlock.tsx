@@ -1,6 +1,8 @@
 "use client";
 
 import { useProductVariation } from "@/components/product/ProductVariationContext";
+import { useShopLocale } from "@/components/locale/ShopLanguagesProvider";
+import { ui } from "@/lib/i18n/ui";
 import {
   formatProductCardPrice,
   formatProductPrice,
@@ -16,6 +18,8 @@ type Props = {
  * Bij meerdere varianten zonder keuze tonen we de prijsrange.
  */
 export default function ProductPriceBlock({ product }: Props) {
+  const { locale } = useShopLocale();
+  const t = ui(locale);
   const ctx = useProductVariation();
   const variations = ctx?.variations;
   const selected = ctx?.selected;
@@ -37,7 +41,7 @@ export default function ProductPriceBlock({ product }: Props) {
     <div>
       <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
         {isRange ? (
-          <span className="text-sm font-semibold text-[var(--foreground)]/60">vanaf</span>
+          <span className="text-sm font-semibold text-[var(--foreground)]/60">{t.fromPrice}</span>
         ) : null}
         <span className="text-3xl font-bold tracking-tight text-[var(--foreground)] md:text-4xl">
           {priceLabel}
@@ -49,12 +53,12 @@ export default function ProductPriceBlock({ product }: Props) {
         ) : null}
         {saving > 0.005 ? (
           <span className="rounded-full bg-[#166534] px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-white">
-            Je bespaart {formatProductPrice(saving, product.currency)}
+            {t.youSave(formatProductPrice(saving, product.currency))}
           </span>
         ) : null}
       </div>
       <p className="mt-1.5 text-xs text-[var(--foreground)]/60">
-        Incl. btw{isRange ? " · prijs volgt na variantkeuze" : ""}
+        {isRange ? t.inclVatRange : t.inclVat}
       </p>
     </div>
   );

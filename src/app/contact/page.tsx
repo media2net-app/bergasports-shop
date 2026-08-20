@@ -7,6 +7,8 @@ import CmsPageView from "@/components/site/CmsPageView";
 import ContactLeadForm from "@/components/site/ContactLeadForm";
 import GoogleReviewsCard from "@/components/site/GoogleReviewsCard";
 import ShopMapEmbed from "@/components/site/ShopMapEmbed";
+import { getRequestLocale } from "@/lib/i18n/locale";
+import { localizePageFields } from "@/lib/i18n/localize-page";
 import { getSitePageSeedByPath } from "@/lib/legal-site-pages-content";
 import { buildPageMetadata, localBusinessJsonLd } from "@/lib/seo";
 import { shopPhoneTelHref } from "@/lib/site-contact";
@@ -21,26 +23,28 @@ export const dynamic = "force-dynamic";
 const SEED = getSitePageSeedByPath("/contact");
 
 export async function generateMetadata(): Promise<Metadata> {
-  const page = await getPublishedPageByPath("/contact");
+  const [page, locale] = await Promise.all([getPublishedPageByPath("/contact"), getRequestLocale()]);
+  const localized = page ? localizePageFields(page, locale) : null;
   return buildPageMetadata({
-    absoluteTitle: page?.meta_title?.trim() || PAGE_SEO.contact.title,
-    description: page?.meta_description?.trim() || PAGE_SEO.contact.description,
+    absoluteTitle: localized?.meta_title?.trim() || PAGE_SEO.contact.title,
+    description: localized?.meta_description?.trim() || PAGE_SEO.contact.description,
     path: "/contact",
-    image: page?.social_image || SEED?.social_image,
-    imageAlt: page?.image_alt || SEED?.image_alt || page?.title,
-    noindex: page?.noindex,
-    ogTitle: page?.og_title,
-    ogDescription: page?.og_description,
+    image: localized?.social_image || SEED?.social_image,
+    imageAlt: localized?.image_alt || SEED?.image_alt || localized?.title,
+    noindex: localized?.noindex,
+    ogTitle: localized?.og_title,
+    ogDescription: localized?.og_description,
   });
 }
 
 export default async function ContactPage() {
-  const [page, contact, hours, instagramUrl, googleRating] = await Promise.all([
+  const [page, contact, hours, instagramUrl, googleRating, locale] = await Promise.all([
     getPublishedPageByPath("/contact"),
     getShopPublicContact(),
     getShopOpeningHours(),
     getInstagramPublicUrl(),
     getGooglePlaceAggregateRating().catch(() => null),
+    getRequestLocale(),
   ]);
   const fallback = SEED
     ? {
@@ -52,7 +56,7 @@ export default async function ContactPage() {
         image_alt: SEED.image_alt ?? null,
       }
     : null;
-  const source = page ?? fallback;
+  const source = page ? localizePageFields(page, locale) : fallback;
   if (!source) {
     notFound();
   }

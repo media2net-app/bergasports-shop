@@ -29,15 +29,31 @@ function isModelUnavailable(message: string): boolean {
 export function formatOpenAiImageError(raw: string): string {
   if (isBillingHardLimit(raw)) {
     return (
-      "OpenAI billing limit reached. Add credits or raise your spending limit at " +
-      "https://platform.openai.com/settings/organization/billing — then try again."
+      "OpenAI billing/tegoedlimiet bereikt. Zet credits of verhoog de spending limit op " +
+      "https://platform.openai.com/settings/organization/billing — daarna opnieuw proberen."
+    );
+  }
+
+  if (/insufficient_quota|exceeded your current quota/i.test(raw)) {
+    return (
+      "OpenAI-quota op. Check billing/credits op " +
+      "https://platform.openai.com/settings/organization/billing — daarna opnieuw proberen."
     );
   }
 
   if (isModelUnavailable(raw) && !isBillingHardLimit(raw)) {
     return (
-      "No image model is available on this API key. Enable GPT Image or DALL·E in your OpenAI " +
-      "project, or use a key from an account with image generation access."
+      "Geen image-model beschikbaar op deze API-key. Zet GPT Image (gpt-image-1) aan in je OpenAI-project, " +
+      "of gebruik een key van een account met image-toegang. Details: " +
+      raw.slice(0, 400)
+    );
+  }
+
+  if (/invalid.?api.?key|incorrect.?api.?key|authentication/i.test(raw)) {
+    return (
+      "OpenAI weigert de API-key (ongeldig of ingetrokken). Plak een nieuwe sk-… key onder " +
+      "Instellingen → OpenAI en sla op. Details: " +
+      raw.slice(0, 300)
     );
   }
 
@@ -75,7 +91,7 @@ function gptImageBody(model: GptImageModel, prompt: string): Record<string, unkn
 }
 
 export async function generateProductImageWithOpenAI(prompt: string): Promise<GenerateImageResult> {
-  const key = getOpenAiApiKey();
+  const key = await getOpenAiApiKey();
   if (!key) {
     throw new Error("OPENAI_API_KEY is not configured.");
   }

@@ -24,11 +24,14 @@ export function formatNewsCategory(value: string | null | undefined): string | n
   return label || null;
 }
 
-export function formatNewsDate(value: Date | string | null | undefined): string | null {
+export function formatNewsDate(
+  value: Date | string | null | undefined,
+  locale: string = "nl",
+): string | null {
   if (!value) return null;
   const date = value instanceof Date ? value : new Date(value);
   if (Number.isNaN(date.getTime())) return null;
-  return date.toLocaleDateString("nl-NL", {
+  return date.toLocaleDateString(locale === "en" ? "en-GB" : "nl-NL", {
     day: "numeric",
     month: "long",
     year: "numeric",

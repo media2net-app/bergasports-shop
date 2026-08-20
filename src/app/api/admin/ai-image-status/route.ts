@@ -20,5 +20,5 @@ export async function GET() {
     return denied;
   }
 
-  return NextResponse.json(getAiImageAdminStatus());
+  return NextResponse.json(await getAiImageAdminStatus());
 }

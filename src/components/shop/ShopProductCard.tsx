@@ -34,7 +34,8 @@ export default function ShopProductCard({
   imageVariant = "card",
 }: Props) {
   const { locale } = useShopLocale();
-  const resolvedCta = ctaLabel ?? ui(locale).viewProduct;
+  const t = ui(locale);
+  const resolvedCta = ctaLabel ?? t.viewProduct;
   const href = productPath(product);
   const inStock = isProductInStock(product);
 
@@ -60,7 +61,7 @@ export default function ShopProductCard({
         <div className="flex flex-1 flex-col p-4 pt-3">
           {!inStock ? (
             <span className="mb-2 inline-flex w-fit rounded-full bg-amber-100 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-amber-900">
-              Niet op voorraad
+              {t.outOfStock}
             </span>
           ) : product.tag ? (
             <span className="mb-2 inline-flex w-fit rounded-full bg-[#f0ead8] px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-[var(--brand-dark)]">
@@ -113,7 +114,7 @@ export default function ShopProductCard({
           </LocalizedLink>
         ) : (
           <span className="mt-3 block w-full rounded-full border border-[#e5dcc8] bg-[#faf9fc] px-4 py-2.5 text-center text-sm font-semibold text-[var(--foreground)]/60">
-            Niet op voorraad
+            {t.outOfStock}
           </span>
         )}
       </div>

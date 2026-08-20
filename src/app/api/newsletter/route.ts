@@ -6,7 +6,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
-  let body: { email?: string; source?: string };
+  let body: { email?: string; source?: string; locale?: string };
   try {
     body = (await request.json()) as typeof body;
   } catch {
@@ -16,6 +16,7 @@ export async function POST(request: Request) {
   const result = await subscribeNewsletter({
     email: body.email ?? "",
     source: body.source,
+    locale: body.locale,
   });
 
   if (!result.ok) {

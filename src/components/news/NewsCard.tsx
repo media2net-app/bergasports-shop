@@ -1,6 +1,10 @@
+"use client";
+
 import LocalizedLink from "@/components/locale/LocalizedLink";
 
+import { useShopLocale } from "@/components/locale/ShopLanguagesProvider";
 import { formatNewsCategory, formatNewsDate, type NewsCardPost } from "@/lib/news-format";
+import { ui } from "@/lib/i18n/ui";
 
 type NewsCardProps = {
   post: NewsCardPost;
@@ -8,7 +12,9 @@ type NewsCardProps = {
 };
 
 export default function NewsCard({ post, variant = "card" }: NewsCardProps) {
-  const date = formatNewsDate(post.publishedAt);
+  const { locale } = useShopLocale();
+  const t = ui(locale);
+  const date = formatNewsDate(post.publishedAt, locale);
   const featured = variant === "featured";
   const meta = [date, formatNewsCategory(post.category)].filter(Boolean).join(" · ");
 
@@ -55,7 +61,7 @@ export default function NewsCard({ post, variant = "card" }: NewsCardProps) {
           </p>
         ) : null}
         <span className="mt-auto inline-flex items-center gap-1.5 pt-5 text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--foreground)]/60 transition-colors group-hover:text-[var(--brand)]">
-          Lees verder
+          {t.readMore}
           <span aria-hidden className="transition-transform duration-300 group-hover:translate-x-1">
             →
           </span>

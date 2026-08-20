@@ -1,11 +1,13 @@
 "use client";
 
 import { useMollieMethods } from "@/components/payments/useMollieMethods";
+import { useShopLocale } from "@/components/locale/ShopLanguagesProvider";
 import {
   formatMollieMethodNames,
   mollieMethodImageUrl,
   mollieMethodLabel,
 } from "@/lib/mollie-methods";
+import { ui } from "@/lib/i18n/ui";
 
 type Props = {
   amount: number;
@@ -15,9 +17,11 @@ type Props = {
 };
 
 export default function MollieMethodsHint({ amount, currency, country = "NL", className = "" }: Props) {
+  const { locale } = useShopLocale();
+  const t = ui(locale);
   const { methods, loading } = useMollieMethods({ amount, currency, country });
   const names = formatMollieMethodNames(methods);
-  const payCopy = names ? `Veilig betalen met ${names}` : "Veilig betalen via Mollie";
+  const payCopy = names ? t.paySafeWith(names) : t.paySafeMollie;
 
   return (
     <div className={`space-y-1.5 ${className}`}>
@@ -48,9 +52,9 @@ export default function MollieMethodsHint({ amount, currency, country = "NL", cl
         </ul>
       ) : null}
       <p className="text-center text-[11px] leading-relaxed text-[var(--foreground)]/50">
-        {loading && methods.length === 0 ? "Veilig betalen via Mollie" : payCopy}
+        {loading && methods.length === 0 ? t.paySafeMollie : payCopy}
         {" · "}
-        Gratis ophalen in Dedemsvaart
+        {t.freePickupDedemsvaart}
       </p>
     </div>
   );

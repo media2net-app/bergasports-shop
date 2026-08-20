@@ -1,6 +1,8 @@
 import type { ReactNode } from "react";
 
 import ContentCtaCard from "@/components/site/ContentCtaCard";
+import { getRequestLocale } from "@/lib/i18n/locale";
+import { ui } from "@/lib/i18n/ui";
 import { LEGAL_PAGE_PATHS } from "@/lib/site-content";
 
 const LEGAL_PATHS = new Set<string>(Object.values(LEGAL_PAGE_PATHS));
@@ -17,9 +19,9 @@ export type ContentPageLayoutProps = {
   showCtas?: boolean;
 };
 
-function formatPageUpdatedAt(iso: string): string {
+function formatPageUpdatedAt(iso: string, locale: string): string {
   try {
-    return new Date(iso).toLocaleDateString("nl-NL", {
+    return new Date(iso).toLocaleDateString(locale === "en" ? "en-GB" : "nl-NL", {
       day: "numeric",
       month: "long",
       year: "numeric",
@@ -39,11 +41,13 @@ export default async function ContentPageLayout({
   aside,
   showCtas,
 }: ContentPageLayoutProps) {
+  const locale = await getRequestLocale();
+  const t = ui(locale);
   const conversion = showCtas ?? !LEGAL_PATHS.has(path);
   const hasSidebar = conversion || Boolean(aside);
   const hero = featured?.trim() || "";
   const heroAlt = featuredAlt?.trim() || heading;
-  const updatedLabel = updatedAt ? formatPageUpdatedAt(updatedAt) : null;
+  const updatedLabel = updatedAt ? formatPageUpdatedAt(updatedAt, locale) : null;
 
   return (
     <section className="mx-auto w-full max-w-[1440px] px-4 py-8 md:py-12 lg:px-6">
@@ -81,7 +85,7 @@ export default async function ContentPageLayout({
           ) : null}
           {!conversion && updatedLabel ? (
             <p className="mt-10 text-xs text-[var(--foreground)]/45">
-              Laatst bijgewerkt: {updatedLabel}
+              {t.lastUpdated} {updatedLabel}
             </p>
           ) : null}
         </article>

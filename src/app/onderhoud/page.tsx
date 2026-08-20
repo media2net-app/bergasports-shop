@@ -4,6 +4,8 @@ import Footer from "@/components/layout/Footer";
 import Header from "@/components/layout/Header";
 import CmsPageView from "@/components/site/CmsPageView";
 import ContactLeadForm from "@/components/site/ContactLeadForm";
+import { getRequestLocale } from "@/lib/i18n/locale";
+import { localizePageFields } from "@/lib/i18n/localize-page";
 import { getSitePageSeedByPath } from "@/lib/legal-site-pages-content";
 import { buildPageMetadata } from "@/lib/seo";
 import { getPublishedPageByPath } from "@/lib/site-pages-db";
@@ -14,33 +16,41 @@ export const dynamic = "force-dynamic";
 const SEED = getSitePageSeedByPath("/onderhoud");
 
 export async function generateMetadata(): Promise<Metadata> {
-  const page = await getPublishedPageByPath("/onderhoud");
+  const [page, locale] = await Promise.all([getPublishedPageByPath("/onderhoud"), getRequestLocale()]);
+  const localized = page ? localizePageFields(page, locale) : null;
   return buildPageMetadata({
-    absoluteTitle: page?.meta_title?.trim() || SEED?.meta_title || undefined,
-    title: page?.meta_title || SEED?.meta_title ? undefined : "Onderhoud & reparatie",
+    absoluteTitle: localized?.meta_title?.trim() || SEED?.meta_title || undefined,
+    title: localized?.meta_title || SEED?.meta_title ? undefined : "Onderhoud & reparatie",
     description:
-      page?.meta_description?.trim() ||
+      localized?.meta_description?.trim() ||
       SEED?.meta_description ||
       "Onderhoud, afstelling en reparatie van racefietsen, gravel en MTB in onze werkplaats in Dedemsvaart.",
     path: "/onderhoud",
-    image: page?.social_image || SEED?.social_image,
-    imageAlt: page?.image_alt || SEED?.image_alt || page?.title,
-    noindex: page?.noindex,
-    ogTitle: page?.og_title,
-    ogDescription: page?.og_description,
+    image: localized?.social_image || SEED?.social_image,
+    imageAlt: localized?.image_alt || SEED?.image_alt || localized?.title,
+    noindex: localized?.noindex,
+    ogTitle: localized?.og_title,
+    ogDescription: localized?.og_description,
   });
 }
 
 export default async function OnderhoudPage() {
-  const [page, hours] = await Promise.all([getPublishedPageByPath("/onderhoud"), getShopOpeningHours()]);
-  const view = page ?? {
-    path: "/onderhoud",
-    title: SEED?.title ?? "Onderhoud & reparatie",
-    heading: SEED?.heading ?? "Onderhoud & reparatie",
-    body_html: SEED?.body_html ?? "",
-    social_image: SEED?.social_image ?? null,
-    image_alt: SEED?.image_alt ?? null,
-  };
+  const [page, hours, locale] = await Promise.all([
+    getPublishedPageByPath("/onderhoud"),
+    getShopOpeningHours(),
+    getRequestLocale(),
+  ]);
+  const view = localizePageFields(
+    page ?? {
+      path: "/onderhoud",
+      title: SEED?.title ?? "Onderhoud & reparatie",
+      heading: SEED?.heading ?? "Onderhoud & reparatie",
+      body_html: SEED?.body_html ?? "",
+      social_image: SEED?.social_image ?? null,
+      image_alt: SEED?.image_alt ?? null,
+    },
+    locale,
+  );
 
   return (
     <main className="min-h-screen bg-[#faf8f5]/40">

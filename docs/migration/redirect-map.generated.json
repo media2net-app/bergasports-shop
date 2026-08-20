@@ -87,12 +87,6 @@
       "kind": "static"
     },
     {
-      "source": "/lafuga-kleding",
-      "destination": "/lafuga",
-      "statusCode": 301,
-      "kind": "static"
-    },
-    {
       "source": "/bike-repair",
       "destination": "/onderhoud",
       "statusCode": 301,

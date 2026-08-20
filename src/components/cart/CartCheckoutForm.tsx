@@ -6,10 +6,12 @@ import TikTokCheckoutEvents from "@/components/analytics/TikTokCheckoutEvents";
 import ApplePayButton from "@/components/payments/ApplePayButton";
 import MollieMethodPicker from "@/components/payments/MollieMethodPicker";
 import { useMollieMethods } from "@/components/payments/useMollieMethods";
+import { useShopLocale } from "@/components/locale/ShopLanguagesProvider";
 import { formatMollieMethodNames, mollieMethodLabel } from "@/lib/mollie-methods";
 import { getTtclidFromDocument } from "@/lib/tiktok-client";
 import { tikTokIdentify } from "@/lib/tiktok-pixel";
 import { formatProductPrice } from "@/lib/products";
+import { ui } from "@/lib/i18n/ui";
 import { LEGAL_PAGE_PATHS } from "@/lib/site-content";
 import { trackCommerceEvent } from "@/components/analytics/AnalyticsScripts";
 import Link from "next/link";
@@ -41,6 +43,8 @@ export default function CartCheckoutForm({
   total,
   onSuccess,
 }: CartCheckoutFormProps) {
+  const { locale } = useShopLocale();
+  const t = ui(locale);
   const [step, setStep] = useState<CheckoutStep>("details");
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
@@ -116,15 +120,15 @@ export default function CartCheckoutForm({
 
   function validateDetails(): boolean {
     if (!customerName.trim() || !customerPhone.trim() || !shippingAddress.trim() || !shippingCity.trim()) {
-      setError("Vul naam, telefoon, adres en plaats in.");
+      setError(t.errFillDetails);
       return false;
     }
     if (!customerEmail.trim()) {
-      setError("E-mail is verplicht voor online betalen.");
+      setError(t.errEmailRequired);
       return false;
     }
     if (!legalAccepted) {
-      setError("Accepteer de algemene voorwaarden en het privacybeleid.");
+      setError(t.errAcceptLegal);
       return false;
     }
     setError("");
@@ -141,7 +145,7 @@ export default function CartCheckoutForm({
     const data = (await res.json()) as { discount?: number; error?: string };
     if (!res.ok) {
       setCouponDiscount(0);
-      setError(data.error || "Ongeldige code");
+      setError(data.error || t.errInvalidCoupon);
       return;
     }
     setCouponDiscount(data.discount ?? 0);
@@ -205,7 +209,7 @@ export default function CartCheckoutForm({
         paymentMethod?: string;
       };
       if (!res.ok || !data.orderNumber) {
-        setError(data.error ?? "De bestelling kon niet worden geplaatst.");
+        setError(data.error ?? t.errOrderFailed);
         setLoading(false);
         return;
       }
@@ -218,7 +222,7 @@ export default function CartCheckoutForm({
       await tikTokIdentify({ externalId: data.orderNumber });
       onSuccess(data.orderNumber);
     } catch {
-      setError("Netwerkfout. Probeer het opnieuw.");
+      setError(t.errNetworkRetry);
       setLoading(false);
     }
   }
@@ -229,13 +233,13 @@ export default function CartCheckoutForm({
 
       <div
         className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--foreground)]/40"
-        aria-label="Checkout stappen"
+        aria-label={t.checkoutStepsAria}
       >
-        <span className={step === "details" ? "text-[var(--brand)]" : ""}>1. Bezorging</span>
+        <span className={step === "details" ? "text-[var(--brand)]" : ""}>{t.checkoutStepDelivery}</span>
         <span aria-hidden className="text-[var(--brand-mid)]">
           →
         </span>
-        <span className={step === "confirm" ? "text-[var(--brand)]" : ""}>2. Bevestigen</span>
+        <span className={step === "confirm" ? "text-[var(--brand)]" : ""}>{t.checkoutStepConfirm}</span>
       </div>
 
       {step === "details" ? (
@@ -247,23 +251,23 @@ export default function CartCheckoutForm({
           }}
         >
           <p className="font-[family-name:var(--font-heading)] text-sm tracking-tight text-[var(--foreground)]">
-            Bezorggegevens
+            {t.deliveryDetails}
           </p>
 
           <div className="rounded-2xl border border-[var(--brand-border)] bg-[var(--brand-surface)] px-4 py-3 text-xs leading-relaxed text-[var(--foreground)]/75">
-            <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[var(--brand)]">Online betalen</p>
+            <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[var(--brand)]">{t.payOnline}</p>
             <p className="mt-1">
               {!mollieConfigured && !mollieLoading
-                ? "Online betalen is tijdelijk niet beschikbaar. Kies alvast een methode of neem contact op."
+                ? t.payUnavailable
                 : mollieFallback
-                  ? "Kies hier je betaalmethode. Staat die niet aan, dan kies je verder op de beveiligde Mollie-pagina."
-                  : `${formatMollieMethodNames(mollieMethods)} — veilig via Mollie.`}
+                  ? t.payFallbackHint
+                  : t.payViaMollie(formatMollieMethodNames(mollieMethods))}
             </p>
           </div>
 
           <div>
             <label htmlFor="co-country" className="text-xs font-medium text-[var(--foreground)]">
-              Land *
+              {t.country} *
             </label>
             <select
               id="co-country"
@@ -271,16 +275,16 @@ export default function CartCheckoutForm({
               value={shippingCountry}
               onChange={(e) => setShippingCountry(e.target.value)}
             >
-              <option value="NL">Nederland</option>
-              <option value="BE">België</option>
-              <option value="DE">Duitsland</option>
-              <option value="EU">Overig EU</option>
+              <option value="NL">{t.countryNl}</option>
+              <option value="BE">{t.countryBe}</option>
+              <option value="DE">{t.countryDe}</option>
+              <option value="EU">{t.countryEu}</option>
             </select>
           </div>
 
           {shippingRates.length > 0 ? (
             <fieldset className="space-y-2">
-              <legend className="text-xs font-medium text-[var(--foreground)]">Verzending</legend>
+              <legend className="text-xs font-medium text-[var(--foreground)]">{t.shipping}</legend>
               {shippingRates.map((rate) => (
                 <label
                   key={rate.method}
@@ -309,13 +313,13 @@ export default function CartCheckoutForm({
           />
           {!mollieConfigured && !mollieLoading ? (
             <p className="text-xs font-medium text-red-600">
-              Online betalen is tijdelijk niet beschikbaar. Probeer later opnieuw of neem contact op.
+              {t.payUnavailableShort}
             </p>
           ) : null}
 
           <div className="flex gap-2">
             <input
-              placeholder="Kortingscode"
+              placeholder={t.couponPlaceholder}
               className={fieldClass}
               value={couponCode}
               onChange={(e) => setCouponCode(e.target.value)}
@@ -325,16 +329,16 @@ export default function CartCheckoutForm({
               className="mt-1 shrink-0 rounded-full border border-[var(--brand-border)] px-4 text-[11px] font-bold uppercase tracking-[0.12em] transition hover:border-[var(--brand)] hover:text-[var(--brand)]"
               onClick={() => void applyCoupon()}
             >
-              Toepassen
+              {t.applyCoupon}
             </button>
           </div>
           {couponDiscount > 0 ? (
-            <p className="text-xs text-emerald-800">Korting: {formatProductPrice(couponDiscount, currency)}</p>
+            <p className="text-xs text-emerald-800">{t.discount}: {formatProductPrice(couponDiscount, currency)}</p>
           ) : null}
 
           <div>
             <label htmlFor="co-name" className="text-xs font-medium text-[var(--foreground)]">
-              Volledige naam *
+              {t.fullName} *
             </label>
             <input
               id="co-name"
@@ -348,7 +352,7 @@ export default function CartCheckoutForm({
           </div>
           <div>
             <label htmlFor="co-phone" className="text-xs font-medium text-[var(--foreground)]">
-              Telefoon *
+              {t.fieldPhone} *
             </label>
             <input
               id="co-phone"
@@ -363,7 +367,7 @@ export default function CartCheckoutForm({
           </div>
           <div>
             <label htmlFor="co-email" className="text-xs font-medium text-[var(--foreground)]">
-              E-mail *
+              {t.fieldEmail} *
             </label>
             <input
               id="co-email"
@@ -378,7 +382,7 @@ export default function CartCheckoutForm({
           </div>
           <div>
             <label htmlFor="co-address" className="text-xs font-medium text-[var(--foreground)]">
-              Adres (straat + huisnummer) *
+              {t.fieldAddress} *
             </label>
             <input
               id="co-address"
@@ -393,7 +397,7 @@ export default function CartCheckoutForm({
           <div className="grid grid-cols-2 gap-2">
             <div>
               <label htmlFor="co-city" className="text-xs font-medium text-[var(--foreground)]">
-                Plaats *
+                {t.fieldCity} *
               </label>
               <input
                 id="co-city"
@@ -407,7 +411,7 @@ export default function CartCheckoutForm({
             </div>
             <div>
               <label htmlFor="co-county" className="text-xs font-medium text-[var(--foreground)]">
-                Provincie
+                {t.fieldProvince}
               </label>
               <input
                 id="co-county"
@@ -421,7 +425,7 @@ export default function CartCheckoutForm({
           </div>
           <div>
             <label htmlFor="co-postal" className="text-xs font-medium text-[var(--foreground)]">
-              Postcode
+              {t.fieldPostal}
             </label>
             <input
               id="co-postal"
@@ -434,7 +438,7 @@ export default function CartCheckoutForm({
           </div>
           <div>
             <label htmlFor="co-notes" className="text-xs font-medium text-[var(--foreground)]">
-              Opmerkingen
+              {t.fieldNotes}
             </label>
             <textarea
               id="co-notes"
@@ -453,8 +457,7 @@ export default function CartCheckoutForm({
               onChange={(e) => setMarketingConsent(e.target.checked)}
             />
             <span>
-              Ik wil aanbiedingen en nieuws per e-mail ontvangen (optioneel) — inclusief welkomstkorting. Je kunt je
-              altijd uitschrijven.
+              {t.marketingConsent}
             </span>
           </label>
           <label className="flex cursor-pointer items-start gap-2 rounded-2xl border border-[var(--brand-border)] bg-white px-3 py-2.5 text-xs text-[var(--foreground)]/85">
@@ -466,17 +469,17 @@ export default function CartCheckoutForm({
               required
             />
             <span>
-              Ik ga akkoord met de{" "}
+              {t.legalConsentPrefix}{" "}
               <Link href={LEGAL_PAGE_PATHS.terms} className="underline">
-                algemene voorwaarden
+                {t.termsOfService}
               </Link>
-              , het{" "}
+              , {t.legalAcceptAnd}{" "}
               <Link href={LEGAL_PAGE_PATHS.privacy} className="underline">
-                privacybeleid
+                {t.privacyPolicyShort}
               </Link>{" "}
-              en het{" "}
+              {t.and}{" "}
               <Link href={LEGAL_PAGE_PATHS.returns} className="underline">
-                retourbeleid
+                {t.returnsPolicy}
               </Link>
               .
             </span>
@@ -485,29 +488,29 @@ export default function CartCheckoutForm({
           {error ? <p className="text-xs font-medium text-red-600">{error}</p> : null}
 
           <button type="submit" className={btnGold}>
-            Ga naar bevestiging
+            {t.continueToConfirm}
           </button>
         </form>
       ) : (
         <div className="space-y-3">
           <p className="font-[family-name:var(--font-heading)] text-sm tracking-tight text-[var(--foreground)]">
-            Bevestig bestelling
+            {t.confirmOrder}
           </p>
           <dl className="space-y-2 rounded-3xl border border-[var(--brand-border)] bg-[var(--brand-surface)] p-4 text-sm text-[var(--foreground)]">
             <div>
-              <dt className="text-xs text-[var(--foreground)]/65">Naam</dt>
+              <dt className="text-xs text-[var(--foreground)]/65">{t.fieldName}</dt>
               <dd className="font-medium">{customerName}</dd>
             </div>
             <div>
-              <dt className="text-xs text-[var(--foreground)]/65">Telefoon</dt>
+              <dt className="text-xs text-[var(--foreground)]/65">{t.fieldPhone}</dt>
               <dd className="font-medium">{customerPhone}</dd>
             </div>
             <div>
-              <dt className="text-xs text-[var(--foreground)]/65">E-mail</dt>
+              <dt className="text-xs text-[var(--foreground)]/65">{t.fieldEmail}</dt>
               <dd className="font-medium">{customerEmail}</dd>
             </div>
             <div>
-              <dt className="text-xs text-[var(--foreground)]/65">Adres</dt>
+              <dt className="text-xs text-[var(--foreground)]/65">{t.address}</dt>
               <dd className="font-medium">
                 {shippingAddress}, {shippingCity}
                 {shippingCounty ? `, ${shippingCounty}` : ""}
@@ -515,21 +518,21 @@ export default function CartCheckoutForm({
               </dd>
             </div>
             <div>
-              <dt className="text-xs text-[var(--foreground)]/65">Verzending</dt>
+              <dt className="text-xs text-[var(--foreground)]/65">{t.shipping}</dt>
               <dd className="font-medium">
                 {shippingRates.find((r) => r.method === shippingMethod)?.label ?? shippingMethod} —{" "}
                 {formatProductPrice(shippingCost, currency)}
               </dd>
             </div>
             <div>
-              <dt className="text-xs text-[var(--foreground)]/65">Betaling</dt>
+              <dt className="text-xs text-[var(--foreground)]/65">{t.payment}</dt>
               <dd className="font-medium">
-                {selectedMollieMethod ? mollieMethodLabel(selectedMollieMethod) : "Kies bij Mollie"}
+                {selectedMollieMethod ? mollieMethodLabel(selectedMollieMethod) : t.chooseAtMollie}
               </dd>
             </div>
             {notes ? (
               <div>
-                <dt className="text-xs text-[var(--foreground)]/65">Opmerkingen</dt>
+                <dt className="text-xs text-[var(--foreground)]/65">{t.fieldNotes}</dt>
                 <dd>{notes}</dd>
               </div>
             ) : null}
@@ -543,17 +546,16 @@ export default function CartCheckoutForm({
           />
           {!mollieConfigured && !mollieLoading ? (
             <p className="text-xs font-medium text-red-600">
-              Online betalen is tijdelijk niet beschikbaar. Neem contact op of probeer later opnieuw.
+              {t.payUnavailableConfirm}
             </p>
           ) : mollieFallback ? (
             <p className="text-xs leading-relaxed text-[var(--foreground)]/65">
-              Kies je methode hier. Als Mollie deze niet aan heeft staan, kies je verder op hun
-              betaalpagina.
+              {t.payFallbackConfirm}
             </p>
           ) : null}
 
           <p className="text-base font-bold text-[var(--foreground)]">
-            Totaal: {formatProductPrice(payableTotal, currency)}
+            {t.total}: {formatProductPrice(payableTotal, currency)}
           </p>
 
           {error ? <p className="text-xs font-medium text-red-600">{error}</p> : null}
@@ -568,10 +570,10 @@ export default function CartCheckoutForm({
               className={btnGold}
               onClick={() => void handleSubmit()}
             >
-              {loading ? "Bezig…" : "Doorgaan naar betalen"}
+              {loading ? t.busy : t.continueToPay}
             </button>
             <button type="button" className={btnGhost} onClick={() => setStep("details")} disabled={loading}>
-              Terug naar bezorggegevens
+              {t.backToDelivery}
             </button>
           </div>
         </div>

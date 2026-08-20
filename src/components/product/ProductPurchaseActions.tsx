@@ -38,7 +38,14 @@ function QuantityStepper({
   onDraftChange,
   onCommit,
   compact = false,
-}: QuantityStepperProps) {
+  qtyDecreaseLabel,
+  qtyIncreaseLabel,
+  quantityLabel,
+}: QuantityStepperProps & {
+  qtyDecreaseLabel: string;
+  qtyIncreaseLabel: string;
+  quantityLabel: string;
+}) {
   const inputId = `qty-${productId}-${idSuffix}`;
 
   return (
@@ -52,13 +59,13 @@ function QuantityStepper({
         className={`flex items-center justify-center text-[var(--foreground)] touch-manipulation ${
           compact ? "min-w-11 px-3" : "min-w-12 px-4"
         }`}
-        aria-label="Aantal verlagen"
+        aria-label={qtyDecreaseLabel}
         onClick={() => onApply(quantity - 1)}
       >
         -
       </button>
       <label className="sr-only" htmlFor={inputId}>
-        Aantal
+        {quantityLabel}
       </label>
       <input
         id={inputId}
@@ -67,7 +74,7 @@ function QuantityStepper({
         pattern="[0-9]*"
         autoComplete="off"
         enterKeyHint="done"
-        aria-label="Aantal"
+        aria-label={quantityLabel}
         value={quantityDraft}
         onChange={(e) => onDraftChange(e.target.value.replace(/\D/g, ""))}
         onBlur={onCommit}
@@ -86,7 +93,7 @@ function QuantityStepper({
         className={`flex items-center justify-center text-[var(--foreground)] touch-manipulation ${
           compact ? "min-w-11 px-3" : "min-w-12 px-4"
         }`}
-        aria-label="Aantal verhogen"
+        aria-label={qtyIncreaseLabel}
         onClick={() => onApply(quantity + 1)}
       >
         +
@@ -173,28 +180,31 @@ export default function ProductPurchaseActions({
     onApply: applyQuantity,
     onDraftChange: handleDraftChange,
     onCommit: commitQuantityDraft,
+    qtyDecreaseLabel: t.qtyDecrease,
+    qtyIncreaseLabel: t.qtyIncrease,
+    quantityLabel: t.quantity,
   };
 
   return (
     <div className="space-y-4">
       {!inStock ? (
         <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-900">
-          Momenteel niet op voorraad — je kunt dit product niet toevoegen. Neem contact op voor beschikbaarheid.
+          {t.outOfStockNotice}
         </p>
       ) : null}
       {variations && variations.length > 1 ? (
         <div>
           <div className="flex flex-wrap items-baseline justify-between gap-2">
-            <p className="text-sm font-semibold text-[var(--foreground)]">Kies een variant</p>
+            <p className="text-sm font-semibold text-[var(--foreground)]">{t.chooseAVariant}</p>
             {selected ? (
               <p className="text-sm text-[var(--foreground)]/60">
-                Gekozen:{" "}
+                {t.chosen}{" "}
                 <span className="font-semibold text-[var(--foreground)]">
                   {shortVariationLabel(selected.label)}
                 </span>
               </p>
             ) : (
-              <p className="text-sm font-semibold text-[#96741f]">Nog geen keuze gemaakt</p>
+              <p className="text-sm font-semibold text-[#96741f]">{t.noChoiceYet}</p>
             )}
           </div>
           <div className="mt-2.5 flex flex-wrap gap-2">

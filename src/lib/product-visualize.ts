@@ -97,7 +97,7 @@ async function bufferFromItem(item: OpenAiImageItem | undefined): Promise<Buffer
 export async function visualizeProductInRoom(
   input: VisualizeProductInRoomInput,
 ): Promise<VisualizeProductInRoomResult> {
-  const key = getOpenAiApiKey();
+  const key = await getOpenAiApiKey();
   if (!key) {
     throw new Error("OPENAI_API_KEY is not configured.");
   }

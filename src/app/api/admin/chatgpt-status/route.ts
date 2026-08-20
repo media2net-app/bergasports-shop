@@ -20,5 +20,5 @@ export async function GET() {
     return denied;
   }
 
-  return NextResponse.json(getChatGptAdminStatus());
+  return NextResponse.json(await getChatGptAdminStatus());
 }

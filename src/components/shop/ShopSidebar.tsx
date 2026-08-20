@@ -3,7 +3,9 @@
 import LocalizedLink from "@/components/locale/LocalizedLink";
 import { useState } from "react";
 import { useCategories } from "@/components/categories/CategoriesProvider";
+import { useShopLocale } from "@/components/locale/ShopLanguagesProvider";
 import { flattenRalexCategoryTree, formatRalexCategoryName } from "@/lib/ralex-categories";
+import { localizedSizeFacetGroupTitle, ui } from "@/lib/i18n/ui";
 import type { ShopMerchView } from "@/lib/shop-merchandising-views";
 import {
   buildShopListingUrl,
@@ -52,7 +54,7 @@ type SizeFacetGroup = {
   facets: ShopFacetChip[];
 };
 
-function groupSizeFacets(facets: ShopFacetChip[]): SizeFacetGroup[] {
+function groupSizeFacets(facets: ShopFacetChip[], locale: string): SizeFacetGroup[] {
   const eu: ShopFacetChip[] = [];
   const frame: ShopFacetChip[] = [];
   const clothing: ShopFacetChip[] = [];
@@ -74,11 +76,12 @@ function groupSizeFacets(facets: ShopFacetChip[]): SizeFacetGroup[] {
   }
 
   const groups: SizeFacetGroup[] = [];
-  if (eu.length) groups.push({ title: "Schoenmaat (EU)", facets: eu });
-  if (frame.length) groups.push({ title: "Framemaat", facets: frame });
-  if (clothing.length) groups.push({ title: "Kledingmaat", facets: clothing });
-  if (wheel.length) groups.push({ title: "Wielmaat", facets: wheel });
-  if (other.length) groups.push({ title: "Maat", facets: other });
+  if (eu.length) groups.push({ title: localizedSizeFacetGroupTitle("eu", locale), facets: eu });
+  if (frame.length) groups.push({ title: localizedSizeFacetGroupTitle("frame", locale), facets: frame });
+  if (clothing.length)
+    groups.push({ title: localizedSizeFacetGroupTitle("clothing", locale), facets: clothing });
+  if (wheel.length) groups.push({ title: localizedSizeFacetGroupTitle("wheel", locale), facets: wheel });
+  if (other.length) groups.push({ title: localizedSizeFacetGroupTitle("other", locale), facets: other });
   return groups;
 }
 
@@ -165,6 +168,8 @@ export default function ShopSidebar({
   hideFacets,
 }: ShopSidebarProps) {
   const { tree } = useCategories();
+  const { locale } = useShopLocale();
+  const t = ui(locale);
   const [mobileCategoriesOpen, setMobileCategoriesOpen] = useState(false);
   const [mobileFacetsOpen, setMobileFacetsOpen] = useState(false);
   const [showAllCategories, setShowAllCategories] = useState(false);
@@ -198,7 +203,7 @@ export default function ShopSidebar({
       (n) => n.slug.toLowerCase() === activeCategorySlug.trim().toLowerCase(),
     );
   const activeCategoryTitle = activeNode ? formatRalexCategoryName(activeNode.name, activeNode.slug) : null;
-  const sizeFacetGroups = groupSizeFacets(sizeFacets);
+  const sizeFacetGroups = groupSizeFacets(sizeFacets, locale);
 
   return (
     <div className="space-y-6 rounded-2xl border border-[#e5dcc8] bg-white p-4 shadow-sm">
@@ -211,7 +216,7 @@ export default function ShopSidebar({
           onClick={() => setMobileCategoriesOpen((v) => !v)}
         >
           <span className="min-w-0 truncate">
-            Categorieën
+            {t.categories}
             {activeCategoryTitle ? (
               <span className="font-normal text-[var(--foreground)]/70"> · {activeCategoryTitle}</span>
             ) : null}
@@ -226,9 +231,9 @@ export default function ShopSidebar({
           className={`${mobileCategoriesOpen ? "block" : "hidden"} lg:block`}
         >
           <p className="hidden text-[11px] font-bold uppercase tracking-wider text-[var(--foreground)]/55 lg:block">
-            Categorieën
+            {t.categories}
           </p>
-          <nav className="mt-0 space-y-0.5 pr-1 lg:mt-2" aria-label="Webshop categorieën">
+          <nav className="mt-0 space-y-0.5 pr-1 lg:mt-2" aria-label={t.shopCategories}>
             <LocalizedLink
               href={buildShopListingUrl({
                 cat: null,
@@ -239,7 +244,7 @@ export default function ShopSidebar({
               })}
               className={`${linkBase} ${!activeCategorySlug ? linkActive : linkInactive}`}
             >
-              Alle producten
+              {t.allProducts}
             </LocalizedLink>
             {visibleCategoryRoots.map((root) => {
               const active =
@@ -292,7 +297,7 @@ export default function ShopSidebar({
                 className="mt-1 w-full rounded-lg px-2 py-2 text-left text-sm font-semibold text-[#96741f] underline decoration-[#e5dcc8] underline-offset-2 hover:bg-[#faf8f5]"
                 onClick={() => setShowAllCategories((v) => !v)}
               >
-                {showAllCategories ? "Minder tonen" : "Meer tonen"}
+                {showAllCategories ? t.showLess : t.showMore}
               </button>
             ) : null}
           </nav>
@@ -309,7 +314,7 @@ export default function ShopSidebar({
             className="flex w-full items-center justify-between gap-2 rounded-xl border border-[#e5dcc8] bg-[#faf8f4] px-3 py-2.5 text-left text-sm font-semibold text-[var(--foreground)] transition hover:border-[#B38F27]/25 lg:hidden"
             onClick={() => setMobileFacetsOpen((v) => !v)}
           >
-            <span>Filters</span>
+            <span>{t.filters}</span>
             <span className="flex shrink-0 items-center gap-2">
               {activeFacetCount > 0 ? (
                 <span className="rounded-full bg-[#B38F27] px-2 py-0.5 text-[11px] font-bold text-white">
@@ -325,12 +330,12 @@ export default function ShopSidebar({
           <div
             id="shop-facets-panel"
             role="region"
-            aria-label="Filters merk, eigenschappen, kleur en maat"
+            aria-label={t.filtersAria}
             className={`space-y-6 ${mobileFacetsOpen ? "block" : "hidden"} lg:block`}
           >
             {brandFacets.length > 0 ? (
             <div>
-              <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--foreground)]/55">Merk</p>
+              <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--foreground)]/55">{t.brand}</p>
               <div className="mt-2 flex flex-wrap gap-1.5">
                 {brandFacets.map((f) => {
                   const active = selectedBrands.includes(f.id);
@@ -390,7 +395,7 @@ export default function ShopSidebar({
 
             {colorFacets.length > 0 ? (
             <div>
-              <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--foreground)]/55">Kleur</p>
+              <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--foreground)]/55">{t.color}</p>
               <div className="mt-2 flex flex-wrap gap-1.5">
                 {colorFacets.map((f) => {
                   const active = selectedColors.includes(f.id);
@@ -440,7 +445,7 @@ export default function ShopSidebar({
                 })}
                 className="block text-center text-xs font-semibold text-[#96741f] underline underline-offset-2"
               >
-                Wis filters
+                {t.clearFilters}
               </LocalizedLink>
             ) : null}
           </div>

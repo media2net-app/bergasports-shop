@@ -63,6 +63,7 @@ export default function AdminSettingsForm({ groupId, initialFields }: AdminSetti
         ok?: boolean;
         error?: string;
         saved?: string[];
+        cleared?: string[];
         fields?: AdminSettingFieldView[];
       };
       if (!res.ok || !data.ok) {
@@ -70,12 +71,14 @@ export default function AdminSettingsForm({ groupId, initialFields }: AdminSetti
         setSaving(false);
         return;
       }
+      const nextFields = data.fields
+        ? data.fields.filter((f) => f.group === groupId && !f.hidden)
+        : fields;
       if (data.fields) {
-        const next = data.fields.filter((f) => f.group === groupId && !f.hidden);
-        setFields(next);
+        setFields(nextFields);
         setDrafts((prev) => {
           const merged = { ...prev };
-          for (const f of next) {
+          for (const f of nextFields) {
             const raw = f.secret ? "" : f.displayValue;
             merged[f.key] = fieldIsMoney(f) ? formatMoneyInput(raw, { allowEmpty: true }) : raw;
           }
@@ -83,11 +86,21 @@ export default function AdminSettingsForm({ groupId, initialFields }: AdminSetti
         });
       }
       const n = data.saved?.length ?? 0;
-      setMessage(
-        n > 0
-          ? `${n} waarde(n) opgeslagen.`
-          : "Geen wijzigingen (geheimen ongewijzigd laten = leeg laten).",
-      );
+      const cleared = data.cleared?.length ?? 0;
+      if (n > 0) {
+        const openAiReady = nextFields.some((f) => f.key === "OPENAI_API_KEY" && f.configured);
+        setMessage(
+          `${n} waarde(n) opgeslagen.${
+            openAiReady ? " OpenAI-key staat klaar voor foto-eendracht / AI-beelden." : ""
+          }`,
+        );
+      } else if (cleared > 0) {
+        setMessage(`${cleared} waarde(n) gewist.`);
+      } else {
+        setMessage(
+          "Geen wijzigingen. Voor API-keys: plak de nieuwe sk-… waarde in het veld en klik Opslaan (leeg laten behoudt de oude key).",
+        );
+      }
     } catch {
       setError("Netwerkfout");
     }

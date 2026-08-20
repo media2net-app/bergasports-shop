@@ -31,7 +31,6 @@
     { "source": "/speedskates", "destination": "/skeelers", "permanent": true },
     { "source": "/scope-wheels", "destination": "/wielen", "permanent": true },
     { "source": "/scope-wheels-2", "destination": "/wielen", "permanent": true },
-    { "source": "/lafuga-kleding", "destination": "/lafuga", "permanent": true },
     { "source": "/bike-repair", "destination": "/onderhoud", "permanent": true },
     { "source": "/about-bergasports", "destination": "/over-ons", "permanent": true },
     { "source": "/verzendkosten-en-levertijd", "destination": "/verzending", "permanent": true },

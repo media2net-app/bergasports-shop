@@ -10,7 +10,7 @@ const TYPE_LABELS: { id: WordpressImportType; label: string; needsWoo: boolean; 
     id: "products",
     label: "Producten",
     needsWoo: true,
-    hint: "SKU/id-match. Easy Sales-voorraad, featured en handmatige specs/SEO blijven staan.",
+    hint: "SKU/id-match. Importeert ook globale attributen. Easy Sales-voorraad, featured en handmatige specs/SEO blijven staan.",
   },
   {
     id: "categories",
@@ -22,7 +22,7 @@ const TYPE_LABELS: { id: WordpressImportType; label: string; needsWoo: boolean; 
     id: "attributes",
     label: "Eigenschappen",
     needsWoo: true,
-    hint: "Woo-attributen → specificaties op het product. Handmatige specs worden niet overschreven.",
+    hint: "Globale Woo-attributen + termen opslaan, en specificaties op producten bijwerken. Handmatige specs blijven staan.",
   },
   {
     id: "customers",

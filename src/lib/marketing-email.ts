@@ -90,6 +90,7 @@ export async function sendWelcomeMarketingEmail(
       welcomeCode: promo.code,
     }),
     logoUrl,
+    { variant: "marketing" },
   );
   const ok = await sendOutboundEmail({ to, subject, text, html });
   if (ok) {
@@ -112,7 +113,9 @@ export async function sendPostPurchaseMarketingEmail(order: OrderWithItems): Pro
 
   const logoUrl = await getEmailLogoUrlSetting();
   const template = await getEmailTemplate("marketing.post_purchase");
-  const { subject, text, html } = renderEmailTemplate(template, buildEmailVars(order), logoUrl);
+  const { subject, text, html } = renderEmailTemplate(template, buildEmailVars(order), logoUrl, {
+    variant: "marketing",
+  });
   const ok = await sendOutboundEmail({ to, subject, text, html });
   if (ok) {
     await logMarketingEmail(to, "post_purchase", order.id);
@@ -155,6 +158,7 @@ export async function sendWinBackMarketingEmail(
       winBackExpiry: expiryDateNl(winBack.expiryDays),
     }),
     logoUrl,
+    { variant: "marketing" },
   );
   const ok = await sendOutboundEmail({ to, subject, text, html });
   if (ok) {

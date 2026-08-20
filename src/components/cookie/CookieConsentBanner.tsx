@@ -5,11 +5,15 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { useCookieConsent } from "@/components/cookie/CookieConsentProvider";
+import { useShopLocale } from "@/components/locale/ShopLanguagesProvider";
+import { ui } from "@/lib/i18n/ui";
 import { LEGAL_PAGE_PATHS } from "@/lib/site-content";
 
 export default function CookieConsentBanner() {
   const pathname = usePathname() ?? "";
   const isAdmin = pathname.startsWith("/admin");
+  const { locale } = useShopLocale();
+  const t = ui(locale);
 
   const {
     showBanner,
@@ -49,7 +53,7 @@ export default function CookieConsentBanner() {
     >
       <div className="mx-auto max-w-3xl rounded-2xl border border-[#f0ead8]/20 bg-[#B38F27] p-5 text-[#faf8f5] shadow-2xl sm:p-6">
         <h2 id="cookie-consent-title" className="text-lg font-semibold">
-          {showSettings ? "Cookievoorkeuren" : "Jouw privacy telt"}
+          {showSettings ? t.cookiePrefs : t.cookieTitle}
         </h2>
 
         {showSettings ? (
@@ -57,8 +61,7 @@ export default function CookieConsentBanner() {
             <label className="flex gap-3 opacity-80">
               <input type="checkbox" checked disabled className="mt-1" />
               <span>
-                <strong className="text-[#faf8f5]">Essentieel</strong> — winkelwagen, sessie, beveiliging
-                (verplicht)
+                <strong className="text-[#faf8f5]">{t.cookieEssential}</strong> — {t.cookieEssentialDesc}
               </span>
             </label>
             <label className="flex cursor-pointer gap-3">
@@ -69,8 +72,7 @@ export default function CookieConsentBanner() {
                 className="mt-1"
               />
               <span>
-                <strong className="text-[#faf8f5]">Analytisch</strong> — geaggregeerde statistieken over
-                sitegebruik (bezoeken, pagina&apos;s, winkelwagen)
+                <strong className="text-[#faf8f5]">{t.cookieAnalytics}</strong> — {t.cookieAnalyticsDesc}
               </span>
             </label>
             <label className="flex cursor-pointer gap-3">
@@ -81,8 +83,7 @@ export default function CookieConsentBanner() {
                 className="mt-1"
               />
               <span>
-                <strong className="text-[#faf8f5]">Marketing</strong> — campagnemeting (bijv. TikTok) en
-                remarketing
+                <strong className="text-[#faf8f5]">{t.cookieMarketing}</strong> — {t.cookieMarketingDesc}
               </span>
             </label>
             <div className="flex flex-wrap gap-2 pt-1">
@@ -91,31 +92,28 @@ export default function CookieConsentBanner() {
                 onClick={() => savePreferences(analytics, marketing)}
                 className="rounded-full bg-[#faf8f5] px-4 py-2 text-sm font-semibold text-[var(--foreground)] hover:bg-white"
               >
-                Voorkeuren opslaan
+                {t.cookieSave}
               </button>
               <button
                 type="button"
                 onClick={closeSettings}
                 className="rounded-full border border-[#f0ead8]/40 px-4 py-2 text-sm hover:bg-[#f0ead8]/10"
               >
-                Terug
+                {t.cookieBack}
               </button>
             </div>
           </div>
         ) : (
           <>
-            <p className="mt-2 text-sm leading-relaxed text-[#f0ead8]/90">
-              We gebruiken essentiële cookies voor winkelwagen en bestelling. Met jouw toestemming kunnen we ook
-              analytische en marketingcookies gebruiken. Je kunt je keuze altijd aanpassen.
-            </p>
+            <p className="mt-2 text-sm leading-relaxed text-[#f0ead8]/90">{t.cookieBody}</p>
             <p className="mt-2 text-xs text-[#f0ead8]/70">
-              Meer in{" "}
+              {t.cookieMoreIn}{" "}
               <LocalizedLink href={LEGAL_PAGE_PATHS.cookies} className="underline hover:text-[#faf8f5]">
-                cookiebeleid
+                {t.cookiePolicy}
               </LocalizedLink>{" "}
-              en{" "}
+              {t.and}{" "}
               <LocalizedLink href={LEGAL_PAGE_PATHS.privacy} className="underline hover:text-[#faf8f5]">
-                privacybeleid
+                {t.privacyPolicy}
               </LocalizedLink>
               .
             </p>
@@ -125,21 +123,21 @@ export default function CookieConsentBanner() {
                 onClick={acceptAll}
                 className="rounded-full bg-[#faf8f5] px-4 py-2 text-sm font-semibold text-[var(--foreground)] hover:bg-white"
               >
-                Alles accepteren
+                {t.cookieAcceptAll}
               </button>
               <button
                 type="button"
                 onClick={openSettings}
                 className="rounded-full border border-[#f0ead8]/40 px-4 py-2 text-sm hover:bg-[#f0ead8]/10"
               >
-                Aanpassen
+                {t.cookieCustomize}
               </button>
               <button
                 type="button"
                 onClick={rejectNonEssential}
                 className="rounded-full px-4 py-2 text-sm text-[#f0ead8]/90 underline-offset-2 hover:underline"
               >
-                Alleen essentieel
+                {t.cookieEssentialOnly}
               </button>
             </div>
           </>

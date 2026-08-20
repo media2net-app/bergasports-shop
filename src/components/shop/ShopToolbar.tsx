@@ -2,9 +2,10 @@
 
 import LocalizedLink from "@/components/locale/LocalizedLink";
 
+import { useShopLocale } from "@/components/locale/ShopLanguagesProvider";
 import type { ShopMerchView } from "@/lib/shop-merchandising-views";
-import { shopMerchViewLabel } from "@/lib/shop-merchandising-views";
-import { SHOP_SORT_OPTIONS, type ShopSort } from "@/lib/shop-sort";
+import { localizedMerchViewLabel, localizedShopSortOptions, ui } from "@/lib/i18n/ui";
+import { type ShopSort } from "@/lib/shop-sort";
 import {
   buildShopListingUrl,
   shopBrandFacetLabel,
@@ -45,6 +46,10 @@ export default function ShopToolbar({
   brandLabels,
   specGroups,
 }: Props) {
+  const { locale } = useShopLocale();
+  const t = ui(locale);
+  const sortOptions = localizedShopSortOptions(locale);
+
   const baseQuery = {
     cat: categorySlug,
     page: 1,
@@ -130,7 +135,7 @@ export default function ShopToolbar({
   if (merchView) {
     chips.push({
       key: "view",
-      label: shopMerchViewLabel(merchView),
+      label: localizedMerchViewLabel(merchView, locale),
       href: buildShopListingUrl({ ...baseQuery, view: null }),
     });
   }
@@ -155,15 +160,15 @@ export default function ShopToolbar({
             href={clearAllHref}
             className="text-xs font-semibold text-[#96741f] underline underline-offset-2"
           >
-            Wis alle filters
+            {t.clearAllFilters}
           </LocalizedLink>
         </div>
       ) : (
-        <span className="text-sm text-[var(--foreground)]/65">Geen actieve filters</span>
+        <span className="text-sm text-[var(--foreground)]/65">{t.noActiveFilters}</span>
       )}
 
       <label className="flex shrink-0 items-center gap-2 text-sm text-[var(--foreground)]">
-        <span className="font-medium">Sorteren</span>
+        <span className="font-medium">{t.sortBy}</span>
         <select
           className="rounded-lg border border-[#e5dcc8] bg-white px-2.5 py-1.5 text-sm font-semibold text-[var(--foreground)] outline-none focus:border-[#B38F27]"
           value={sort}
@@ -172,7 +177,7 @@ export default function ShopToolbar({
             window.location.href = buildShopListingUrl({ ...baseQuery, sort: next });
           }}
         >
-          {SHOP_SORT_OPTIONS.map((opt) => (
+          {sortOptions.map((opt) => (
             <option key={opt.id} value={opt.id}>
               {opt.label}
             </option>

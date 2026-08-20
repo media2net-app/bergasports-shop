@@ -67,12 +67,14 @@ function QtyStepper({
   onDecrease: () => void;
   onIncrease: () => void;
 }) {
+  const { locale } = useShopLocale();
+  const t = ui(locale);
   return (
     <div className="inline-flex h-9 items-stretch overflow-hidden rounded-full border border-[var(--brand-border)] bg-white">
       <button
         type="button"
         className="flex w-9 items-center justify-center text-[var(--foreground)] transition hover:bg-[var(--brand-surface)]"
-        aria-label="Aantal verlagen"
+        aria-label={t.qtyDecrease}
         onClick={onDecrease}
       >
         −
@@ -83,7 +85,7 @@ function QtyStepper({
       <button
         type="button"
         className="flex w-9 items-center justify-center text-[var(--foreground)] transition hover:bg-[var(--brand-surface)]"
-        aria-label="Aantal verhogen"
+        aria-label={t.qtyIncrease}
         onClick={onIncrease}
       >
         +
@@ -150,6 +152,8 @@ function CartLineRow({
   onClose: () => void;
 }) {
   const { getProductById } = useProductLookup();
+  const { locale } = useShopLocale();
+  const t = ui(locale);
   const lineTotal = item.price * item.quantity;
   const hasBundleSave = item.bundleListUnit != null && item.bundleListUnit > item.price + 0.005;
 
@@ -175,7 +179,7 @@ function CartLineRow({
             <button
               type="button"
               className="mt-0.5 shrink-0 rounded-full p-1 text-[var(--foreground)]/40 transition hover:bg-[var(--brand-surface)] hover:text-[var(--foreground)]"
-              aria-label={`${item.name} verwijderen`}
+              aria-label={t.removeItem(item.name)}
               onClick={() => onRemove(item.lineId)}
             >
               <CloseIcon />
@@ -184,7 +188,7 @@ function CartLineRow({
 
           {showVariationChips && wcSorted ? (
             <div className="mt-2">
-              <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[var(--brand)]">Variant</p>
+              <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[var(--brand)]">{t.variant}</p>
               <div className="mt-1.5 flex flex-wrap gap-1.5">
                 {wcSorted.map((v) => {
                   const active = item.variationId === v.id;
@@ -226,7 +230,7 @@ function CartLineRow({
             </p>
           ) : (
             <p className="mt-1.5 text-xs text-[var(--foreground)]/55">
-              {formatProductPrice(item.price, item.currency)} p.st.
+              {formatProductPrice(item.price, item.currency)} {t.perPiece}
             </p>
           )}
         </div>
@@ -241,7 +245,7 @@ function CartLineRow({
         <div className="text-right">
           {hasBundleSave ? (
             <p className="text-[11px] font-semibold text-red-600">
-              Besparing{" "}
+              {t.savings}{" "}
               {formatProductPrice((item.bundleListUnit! - item.price) * item.quantity, item.currency)}
             </p>
           ) : null}
@@ -344,7 +348,7 @@ export default function CartDrawer({
                   onClick={() => setCheckoutOpen(false)}
                 >
                   <BackIcon />
-                  Terug
+                  {t.cookieBack}
                 </button>
               ) : (
                 <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[var(--brand-mid)]">
@@ -359,7 +363,7 @@ export default function CartDrawer({
               </h2>
               {!orderSuccess && itemCount > 0 ? (
                 <p className="mt-1 text-xs text-[var(--topbar-muted)]">
-                  {itemCount === 1 ? "1 artikel" : `${itemCount} artikelen`}
+                  {t.itemCount(itemCount)}
                 </p>
               ) : null}
             </div>
@@ -377,13 +381,12 @@ export default function CartDrawer({
         <div className="min-h-0 flex-1 overflow-y-auto px-4 py-5 md:px-5">
           {orderSuccess ? (
             <div className="rounded-3xl border border-[var(--brand-border)] bg-white p-5 shadow-[0_8px_30px_-18px_rgb(26_21_36_/_0.35)]">
-              <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[var(--brand)]">Bevestiging</p>
+              <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[var(--brand)]">{t.confirmation}</p>
               <p className="mt-2 text-sm leading-relaxed text-[var(--foreground)]/75">
-                Bestelnummer <strong className="text-[var(--foreground)]">{orderSuccess}</strong>. We nemen contact op
-                voor bevestiging en levering.
+                {t.orderNumberLabel(orderSuccess)}
               </p>
               <button type="button" className={`${btnGold} mt-5`} onClick={onDismissSuccess}>
-                Sluiten
+                {t.close}
               </button>
             </div>
           ) : items.length === 0 ? (
@@ -416,7 +419,7 @@ export default function CartDrawer({
               <div className="rounded-3xl border border-[var(--brand-border)] bg-white p-4">
                 {Object.entries(cartSummaryByCurrency).map(([currency, row]) => (
                   <div key={currency} className="flex items-baseline justify-between text-sm">
-                    <span className="text-[var(--foreground)]/65">Te betalen</span>
+                    <span className="text-[var(--foreground)]/65">{t.amountDue}</span>
                     <span className="font-[family-name:var(--font-heading)] text-base font-bold">
                       {formatProductPrice(row.paid, currency)}
                     </span>
@@ -457,19 +460,19 @@ export default function CartDrawer({
                     return (
                       <div key={currency} className="space-y-1.5">
                         <div className="flex justify-between text-[var(--foreground)]/70">
-                          <span>Subtotaal</span>
+                          <span>{t.subtotal}</span>
                           <span className="font-medium tabular-nums text-[var(--foreground)]">
                             {formatProductPrice(row.list, currency)}
                           </span>
                         </div>
                         {discount > 0.005 ? (
                           <div className="flex justify-between text-red-600">
-                            <span className="font-semibold">Korting</span>
+                            <span className="font-semibold">{t.discount}</span>
                             <span className="font-semibold tabular-nums">-{formatProductPrice(discount, currency)}</span>
                           </div>
                         ) : null}
                         <div className="flex items-baseline justify-between border-t border-[var(--brand-border)] pt-2">
-                          <span className="text-xs font-bold uppercase tracking-[0.14em]">Totaal</span>
+                          <span className="text-xs font-bold uppercase tracking-[0.14em]">{t.total}</span>
                           <span className="font-[family-name:var(--font-heading)] text-lg font-bold tabular-nums">
                             {formatProductPrice(row.paid, currency)}
                           </span>

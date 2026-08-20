@@ -197,6 +197,7 @@ export type WcRestGlobalAttribute = {
   name?: string;
   slug?: string;
   type?: string;
+  order_by?: string;
   has_archives?: boolean;
 };
 
@@ -204,6 +205,7 @@ export type WcRestAttributeTerm = {
   id: number;
   name?: string;
   slug?: string;
+  menu_order?: number;
   count?: number;
 };
 

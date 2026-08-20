@@ -30,9 +30,11 @@ import {
 } from "@/lib/shop-category-filter";
 import { buildCategorySeoContent } from "@/lib/category-seo";
 import { loadCategorySeoOverrides, loadRalexCategories } from "@/lib/categories-db";
+import { getRequestLocale } from "@/lib/i18n/locale";
+import { localizedMerchViewLabel, ui } from "@/lib/i18n/ui";
 import { loadCatalogProducts } from "@/lib/products-db";
 import { listShopBrands } from "@/lib/brands-db";
-import { applyShopMerchView, parseShopMerchView, shopMerchViewLabel } from "@/lib/shop-merchandising-views";
+import { applyShopMerchView, parseShopMerchView } from "@/lib/shop-merchandising-views";
 import { applyShopSort, parseShopSortParam } from "@/lib/shop-sort";
 import { formatRalexCategoryName } from "@/lib/ralex-categories";
 
@@ -59,6 +61,8 @@ type Props = {
 };
 
 export default async function ShopListingPage({ pathCategorySlug, searchParams }: Props) {
+  const locale = await getRequestLocale();
+  const t = ui(locale);
   const [catalog, categoriesFile, managedBrands] = await Promise.all([
     loadCatalogProducts(),
     loadRalexCategories(),
@@ -153,26 +157,28 @@ export default async function ShopListingPage({ pathCategorySlug, searchParams }
 
   const heading = catResolved.unknownCategory
     ? merchView
-      ? shopMerchViewLabel(merchView)
-      : "Categorie niet gevonden"
+      ? localizedMerchViewLabel(merchView, locale)
+      : t.categoryNotFound
     : catResolved.categoryLabel
       ? catResolved.categoryLabel
       : merchView
-        ? shopMerchViewLabel(merchView)
-        : "Alle producten";
+        ? localizedMerchViewLabel(merchView, locale)
+        : t.allProducts;
 
   const facetNote =
     !catResolved.unknownCategory &&
     (colorIds.length > 0 || sizeIds.length > 0 || brandIds.length > 0 || specIds.length > 0)
-      ? `Actieve filters: ${[
-          ...brandIds.map((id) => shopBrandFacetLabel(id, sidebarBrandFacets)),
-          ...specIds.map((id) => shopSpecFacetLabel(id, sidebarSpecGroups)),
-          ...colorIds.map(shopColorFacetLabel),
-          ...sizeIds.map(shopSizeFacetLabel),
-        ].join(", ")}.`
+      ? t.activeFilters(
+          [
+            ...brandIds.map((id) => shopBrandFacetLabel(id, sidebarBrandFacets)),
+            ...specIds.map((id) => shopSpecFacetLabel(id, sidebarSpecGroups)),
+            ...colorIds.map(shopColorFacetLabel),
+            ...sizeIds.map(shopSizeFacetLabel),
+          ].join(", "),
+        )
       : null;
 
-  const searchNote = searchTrimmed ? `Zoeken: „${searchTrimmed}”.` : null;
+  const searchNote = searchTrimmed ? t.searchNote(searchTrimmed) : null;
 
   const categoryNode =
     categorySlug && !catResolved.unknownCategory
@@ -210,14 +216,14 @@ export default async function ShopListingPage({ pathCategorySlug, searchParams }
               href="/shop"
               className="shrink-0 text-sm font-semibold text-[#96741f] underline underline-offset-2"
             >
-              Bekijk alle producten
+              {t.viewProducts}
             </LocalizedLink>
           )}
         </div>
 
         {catResolved.unknownCategory ? (
           <p className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
-            Deze categorie bestaat niet in onze catalogus. Kies een categorie in het menu of bekijk alle producten.
+            {t.categoryMissingHint}
           </p>
         ) : null}
 
@@ -228,18 +234,18 @@ export default async function ShopListingPage({ pathCategorySlug, searchParams }
         {!catResolved.unknownCategory && total === 0 && searchTrimmed ? (
           <div className="mt-4 rounded-xl border border-[#e5dcc8] bg-white px-4 py-3 text-sm text-[var(--foreground)]/85">
             <p>
-              Geen resultaten voor deze zoekopdracht. Probeer een andere term of{" "}
+              {t.noSearchResults}{" "}
               <LocalizedLink
                 href={buildShopListingUrl({ ...listingQuery, page: 1, search: null })}
                 className="font-semibold text-[#96741f] underline"
               >
-                wis de zoekopdracht
+                {t.clearSearch}
               </LocalizedLink>
               .
             </p>
             {categoryTree.length > 0 ? (
               <p className="mt-3">
-                Of bekijk:{" "}
+                {t.orBrowse}{" "}
                 {categoryTree.slice(0, 5).map((root, i) => (
                   <span key={root.id}>
                     {i > 0 ? " · " : null}
@@ -262,12 +268,12 @@ export default async function ShopListingPage({ pathCategorySlug, searchParams }
         ) : null}
         {!catResolved.unknownCategory && total === 0 && categorySlug && !colorIds.length && !sizeIds.length && !brandIds.length && !specIds.length && !searchTrimmed ? (
           <p className="mt-4 rounded-xl border border-[#e5dcc8] bg-white px-4 py-3 text-sm text-[var(--foreground)]/85">
-            Er zijn momenteel geen producten in deze categorie.
+            {t.noProductsInCategory}
           </p>
         ) : null}
         {!catResolved.unknownCategory && total === 0 && (colorIds.length > 0 || sizeIds.length > 0 || brandIds.length > 0 || specIds.length > 0) ? (
           <p className="mt-4 rounded-xl border border-[#e5dcc8] bg-white px-4 py-3 text-sm text-[var(--foreground)]/85">
-            Geen producten voldoen aan de geselecteerde filters. Probeer filters te verwijderen.
+            {t.noProductsMatchFilters}
           </p>
         ) : null}
 
@@ -294,15 +300,11 @@ export default async function ShopListingPage({ pathCategorySlug, searchParams }
             <div className="mb-4 flex flex-wrap items-center gap-x-4 gap-y-1">
               <p className="text-sm text-[var(--foreground)]/80">
                 {catResolved.unknownCategory
-                  ? "0 producten getoond."
-                  : `${total} product${total === 1 ? "" : "en"}${catResolved.categoryLabel ? ` in ${catResolved.categoryLabel}` : " in de Bergasports-catalogus"}`}
-                {!catResolved.unknownCategory && totalPages > 1 ? (
-                  <>
-                    {" "}
-                    · <span className="font-semibold text-[var(--foreground)]">{from}</span>–
-                    <span className="font-semibold text-[var(--foreground)]">{to}</span> van {total} (pagina {page} van {totalPages})
-                  </>
-                ) : null}
+                  ? t.productsShownZero
+                  : `${t.productsCount(total)}${catResolved.categoryLabel ? t.inCategory(catResolved.categoryLabel) : t.inCatalog}`}
+                {!catResolved.unknownCategory && totalPages > 1
+                  ? t.rangeOfTotal(from, to, total, page, totalPages)
+                  : null}
                 {!catResolved.unknownCategory ? "." : ""}
               </p>
               {searchTrimmed ? (
@@ -310,7 +312,7 @@ export default async function ShopListingPage({ pathCategorySlug, searchParams }
                   href={buildShopListingUrl({ ...listingQuery, page: 1, search: null })}
                   className="text-xs font-semibold text-[#96741f] underline underline-offset-2"
                 >
-                  Wis zoekopdracht
+                  {t.clearSearchShort}
                 </LocalizedLink>
               ) : null}
               {facetNote ? <p className="text-xs text-[var(--foreground)]/65">{facetNote}</p> : null}
@@ -340,7 +342,6 @@ export default async function ShopListingPage({ pathCategorySlug, searchParams }
                 <ShopProductCard
                   key={product.id}
                   product={product}
-                  ctaLabel="Bekijk product"
                   priority={page === 1 && index === 0}
                 />
               ))}
@@ -350,35 +351,34 @@ export default async function ShopListingPage({ pathCategorySlug, searchParams }
               <nav
                 className="mt-10 flex flex-col items-center justify-between gap-4 border-t border-[#e5dcc8] pt-8 sm:flex-row"
                 role="navigation"
-                aria-label="Paginering webshop"
+                aria-label={t.paginationAria}
               >
                 <p className="text-sm text-[var(--foreground)]/80">
-                  Pagina <span className="font-semibold text-[var(--foreground)]">{page}</span> van{" "}
-                  <span className="font-semibold text-[var(--foreground)]">{totalPages}</span>
+                  {t.pageOf(page, totalPages)}
                 </p>
                 <div className="flex flex-wrap items-center justify-center gap-2">
                   {page <= 1 ? (
                     <span className="rounded-full border border-[#e5dcc8] bg-white px-4 py-2 text-sm font-semibold text-[var(--foreground)]/40">
-                      Vorige
+                      {t.previous}
                     </span>
                   ) : (
                     <LocalizedLink
                       href={pageHref(page - 1)}
                       className="rounded-full border border-[#e5dcc8] bg-white px-4 py-2 text-sm font-semibold text-[var(--foreground)] transition hover:border-[#B38F27] hover:bg-[#faf8f4]"
                     >
-                      Vorige
+                      {t.previous}
                     </LocalizedLink>
                   )}
                   {page >= totalPages ? (
                     <span className="rounded-full border border-[#e5dcc8] bg-white px-4 py-2 text-sm font-semibold text-[var(--foreground)]/40">
-                      Volgende
+                      {t.next}
                     </span>
                   ) : (
                     <LocalizedLink
                       href={pageHref(page + 1)}
                       className="rounded-full border border-[#B38F27] bg-[#B38F27] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#96741f]"
                     >
-                      Volgende
+                      {t.next}
                     </LocalizedLink>
                   )}
                 </div>

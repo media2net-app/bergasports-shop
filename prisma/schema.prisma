@@ -81,6 +81,40 @@ model Category {
   @@map("categories")
 }
 
+/** Globale WooCommerce-productattributen (pa_kleur, pa_maat, …). */
+model ProductAttribute {
+  id          Int      @id
+  name        String
+  slug        String   @unique
+  type        String   @default("select")
+  orderBy     String?  @map("order_by")
+  hasArchives Boolean  @default(false) @map("has_archives")
+  sortOrder   Int      @default(0) @map("sort_order")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  terms ProductAttributeTerm[]
+
+  @@index([sortOrder, name])
+  @@map("product_attributes")
+}
+
+model ProductAttributeTerm {
+  id          Int      @id
+  attributeId Int      @map("attribute_id")
+  name        String
+  slug        String
+  menuOrder   Int      @default(0) @map("menu_order")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  attribute ProductAttribute @relation(fields: [attributeId], references: [id], onDelete: Cascade)
+
+  @@unique([attributeId, slug])
+  @@index([attributeId, menuOrder])
+  @@map("product_attribute_terms")
+}
+
 model ShopLanguage {
   code       String   @id
   name       String
@@ -389,14 +423,40 @@ model Coupon {
 }
 
 model NewsletterSubscriber {
-  id         String   @id @default(cuid())
-  email      String   @unique
-  source     String   @default("footer")
-  couponCode String?  @map("coupon_code")
-  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  id             String    @id @default(cuid())
+  email          String    @unique
+  name           String?
+  source         String    @default("footer")
+  locale         String?
+  couponCode     String?   @map("coupon_code")
+  status         String    @default("active")
+  consentAt      DateTime  @default(now()) @map("consent_at") @db.Timestamptz(6)
+  unsubscribedAt DateTime? @map("unsubscribed_at") @db.Timestamptz(6)
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   @@index([createdAt(sort: Desc)])
+  @@index([status])
   @@map("newsletter_subscribers")
+}
+
+model NewsletterCampaign {
+  id             String    @id @default(cuid())
+  subject        String
+  title          String?
+  bodyHtml       String    @map("body_html") @db.Text
+  status         String    @default("draft")
+  recipientCount Int       @default(0) @map("recipient_count")
+  sentCount      Int       @default(0) @map("sent_count")
+  failCount      Int       @default(0) @map("fail_count")
+  scheduledAt    DateTime? @map("scheduled_at") @db.Timestamptz(6)
+  sentAt         DateTime? @map("sent_at") @db.Timestamptz(6)
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([createdAt(sort: Desc)])
+  @@index([scheduledAt])
+  @@map("newsletter_campaigns")
 }
 
 model Customer {

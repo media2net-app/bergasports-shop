@@ -70,7 +70,8 @@ export const BERGASPORTS_CATEGORY_PATHS = {
   scopeOutlet: "/scope-outlet",
   cyclingShoes: "/wielrenschoenen",
   shoesClothing: "/schoenen-kleding",
-  lafugaWear: "/lafuga",
+  lafugaWear: "/lafuga-kleding",
+  lafugaCustom: "/lafuga",
   glasses: "/brillen",
   accessories: "/accessoires",
   cyclingHelmets: "/helmen",
@@ -85,7 +86,7 @@ export const WEBSHOP_MENU_LINKS: ShopMenuLink[] = [
   { href: BERGASPORTS_CATEGORY_PATHS.mtb, label: "MTB" },
   { href: BERGASPORTS_CATEGORY_PATHS.speedSkates, label: "Skeelers" },
   { href: BERGASPORTS_CATEGORY_PATHS.cyclingShoes, label: "Nimbl" },
-  { href: BERGASPORTS_CATEGORY_PATHS.lafugaWear, label: "LaFuga" },
+  { href: BERGASPORTS_CATEGORY_PATHS.lafugaWear, label: "LaFuga kleding" },
   { href: BERGASPORTS_CATEGORY_PATHS.wheels, label: "Wielen" },
   { href: BERGASPORTS_CATEGORY_PATHS.accessories, label: "Accessoires" },
 ];
@@ -118,7 +119,8 @@ export const WEBSHOP_MEGA_MENU = {
       href: BERGASPORTS_CATEGORY_PATHS.shoesClothing,
       links: [
         { href: BERGASPORTS_CATEGORY_PATHS.cyclingShoes, label: "Nimbl" },
-        { href: BERGASPORTS_CATEGORY_PATHS.lafugaWear, label: "LaFuga" },
+        { href: BERGASPORTS_CATEGORY_PATHS.lafugaCustom, label: "LaFuga custom kleding" },
+        { href: BERGASPORTS_CATEGORY_PATHS.lafugaWear, label: "LaFuga in de shop" },
       ],
     },
     {
@@ -165,6 +167,10 @@ export function isShopNavigationPath(pathname: string): boolean {
   if (pathname === "/shop" || pathname.startsWith("/shop?") || pathname.startsWith("/product/")) {
     return true;
   }
+  // /lafuga is de maatwerk-landingspagina, geen productcategorie.
+  if (pathname === "/lafuga" || pathname.startsWith("/lafuga?")) {
+    return false;
+  }
   return shopCategoryHrefsFromNav().some(
     (href) => pathname === href || pathname.startsWith(`${href}?`) || pathname.startsWith(`${href}/`),
   );
@@ -179,7 +185,7 @@ export type HeaderNavItem =
 export const HEADER_NAV_LEFT: HeaderNavItem[] = [
   { type: "mega", label: "Webshop" },
   { type: "link", href: "/nieuws", label: "Nieuws" },
-  { type: "link", href: BERGASPORTS_CATEGORY_PATHS.lafugaWear, label: "LaFuga", badge: "NIEUW" },
+  { type: "link", href: BERGASPORTS_CATEGORY_PATHS.lafugaCustom, label: "LaFuga custom kleding" },
 ];
 
 /** Rechts van het logo. */
@@ -218,7 +224,7 @@ export const MOBILE_NAV_TREE: {
       : { label: column.title, href: column.href },
   ),
   { label: "Nieuws", href: "/nieuws" },
-  { label: "LaFuga", href: BERGASPORTS_CATEGORY_PATHS.lafugaWear, badge: "NIEUW" },
+  { label: "LaFuga custom kleding", href: BERGASPORTS_CATEGORY_PATHS.lafugaCustom },
   { label: "Over ons", children: ABOUT_MENU_LINKS },
 ];
 

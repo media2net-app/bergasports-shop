@@ -42,7 +42,8 @@ export async function PATCH(request: Request) {
   try {
     const session = await getAdminSessionFromRequest();
     const result = await upsertSiteSettings(values, session?.role ?? "admin");
-    const fields = await buildAdminSettingsView();
+    // Fresh read so secrets just written are marked configured (React cache would be stale).
+    const fields = await buildAdminSettingsView({ fresh: true });
     return NextResponse.json({ ok: true, ...result, fields });
   } catch (e) {
     return NextResponse.json(

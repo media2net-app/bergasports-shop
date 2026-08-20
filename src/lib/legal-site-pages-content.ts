@@ -376,7 +376,7 @@ ${p([
         { href: "/shop", label: "Bekijk de shop", primary: true },
         { href: "/afspraak#formulier", label: "Plan afspraak" },
         { href: "/nimbl", label: "Nimbl" },
-        { href: "/lafuga", label: "LaFuga" },
+        { href: "/lafuga", label: "LaFuga custom kleding" },
       ]),
     ].join("\n"),
   },

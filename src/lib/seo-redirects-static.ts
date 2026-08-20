@@ -25,6 +25,7 @@ export const CANONICAL_LIVE_PATHS = new Set([
   "/checkout",
   "/account",
   "/lafuga",
+  "/lafuga-kleding",
   "/nimbl",
 ]);
 
@@ -34,7 +35,6 @@ export const WORDPRESS_PAGE_CANONICALS: Record<string, string> = {
   "about-us": "/over-ons",
   "bike-repair": "/onderhoud",
   service: "/onderhoud",
-  "lafuga-kleding": "/lafuga",
   "verzendkosten-en-levertijd": "/verzending",
   shipping: "/verzending",
   "retourneren-en-garantie": "/retouren",
@@ -108,7 +108,6 @@ const EXACT_STATIC: Record<string, string> = {
   "/speedskates": "/skeelers",
   "/scope-wheels": "/wielen",
   "/scope-wheels-2": "/wielen",
-  "/lafuga-kleding": "/lafuga",
   "/bike-repair": "/onderhoud",
   "/about-bergasports": "/over-ons",
   "/verzendkosten-en-levertijd": "/verzending",

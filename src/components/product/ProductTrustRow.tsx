@@ -1,6 +1,8 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 
+import { getRequestLocale } from "@/lib/i18n/locale";
+import { ui } from "@/lib/i18n/ui";
 import { SITE_DEFAULT_CURRENCY } from "@/lib/site-brand";
 import {
   RETURNS_DAYS,
@@ -65,37 +67,40 @@ function Row({ icon, children }: { icon: ReactNode; children: ReactNode }) {
 }
 
 /** Compacte trust-signalen direct onder de CTA — vervangt het lange verzendpaneel op de PDP. */
-export default function ProductTrustRow({
+export default async function ProductTrustRow({
   freeCargo = false,
   currency = SITE_DEFAULT_CURRENCY,
   className = "",
   freeShippingThreshold,
 }: Props) {
+  const locale = await getRequestLocale();
+  const t = ui(locale);
+
   return (
-    <ul className={`space-y-2.5 ${className}`} aria-label="Verzending, retour en betaling">
+    <ul className={`space-y-2.5 ${className}`} aria-label={t.trustShippingReturnsPay}>
       <Row icon={<IconTruck />}>
-        Bezorgd tussen{" "}
+        {t.deliveredBetween}{" "}
         <span className="font-semibold text-[var(--foreground)]">
           {formatEstimatedDeliveryRange()}
         </span>{" "}
         {freeCargo ? (
-          <span className="font-semibold text-[#166534]">· gratis verzending naar NL</span>
+          <span className="font-semibold text-[#166534]">{t.freeShippingNlShort}</span>
         ) : (
-          <>· gratis verzending NL vanaf {formatFreeShippingThreshold(currency, freeShippingThreshold)}</>
+          <>{t.freeShippingFrom(formatFreeShippingThreshold(currency, freeShippingThreshold))}</>
         )}
       </Row>
       <Row icon={<IconReturn />}>
-        <span className="font-semibold text-[var(--foreground)]">{RETURNS_DAYS} dagen</span>{" "}
-        bedenktijd —{" "}
+        <span className="font-semibold text-[var(--foreground)]">{t.returnsDays(RETURNS_DAYS)}</span>{" "}
+        {t.coolingOff}{" "}
         <Link
           href={RETURNS_POLICY_PATH}
           className="font-semibold text-[#96741f] underline underline-offset-2"
         >
-          retourvoorwaarden
+          {t.returnsConditions}
         </Link>
       </Row>
-      <Row icon={<IconShield />}>Veilig betalen met iDEAL, Apple Pay of creditcard via Mollie</Row>
-      <Row icon={<IconStore />}>Gratis afhalen op afspraak in Dedemsvaart</Row>
+      <Row icon={<IconShield />}>{t.paySafeIdeal}</Row>
+      <Row icon={<IconStore />}>{t.freePickupAppointment}</Row>
     </ul>
   );
 }

@@ -5,19 +5,26 @@ import Footer from "@/components/layout/Footer";
 import Header from "@/components/layout/Header";
 import NewsCard from "@/components/news/NewsCard";
 import ContentCtaCard from "@/components/site/ContentCtaCard";
+import { getRequestLocale } from "@/lib/i18n/locale";
+import { ui } from "@/lib/i18n/ui";
 import { loadNewsPosts } from "@/lib/news-db";
 import { buildPageMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = buildPageMetadata({
-  title: "Nieuws & inspiratie",
-  description: "Nieuws over racefietsen, wielen, LaFuga, tips en evenementen bij Bergasports.",
-  path: "/nieuws",
-});
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getRequestLocale();
+  const t = ui(locale);
+  return buildPageMetadata({
+    title: t.newsInspiration,
+    description: t.newsIntro,
+    path: "/nieuws",
+  });
+}
 
 export default async function NieuwsPage() {
-  const posts = await loadNewsPosts({ limit: 40 });
+  const [posts, locale] = await Promise.all([loadNewsPosts({ limit: 40 }), getRequestLocale()]);
+  const t = ui(locale);
   const [featured, ...rest] = posts;
 
   return (
@@ -30,16 +37,15 @@ export default async function NieuwsPage() {
               Bergasports · Dedemsvaart
             </p>
             <h1 className="section-rule font-[family-name:var(--font-heading)] text-3xl font-semibold tracking-tight text-[var(--foreground)] md:text-4xl lg:text-[2.6rem]">
-              Nieuws &amp; inspiratie
+              {t.newsInspiration}
             </h1>
             <p className="mt-4 max-w-2xl text-base leading-relaxed text-[var(--foreground)]/70 md:text-lg">
-              Updates uit de winkel, nieuwe producten en wat er speelt in Dedemsvaart.
+              {t.newsIntro}
             </p>
 
             {posts.length === 0 ? (
               <p className="mt-10 rounded-3xl border border-dashed border-[var(--brand-border)] bg-white px-6 py-12 text-sm leading-relaxed text-[var(--foreground)]/65">
-                Nog geen berichten. Zodra er nieuws is — een nieuwe fiets, een pasavond of een wedstrijd —
-                staat het hier.
+                {t.newsEmptyListing}
               </p>
             ) : (
               <div className="mt-10 space-y-6">
@@ -60,9 +66,9 @@ export default async function NieuwsPage() {
           <aside className="space-y-4 lg:sticky lg:top-28">
             <ContentCtaCard />
             <p className="px-1 text-sm text-[var(--foreground)]/60">
-              Liever meteen kijken?{" "}
+              {t.preferBrowse}{" "}
               <LocalizedLink href="/shop" className="font-semibold text-[var(--brand)] underline-offset-4 hover:underline">
-                Naar de shop
+                {t.toShop}
               </LocalizedLink>
               .
             </p>

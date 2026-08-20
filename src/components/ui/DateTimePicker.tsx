@@ -15,8 +15,8 @@ import {
   type DateTimePickerMode,
 } from "@/lib/datetime-picker";
 import type { OpeningHoursRow } from "@/lib/opening-hours";
-
-const WEEKDAYS = ["Ma", "Di", "Wo", "Do", "Vr", "Za", "Zo"];
+import { useShopLocale } from "@/components/locale/ShopLanguagesProvider";
+import { ui } from "@/lib/i18n/ui";
 
 function resolveTimeSlots(
   mode: DateTimePickerMode,
@@ -61,6 +61,9 @@ export default function DateTimePicker({
   minuteStep = 30,
   className = "",
 }: Props) {
+  const { locale } = useShopLocale();
+  const t = ui(locale);
+  const weekdays = t.weekdaysShort;
   const generatedId = useId();
   const fieldId = id ?? generatedId;
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -73,7 +76,7 @@ export default function DateTimePicker({
   const [viewMonth, setViewMonth] = useState(selected.getMonth());
 
   const defaultPlaceholder =
-    mode === "time" ? "Kies een tijd" : mode === "datetime" ? "Kies datum en tijd" : "Kies een datum";
+    mode === "time" ? t.pickTime : mode === "datetime" ? t.pickDateTime : t.pickDate;
   const label = formatPickerValue(value, mode) || placeholder || defaultPlaceholder;
   const slots = resolveTimeSlots(mode, date, hours, minuteStep);
 
@@ -195,7 +198,7 @@ export default function DateTimePicker({
                   type="button"
                   className="inline-flex h-8 w-8 items-center justify-center rounded-full text-sm hover:bg-[var(--brand-surface-alt)]"
                   onClick={() => shiftMonth(-1)}
-                  aria-label="Vorige maand"
+                  aria-label={t.prevMonth}
                 >
                   ‹
                 </button>
@@ -204,13 +207,13 @@ export default function DateTimePicker({
                   type="button"
                   className="inline-flex h-8 w-8 items-center justify-center rounded-full text-sm hover:bg-[var(--brand-surface-alt)]"
                   onClick={() => shiftMonth(1)}
-                  aria-label="Volgende maand"
+                  aria-label={t.nextMonth}
                 >
                   ›
                 </button>
               </div>
               <div className="grid grid-cols-7 gap-0.5 text-center text-[11px] font-bold uppercase tracking-wide text-[var(--foreground)]/45">
-                {WEEKDAYS.map((day) => (
+                {weekdays.map((day) => (
                   <span key={day} className="py-1">
                     {day}
                   </span>
@@ -250,7 +253,7 @@ export default function DateTimePicker({
               {mode === "datetime" && !date ? (
                 <p className="text-xs text-[var(--foreground)]/55">Kies eerst een datum.</p>
               ) : slots.length === 0 ? (
-                <p className="text-xs text-[var(--foreground)]/55">Geen tijden beschikbaar op deze dag.</p>
+                <p className="text-xs text-[var(--foreground)]/55">{t.noTimesAvailable}</p>
               ) : (
                 <div className="grid max-h-40 grid-cols-3 gap-1.5 overflow-y-auto">
                   {slots.map((slot) => {

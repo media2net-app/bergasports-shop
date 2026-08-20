@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import LocalizedLink from "@/components/locale/LocalizedLink";
 
 import Footer from "@/components/layout/Footer";
 import Header from "@/components/layout/Header";
+import { getRequestLocale } from "@/lib/i18n/locale";
+import { ui } from "@/lib/i18n/ui";
 import { getMolliePayment } from "@/lib/mollie";
 import { getOrderByNumber, markMollieOrderPaid } from "@/lib/orders-db";
 import { formatProductPrice } from "@/lib/products";
@@ -10,18 +12,24 @@ import { buildPageMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = buildPageMetadata({
-  title: "Bestelling afgerond",
-  description: "Status van je betaling en bestelling bij Bergasports.",
-  path: "/checkout/return",
-  noindex: true,
-});
-
 type PageProps = {
   searchParams?: Promise<{ order?: string }>;
 };
 
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getRequestLocale();
+  const t = ui(locale);
+  return buildPageMetadata({
+    title: t.orderCompleteTitle,
+    description: t.orderNotFoundText,
+    path: "/checkout/return",
+    noindex: true,
+  });
+}
+
 export default async function CheckoutReturnPage({ searchParams }: PageProps) {
+  const locale = await getRequestLocale();
+  const t = ui(locale);
   const sp = (await searchParams) ?? {};
   const orderNumber = sp.order?.trim() || "";
   const order = orderNumber ? await getOrderByNumber(orderNumber) : null;
@@ -49,53 +57,50 @@ export default async function CheckoutReturnPage({ searchParams }: PageProps) {
         {!order ? (
           <div className="rounded-2xl border border-[#e5dcc8] bg-white p-6 text-center">
             <h1 className="font-[family-name:var(--font-heading)] text-2xl font-semibold text-[var(--foreground)]">
-              Bestelling niet gevonden
+              {t.orderNotFound}
             </h1>
-            <p className="mt-2 text-sm text-[var(--foreground)]/75">
-              We konden deze bestelling niet laden. Check je e-mail of neem contact op.
-            </p>
-            <Link href="/shop" className="mt-6 inline-block text-sm font-semibold text-[#B38F27] underline">
-              Terug naar de shop
-            </Link>
+            <p className="mt-2 text-sm text-[var(--foreground)]/75">{t.orderNotFoundText}</p>
+            <LocalizedLink href="/shop" className="mt-6 inline-block text-sm font-semibold text-[#B38F27] underline">
+              {t.backToShop}
+            </LocalizedLink>
           </div>
         ) : paid ? (
           <div className="rounded-2xl border border-[#e5dcc8] bg-white p-6 text-center">
-            <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">Betaald</p>
+            <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">{t.paid}</p>
             <h1 className="mt-2 font-[family-name:var(--font-heading)] text-2xl font-semibold text-[var(--foreground)]">
-              Bedankt voor je bestelling
+              {t.thanksOrder}
             </h1>
             <p className="mt-2 text-sm text-[var(--foreground)]/80">
-              Bestelling <strong>{order.order_number}</strong> is betaald
-              {order.customer_email ? ` — bevestiging gaat naar ${order.customer_email}` : ""}.
+              {t.orderPaid(order.order_number)}
+              {order.customer_email ? t.confirmationTo(order.customer_email) : ""}.
             </p>
             <p className="mt-4 text-lg font-bold text-[var(--foreground)]">
               {formatProductPrice(order.total, order.currency)}
             </p>
-            <Link
+            <LocalizedLink
               href="/shop"
               className="mt-8 inline-flex rounded-xl bg-[#B38F27] px-5 py-3 text-sm font-bold text-white hover:bg-[#96741f]"
             >
-              Verder winkelen
-            </Link>
+              {t.continueShopping}
+            </LocalizedLink>
           </div>
         ) : (
           <div className="rounded-2xl border border-[#e5dcc8] bg-white p-6 text-center">
             <p className="text-xs font-semibold uppercase tracking-wide text-amber-700">
-              Betaling nog niet bevestigd
+              {t.paymentPending}
             </p>
             <h1 className="mt-2 font-[family-name:var(--font-heading)] text-2xl font-semibold text-[var(--foreground)]">
-              Even geduld
+              {t.pleaseWait}
             </h1>
             <p className="mt-2 text-sm text-[var(--foreground)]/80">
-              Bestelling <strong>{order.order_number}</strong> wacht nog op bevestiging van Mollie.
-              Vernieuw deze pagina over een paar seconden, of check je e-mail.
+              {t.orderAwaitingMollie(order.order_number)}
             </p>
-            <Link
+            <LocalizedLink
               href={`/checkout/return?order=${encodeURIComponent(order.order_number)}`}
               className="mt-8 inline-flex rounded-xl bg-[#B38F27] px-5 py-3 text-sm font-bold text-white hover:bg-[#96741f]"
             >
-              Status vernieuwen
-            </Link>
+              {t.refreshStatus}
+            </LocalizedLink>
           </div>
         )}
       </section>

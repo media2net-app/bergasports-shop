@@ -149,6 +149,8 @@ export default function ProductEditorForm({
   const [saveOk, setSaveOk] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [normalizingImage, setNormalizingImage] = useState(false);
+  const [normalizeMsg, setNormalizeMsg] = useState("");
 
   const [id] = useState(initial.id);
   const {
@@ -482,6 +484,51 @@ export default function ProductEditorForm({
   const imagePreviewOk = isPreviewableImageUrl(image.trim());
   const extraImages = images.slice(1).filter((u) => isPreviewableImageUrl(u));
 
+  async function normalizeMainImage() {
+    if (!imagePreviewOk || normalizingImage) return;
+    setNormalizingImage(true);
+    setNormalizeMsg("");
+    setError("");
+    try {
+      const res = await fetch(`/api/admin/products/${id}/normalize-image`, {
+        method: "POST",
+        credentials: "include",
+        cache: "no-store",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ apply: true }),
+      });
+      const data = (await res.json()) as {
+        error?: string;
+        warning?: string;
+        imageUrl?: string;
+        rule?: { label?: string };
+        applied?: boolean;
+      };
+      if (!res.ok) {
+        throw new Error(data.error || "Normalisatie mislukt");
+      }
+      const nextUrl = data.imageUrl?.trim();
+      if (nextUrl) {
+        setImages((prev) => {
+          const rest = prev.filter((u) => u.trim().toLowerCase() !== nextUrl.toLowerCase());
+          return [nextUrl, ...rest];
+        });
+      }
+      const ruleLabel = data.rule?.label ? ` (${data.rule.label})` : "";
+      if (data.warning) {
+        setNormalizeMsg(data.warning);
+      } else if (data.applied) {
+        setNormalizeMsg(`Foto genormaliseerd${ruleLabel}. Nieuwe hoofdfoto opgeslagen; origineel staat in de galerij.`);
+      } else {
+        setNormalizeMsg(`Foto genormaliseerd${ruleLabel}.`);
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Normalisatie mislukt");
+    } finally {
+      setNormalizingImage(false);
+    }
+  }
+
   const categoryOptionGroups = useMemo(() => {
     const groups = new Map<string, CategoryOption[]>();
     for (const option of categoryOptions) {
@@ -710,9 +757,29 @@ export default function ProductEditorForm({
                   />
                 </div>
                 {imagePreviewOk ? (
-                  <button type="button" className="admin-link-action admin-w-fit" onClick={() => removeImage(image)}>
-                    Hoofdfoto verwijderen
-                  </button>
+                  <div className="admin-stack-tight">
+                    <button
+                      type="button"
+                      className="admin-btn-secondary admin-w-fit"
+                      disabled={normalizingImage}
+                      onClick={() => void normalizeMainImage()}
+                    >
+                      {normalizingImage ? "Bezig met eendracht…" : "Foto eendracht / normaliseren"}
+                    </button>
+                    <p className="admin-muted admin-m-0" style={{ fontSize: "0.8rem" }}>
+                      Zelfde hoek/achtergrond per categorie via OpenAI Images. Duurt ~30–90 sec.
+                      Vereist een opgeslagen API-key onder Instellingen → OpenAI (sk-… + Opslaan).
+                      Foutmeldingen (geen key, billing, model) verschijnen hieronder.
+                    </p>
+                    {normalizeMsg ? (
+                      <div className="admin-banner ok admin-m-0" role="status">
+                        {normalizeMsg}
+                      </div>
+                    ) : null}
+                    <button type="button" className="admin-link-action admin-w-fit" onClick={() => removeImage(image)}>
+                      Hoofdfoto verwijderen
+                    </button>
+                  </div>
                 ) : null}
                 <label className="admin-label">
                   Alt-tekst hoofdfoto

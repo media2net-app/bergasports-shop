@@ -38,7 +38,8 @@ export async function POST(request: Request) {
       email,
       phone: body.phone,
       message,
-      kind: body.kind === "appointment" ? "appointment" : "contact",
+      kind:
+        body.kind === "appointment" ? "appointment" : body.kind === "lafuga" ? "lafuga" : "contact",
       preferredDate: body.preferredDate,
     });
     return NextResponse.json({ ok: true });

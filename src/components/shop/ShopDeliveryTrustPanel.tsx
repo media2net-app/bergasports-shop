@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { getRequestLocale } from "@/lib/i18n/locale";
+import { ui } from "@/lib/i18n/ui";
 import { SITE_DEFAULT_CURRENCY } from "@/lib/site-brand";
 import {
   RETURNS_DAYS,
@@ -21,13 +23,15 @@ type ShopDeliveryTrustPanelProps = {
   freeShippingThreshold?: number;
 };
 
-export default function ShopDeliveryTrustPanel({
+export default async function ShopDeliveryTrustPanel({
   subtotalAmount,
   currency = SITE_DEFAULT_CURRENCY,
   freeCargo = false,
   className = "",
   freeShippingThreshold,
 }: ShopDeliveryTrustPanelProps) {
+  const locale = await getRequestLocale();
+  const t = ui(locale);
   const deliveryRange = formatEstimatedDeliveryRange();
   const threshold = freeShippingThreshold ?? freeShippingThresholdAmount();
   const thresholdLabel = formatFreeShippingThreshold(currency, threshold);
@@ -39,37 +43,27 @@ export default function ShopDeliveryTrustPanel({
   return (
     <div
       className={`rounded-xl border border-[#e5dcc8] bg-[#faf8f4] p-4 text-sm text-[var(--foreground)]/90 ${className}`}
-      aria-label="Verzending en retour"
+      aria-label={t.shippingReturnsAria}
     >
-      <p className="font-semibold text-[var(--foreground)]">Geschatte levering</p>
-      <p className="mt-1">
-        Bestel nu — levering tussen{" "}
-        <span className="font-semibold text-[var(--foreground)]">{deliveryRange}</span> (Nederland en België,
-        werkdagen).
-      </p>
+      <p className="font-semibold text-[var(--foreground)]">{t.estimatedDelivery}</p>
+      <p className="mt-1">{t.orderNowDelivery(deliveryRange)}</p>
 
-      <p className="mt-3 font-semibold text-[var(--foreground)]">Verzendkosten</p>
+      <p className="mt-3 font-semibold text-[var(--foreground)]">{t.shippingCost}</p>
       {qualifiesFree ? (
-        <p className="mt-1 font-semibold text-[#16a34a]">Gratis verzending naar Nederland voor deze bestelling.</p>
+        <p className="mt-1 font-semibold text-[#16a34a]">{t.freeShippingThisOrder}</p>
       ) : remaining != null && remaining > 0.005 ? (
         <p className="mt-1">
-          Voeg nog{" "}
-          <span className="font-semibold">{formatProductPrice(remaining, currency)}</span> toe voor gratis
-          verzending naar Nederland (vanaf {thresholdLabel}).
+          {t.addMoreForFreeShipping(formatProductPrice(remaining, currency), thresholdLabel)}
         </p>
       ) : (
-        <p className="mt-1">
-          Gratis verzending naar Nederland vanaf <span className="font-semibold">{thresholdLabel}</span>. Onder dit bedrag
-          berekenen we de verzendkosten bij bevestiging.
-        </p>
+        <p className="mt-1">{t.freeShippingFromThreshold(thresholdLabel)}</p>
       )}
 
-      <p className="mt-3 font-semibold text-[var(--foreground)]">Retour</p>
+      <p className="mt-3 font-semibold text-[var(--foreground)]">{t.returnsHeading}</p>
       <p className="mt-1">
-        Je hebt <span className="font-semibold">{RETURNS_DAYS} kalenderdagen</span> om te retourneren, volgens
-        ons beleid.{" "}
+        {t.returnsBody(RETURNS_DAYS)}{" "}
         <Link href={RETURNS_POLICY_PATH} className="font-semibold text-[#96741f] underline underline-offset-2">
-          Verzending & retour
+          {t.shippingAndReturns}
         </Link>
         .
       </p>

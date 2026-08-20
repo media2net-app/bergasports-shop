@@ -11,8 +11,18 @@ import {
   escapeHtml,
   formatEmailMoney,
   transactionalEmailSiteUrl,
+  transactionalEmailTextFooter,
   wrapTransactionalEmailHtml,
+  type EmailLayoutLocale,
+  type EmailLayoutVariant,
 } from "@/lib/transactional-email-layout";
+
+export type RenderEmailLayoutOptions = {
+  locale?: EmailLayoutLocale | string | null;
+  variant?: EmailLayoutVariant;
+  unsubscribeUrl?: string;
+  showTitle?: boolean;
+};
 
 export type EmailVar = { html: string; text: string };
 
@@ -247,12 +257,14 @@ export function renderEmailTemplate(
   draft: EmailRenderInput,
   vars: Record<string, EmailVar>,
   logoUrl?: string,
+  layout?: RenderEmailLayoutOptions,
 ): { subject: string; text: string; html: string } {
   const subject = applyVars(draft.subject, vars, "text").replace(/\s+/g, " ").trim();
   const title = applyVars(draft.title, vars, "text").replace(/\s+/g, " ").trim() || subject;
   const body = applyVars(prepareBodyHtml(draft.bodyHtml), vars, "html");
   const textBody = htmlToPlainText(applyVars(prepareBodyHtml(draft.bodyHtml), vars, "html"));
   const shop = transactionalEmailSiteUrl();
+  const variant = layout?.variant ?? "transactional";
 
   const html = wrapTransactionalEmailHtml({
     preheader: subject,
@@ -260,16 +272,13 @@ export function renderEmailTemplate(
     innerHtml: body,
     siteUrl: shop,
     logoUrl: logoUrl?.trim() || resolveSiteEmailLogoUrl(),
+    locale: layout?.locale,
+    variant,
+    unsubscribeUrl: layout?.unsubscribeUrl,
+    showTitle: layout?.showTitle,
   });
 
-  const text = [
-    textBody,
-    "",
-    "—",
-    "Bergasports",
-    shop,
-    "Vragen? Antwoord op deze e-mail of neem contact op via de website.",
-  ].join("\n");
+  const text = [textBody, "", transactionalEmailTextFooter(shop, layout?.locale, variant)].join("\n");
 
   return { subject, text, html };
 }
@@ -283,8 +292,12 @@ export function renderDefaultEmailTemplate(
   order: OrderWithItems | null,
   logoUrl?: string,
   extra?: EmailTemplateExtraVars,
+  layout?: RenderEmailLayoutOptions,
 ): { subject: string; text: string; html: string } {
-  return renderEmailTemplate(DEFAULT_EMAIL_TEMPLATES[key], buildEmailVars(order, extra), logoUrl);
+  const draft = DEFAULT_EMAIL_TEMPLATES[key];
+  const variant =
+    layout?.variant ?? (draft.category === "marketing" ? "marketing" : "transactional");
+  return renderEmailTemplate(draft, buildEmailVars(order, extra), logoUrl, { ...layout, variant });
 }
 
 export type AdminOrderLike = {

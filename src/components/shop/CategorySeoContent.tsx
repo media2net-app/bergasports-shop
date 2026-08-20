@@ -1,5 +1,7 @@
 import LocalizedLink from "@/components/locale/LocalizedLink";
 
+import { getRequestLocale } from "@/lib/i18n/locale";
+import { ui } from "@/lib/i18n/ui";
 import type { CategorySeoContent } from "@/lib/category-seo";
 
 type Props = {
@@ -16,11 +18,14 @@ export function CategorySeoIntro({ seo }: { seo: CategorySeoContent }) {
   );
 }
 
-export function CategorySeoFooter({ seo, showProductLinks = true }: Props) {
+export async function CategorySeoFooter({ seo, showProductLinks = true }: Props) {
+  const locale = await getRequestLocale();
+  const t = ui(locale);
+
   return (
     <article
       className="mt-12 rounded-2xl border border-[#e5dcc8] bg-white p-5 md:mt-14 md:p-8"
-      aria-label="Categorie-informatie"
+      aria-label={t.categoryInfoAria}
     >
       <h2 className="font-[family-name:var(--font-heading)] text-xl font-semibold text-[var(--foreground)] md:text-2xl">
         {seo.footerTitle}
@@ -42,7 +47,7 @@ export function CategorySeoFooter({ seo, showProductLinks = true }: Props) {
       {showProductLinks && seo.productLinks.length > 0 ? (
         <section className="mt-8 border-t border-[#e5dcc8] pt-6">
           <h3 className="text-base font-semibold text-[var(--foreground)] md:text-lg">
-            Populaire producten in deze categorie
+            {t.popularInCategory}
           </h3>
           <ul className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
             {seo.productLinks.map((link) => (
@@ -61,7 +66,9 @@ export function CategorySeoFooter({ seo, showProductLinks = true }: Props) {
 
       {seo.relatedCategoryLinks.length > 0 ? (
         <section className="mt-8 border-t border-[#e5dcc8] pt-6">
-          <h3 className="text-base font-semibold text-[var(--foreground)] md:text-lg">Gerelateerde categorieën</h3>
+          <h3 className="text-base font-semibold text-[var(--foreground)] md:text-lg">
+            {t.relatedCategories}
+          </h3>
           <ul className="mt-3 flex flex-wrap gap-2">
             {seo.relatedCategoryLinks.map((link) => (
               <li key={link.href}>
@@ -79,11 +86,11 @@ export function CategorySeoFooter({ seo, showProductLinks = true }: Props) {
 
       <p className="mt-8 text-sm text-[var(--foreground)]/75">
         <LocalizedLink href="/shop" className="font-semibold text-[#96741f] underline underline-offset-2">
-          Bekijk de volledige Bergasports-webshop
+          {t.viewFullShop}
         </LocalizedLink>
         {" · "}
         <LocalizedLink href="/contact" className="font-semibold text-[#96741f] underline underline-offset-2">
-          Contact
+          {t.contactHeading}
         </LocalizedLink>
       </p>
     </article>

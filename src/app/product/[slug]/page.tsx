@@ -16,7 +16,8 @@ import { isNumericProductPathSegment, productPath } from "@/lib/product-slug";
 import { loadRalexCategories } from "@/lib/categories-db";
 import { loadCatalogProducts, loadProductFromPathSegment } from "@/lib/products-db";
 import { followSeoRedirect } from "@/lib/seo-redirects";
-import { localizedPublicPath } from "@/lib/i18n/locale";
+import { getRequestLocale, localizedPublicPath } from "@/lib/i18n/locale";
+import { ui } from "@/lib/i18n/ui";
 import {
   productMatchesShopCategory,
   resolveProductShopCategory,
@@ -83,7 +84,15 @@ function SpecRow({ label, value }: { label: string; value: string }) {
   );
 }
 
-function RatingStars({ rating, count }: { rating: string; count?: number }) {
+function RatingStars({
+  rating,
+  count,
+  reviewsLabel,
+}: {
+  rating: string;
+  count?: number;
+  reviewsLabel: (n: number) => string;
+}) {
   const value = Number.parseFloat(rating);
   if (!Number.isFinite(value) || value <= 0) {
     return null;
@@ -97,7 +106,7 @@ function RatingStars({ rating, count }: { rating: string; count?: number }) {
       </span>
       <span className="text-[var(--foreground)]/70">
         {value.toFixed(1)}
-        {typeof count === "number" && count > 0 ? ` · ${count} beoordelingen` : ""}
+        {typeof count === "number" && count > 0 ? ` · ${reviewsLabel(count)}` : ""}
       </span>
     </p>
   );
@@ -152,11 +161,13 @@ export default async function ProductDetailPage({ params, searchParams }: Produc
   const initialVariationId =
     Number.isFinite(variationRaw) && variationRaw > 0 ? variationRaw : undefined;
 
-  const [catalog, categoriesFile, freeShippingThreshold] = await Promise.all([
+  const [catalog, categoriesFile, freeShippingThreshold, locale] = await Promise.all([
     loadCatalogProducts(),
     loadRalexCategories(),
     getFreeShippingThresholdSetting().catch(() => DEFAULT_FREE_SHIPPING_THRESHOLD_EUR),
+    getRequestLocale(),
   ]);
+  const t = ui(locale);
   const productCategory = resolveProductShopCategory(product, categoriesFile.tree);
 
   const resolvedInitialVariationId =
@@ -187,19 +198,19 @@ export default async function ProductDetailPage({ params, searchParams }: Produc
 
   const sellingPoints: { label: string; tone: "neutral" | "good" }[] = [];
   if (product.discount) {
-    sellingPoints.push({ label: `${product.discount}% korting`, tone: "good" });
+    sellingPoints.push({ label: t.percentOff(product.discount), tone: "good" });
   }
   if (meetsFreeShippingThreshold(product.price, freeShippingThreshold)) {
-    sellingPoints.push({ label: "Gratis verzending naar NL", tone: "good" });
+    sellingPoints.push({ label: t.freeShippingNlBadge, tone: "good" });
   }
   if (product.sameDayShipping) {
-    sellingPoints.push({ label: "Zelfde dag verzonden", tone: "good" });
+    sellingPoints.push({ label: t.sameDayShipping, tone: "good" });
   }
   if (product.hasFastDeliveryTag) {
-    sellingPoints.push({ label: "Snelle levering", tone: "neutral" });
+    sellingPoints.push({ label: t.fastDelivery, tone: "neutral" });
   }
   if (product.hasFlashSaleTag) {
-    sellingPoints.push({ label: "Flash-aanbieding", tone: "neutral" });
+    sellingPoints.push({ label: t.flashSale, tone: "neutral" });
   }
   if (product.socialProof) {
     sellingPoints.push({ label: product.socialProof, tone: "neutral" });
@@ -226,17 +237,18 @@ export default async function ProductDetailPage({ params, searchParams }: Produc
     productPath: publicProductPath,
     shopPath: publicShopPath,
     homePath: publicHomePath,
+    shopName: t.webshop,
   });
   const inStock = isProductInStock(product);
   const contentTier = resolveProductContentTier(product);
 
   const catalogSpecsFallback = (
     <p className="mt-2 text-sm text-[var(--foreground)]/85">
-      Voor maten, materiaal of andere technische details kun je contact opnemen via de{" "}
+      {t.specsContactFallbackPrefix}{" "}
       <LocalizedLink href="/contact" className="font-semibold text-[#96741f] underline underline-offset-2">
-        contact
+        {t.specsContactFallbackLink}
       </LocalizedLink>
-      .
+      {t.specsContactFallbackSuffix}
     </p>
   );
 
@@ -261,7 +273,7 @@ export default async function ProductDetailPage({ params, searchParams }: Produc
           <ol className="flex flex-wrap items-center gap-1.5 text-[var(--foreground)]/60">
             <li>
               <LocalizedLink href="/shop" className="transition-colors hover:text-[var(--brand)]">
-                Webshop
+                {t.webshop}
               </LocalizedLink>
             </li>
             {productCategory ? (
@@ -306,7 +318,11 @@ export default async function ProductDetailPage({ params, searchParams }: Produc
                 {product.name}
               </h1>
               {product.wcAverageRating ? (
-                <RatingStars rating={product.wcAverageRating} count={product.wcReviewCount} />
+                <RatingStars
+                  rating={product.wcAverageRating}
+                  count={product.wcReviewCount}
+                  reviewsLabel={t.reviewsCount}
+                />
               ) : null}
 
               {!product.landingPromo ? (
@@ -321,7 +337,7 @@ export default async function ProductDetailPage({ params, searchParams }: Produc
                   aria-hidden
                 />
                 <span className={inStock ? "text-[#166534]" : "text-amber-700"}>
-                  {inStock ? "Op voorraad" : "Niet op voorraad"}
+                  {inStock ? t.inStock : t.outOfStock}
                 </span>
               </p>
 
@@ -366,17 +382,16 @@ export default async function ProductDetailPage({ params, searchParams }: Produc
 
               <div className="mt-6 rounded-2xl border border-[var(--brand-border)] bg-[var(--brand-surface-alt)] p-5">
                 <p className="text-sm font-semibold text-[var(--foreground)]">
-                  Twijfel je over maat of model?
+                  {t.sizeAdviceTitle}
                 </p>
                 <p className="mt-1.5 text-sm leading-relaxed text-[var(--foreground)]/75">
-                  Ingmar denkt met je mee — bel, mail of kom langs in Dedemsvaart voor persoonlijk
-                  advies.
+                  {t.sizeAdviceText}
                 </p>
                 <LocalizedLink
                   href="/afspraak#formulier"
                   className="arrow-link mt-3 inline-flex min-h-11 items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[#96741f]"
                 >
-                  Plan een afspraak
+                  {t.planAppointment}
                   <span aria-hidden className="arrow-link-icon">
                     →
                   </span>
@@ -390,13 +405,13 @@ export default async function ProductDetailPage({ params, searchParams }: Produc
           <div className="mt-12 grid gap-8 rounded-2xl border border-[var(--brand-border)] bg-white p-6 md:mt-14 md:p-8 lg:grid-cols-2 lg:gap-12">
             <div>
               <h2 className="section-rule font-[family-name:var(--font-heading)] text-xl font-semibold tracking-tight md:text-2xl">
-                Waarom dit model?
+                {t.whyThisModel}
               </h2>
               <ul className="mt-4 space-y-2.5">
                 {[
-                  "Geselecteerd op performance, pasvorm en rijstijl.",
-                  "Persoonlijk advies over maat, groepset en wielkeuze.",
-                  "Montage en afstelling in onze eigen werkplaats.",
+                  t.whyLine1,
+                  t.whyLine2,
+                  t.whyLine3,
                 ].map((line) => (
                   <li
                     key={line}
@@ -412,12 +427,10 @@ export default async function ProductDetailPage({ params, searchParams }: Produc
             </div>
             <div>
               <h3 className="font-[family-name:var(--font-heading)] text-lg font-semibold tracking-tight">
-                Voor wie is dit geschikt?
+                {t.whoIsThisFor}
               </h3>
               <p className="mt-3 text-sm leading-relaxed text-[var(--foreground)]/80">
-                Voor renners die kwaliteit zoeken en materiaal willen dat past bij training,
-                wedstrijd of lange ritten. Weet je niet welke maat je nodig hebt? Dan meten we je op
-                in de winkel voordat je bestelt.
+                {t.whoIsThisForText}
               </p>
             </div>
           </div>
@@ -427,7 +440,7 @@ export default async function ProductDetailPage({ params, searchParams }: Produc
           <div className="mt-12 grid gap-10 md:mt-14 lg:grid-cols-12 lg:gap-12">
             <div className="lg:col-span-7">
               <h2 className="section-rule font-[family-name:var(--font-heading)] text-xl font-semibold tracking-tight text-[var(--foreground)] md:text-2xl">
-                Productbeschrijving
+                {t.productDescription}
               </h2>
               <div className="mt-4">
                 {product.wcShortDescriptionHtml ? (
@@ -445,7 +458,7 @@ export default async function ProductDetailPage({ params, searchParams }: Produc
 
             <div className="lg:col-span-5">
               <h2 className="section-rule font-[family-name:var(--font-heading)] text-xl font-semibold tracking-tight text-[var(--foreground)] md:text-2xl">
-                Specificaties
+                {t.specifications}
               </h2>
               <dl className="mt-4 rounded-2xl border border-[var(--brand-border)] bg-white px-5 py-2">
                 {product.specsText
@@ -461,15 +474,15 @@ export default async function ProductDetailPage({ params, searchParams }: Produc
                       })
                   : null}
                 <SpecRow
-                  label="Productcode"
+                  label={t.productCode}
                   value={product.wcSku ? product.wcSku : String(product.id)}
                 />
                 {product.wcProductType ? (
-                  <SpecRow label="Type" value={product.wcProductType} />
+                  <SpecRow label={t.productType} value={product.wcProductType} />
                 ) : null}
                 {product.wcAverageRating ? (
                   <SpecRow
-                    label="Beoordeling"
+                    label={t.rating}
                     value={`${product.wcAverageRating}${
                       typeof product.wcReviewCount === "number"
                         ? ` (${product.wcReviewCount} reviews)`
@@ -479,14 +492,14 @@ export default async function ProductDetailPage({ params, searchParams }: Produc
                 ) : null}
                 {product.wcCategories?.length ? (
                   <SpecRow
-                    label="Categorieën"
+                    label={t.categories}
                     value={product.wcCategories
                       .map((c) => categoryDisplayName(c.slug, c.name))
                       .filter(Boolean)
                       .join(", ")}
                   />
                 ) : (
-                  <SpecRow label="Categorie" value={dutchLabelFromImportedName(product.category)} />
+                  <SpecRow label={t.category} value={dutchLabelFromImportedName(product.category)} />
                 )}
               </dl>
             </div>
@@ -494,7 +507,7 @@ export default async function ProductDetailPage({ params, searchParams }: Produc
         ) : hasWcDescription ? (
           <div className="mt-10 max-w-3xl">
             <h2 className="section-rule font-[family-name:var(--font-heading)] text-xl font-semibold tracking-tight text-[var(--foreground)] md:text-2xl">
-              Productbeschrijving
+              {t.productDescription}
             </h2>
             <div className="mt-4">
               {product.wcShortDescriptionHtml ? (
@@ -511,13 +524,13 @@ export default async function ProductDetailPage({ params, searchParams }: Produc
           <div className="mt-12 md:mt-16">
             <div className="flex flex-wrap items-end justify-between gap-3">
               <h2 className="section-rule font-[family-name:var(--font-heading)] text-xl font-semibold tracking-tight text-[var(--foreground)] md:text-2xl">
-                Vergelijkbare producten
+                {t.similarProducts}
               </h2>
               <LocalizedLink
                 href={productCategory?.href ?? "/shop"}
                 className="arrow-link inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[#96741f]"
               >
-                Bekijk meer
+                {t.viewMore}
                 <span aria-hidden className="arrow-link-icon">
                   →
                 </span>

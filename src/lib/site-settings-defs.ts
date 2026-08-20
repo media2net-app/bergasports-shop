@@ -17,6 +17,7 @@ export type SiteSettingGroupId =
   | "instagram"
   | "google"
   | "woocommerce"
+  | "openai"
   | "analytics"
   | "pixels"
   | "seo"
@@ -51,7 +52,11 @@ export const SITE_SETTING_SECTIONS: {
   { id: "shop", title: "Shop", intro: "Winkelgegevens, URL en gratis verzending." },
   { id: "products", title: "Producten", intro: "Voorraadwaarschuwingen in het CMS." },
   { id: "email", title: "E-mails", intro: "SMTP en afzender. Mailteksten bewerk je onder E-mails." },
-  { id: "integrations", title: "Koppelingen", intro: "Mollie, Sendcloud, Easy Sales, Instagram, Google-reviews." },
+  {
+    id: "integrations",
+    title: "Koppelingen",
+    intro: "Mollie, Sendcloud, Easy Sales, Instagram, Google-reviews, OpenAI.",
+  },
   { id: "marketing", title: "Marketing", intro: "Analytics, pixels en zoekmachines." },
 ];
 
@@ -145,6 +150,13 @@ export const SITE_SETTING_GROUPS: {
     title: "WooCommerce (oude site)",
     navLabel: "WooCommerce",
     intro: "REST-sleutels van bergasports.com. Daarmee kun je producten, klanten, orders, nieuws en pagina’s overnemen.",
+  },
+  {
+    id: "openai",
+    section: "integrations",
+    title: "OpenAI / ChatGPT",
+    navLabel: "OpenAI",
+    intro: "API-key voor AI-tekst en productfoto’s (eendracht, visualiseer, AI-beelden).",
   },
   {
     id: "analytics",
@@ -1028,6 +1040,26 @@ export const SITE_SETTING_DEFS: SiteSettingDef[] = [
       summary: "Hoort bij Client ID. Leeg laten als je een Personal Access Token gebruikt.",
       steps: ["Plak het secret.", "Sla op."],
       whereUsed: "OAuth/website grant.",
+    },
+  },
+  {
+    key: "OPENAI_API_KEY",
+    envKey: "OPENAI_API_KEY",
+    label: "OpenAI API-key",
+    group: "openai",
+    secret: true,
+    optional: true,
+    placeholder: "sk-…",
+    manual: {
+      summary:
+        "Sleutel voor ChatGPT/OpenAI: productfoto-eendracht, AI-beelden en in-ruimte-previews. Zelfde key als in het OpenAI-dashboard.",
+      steps: [
+        "Ga naar platform.openai.com → API keys en maak een key aan.",
+        "Plak hier (begint met sk-). Sla op — geen restart nodig.",
+        "Als je lokaal alleen .env.local gebruikt, kan dat ook (env is fallback).",
+      ],
+      links: [{ label: "OpenAI API keys", href: "https://platform.openai.com/api-keys" }],
+      whereUsed: "Admin foto-eendracht, AI-beelden, product visualiseren.",
     },
   },
   {
