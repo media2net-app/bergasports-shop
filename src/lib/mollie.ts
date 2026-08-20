@@ -79,7 +79,7 @@ export async function createMolliePayment(input: {
   method?: string | string[];
   locale?: string;
 }): Promise<MolliePayment> {
-  const profileId = await getRuntimeSetting("MOLLIE_PROFILE_ID");
+  const apiKey = await getApiKey();
   const payload: Record<string, unknown> = {
     amount: formatMollieAmount(input.amount, input.currency),
     description: input.description.slice(0, 255),
@@ -88,8 +88,11 @@ export async function createMolliePayment(input: {
     metadata: input.metadata,
     locale: input.locale || "nl_NL",
   };
-  if (profileId) {
-    payload.profileId = profileId;
+  // profileId is required for OAuth/org tokens only. With live_/test_ API keys
+  // Mollie rejects it: "Non-existent body parameter profileId".
+  if (apiKey.startsWith("access_")) {
+    const profileId = await getRuntimeSetting("MOLLIE_PROFILE_ID");
+    if (profileId) payload.profileId = profileId;
   }
   if (input.method) {
     payload.method = input.method;

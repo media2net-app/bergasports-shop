@@ -219,15 +219,16 @@ export const SITE_SETTING_DEFS: SiteSettingDef[] = [
     optional: true,
     placeholder: "pfl_…",
     manual: {
-      summary: "Optioneel. Koppelt betalingen aan het juiste webshop-profiel in Mollie.",
+      summary:
+        "Optioneel referentie-ID van je websiteprofiel. Niet nodig bij een gewone API-key (live_/test_) — die is al aan één profiel gekoppeld. Alleen verplicht bij OAuth-tokens (access_).",
       steps: [
         "In Mollie: Settings → Website profiles (Websiteprofielen).",
-        "Open het profiel voor Bergasports / nieuw.bergasports.com.",
-        "Kopieer het Profile ID (begint met pfl_).",
-        "Plak hier en sla op.",
+        "Open het profiel voor Bergasports.",
+        "Kopieer het Profile ID (begint met pfl_) als je OAuth gebruikt of het ergens wilt noteren.",
+        "Met alleen een API-key mag je dit veld leeg laten; het wordt dan niet meegestuurd bij betalingen.",
       ],
       links: [{ label: "Website profiles", href: "https://my.mollie.com/dashboard/settings/profiles" }],
-      whereUsed: "Bij het aanmaken van Mollie-betalingen.",
+      whereUsed: "Alleen bij OAuth-authenticatie bij het aanmaken van Mollie-betalingen.",
     },
   },
   {
