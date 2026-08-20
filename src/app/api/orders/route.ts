@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { readConsentFromCookieString, hasMarketingConsent } from "@/lib/cookie-consent";
 import {
   attachMolliePaymentId,
+  cancelOrder,
   createOrder,
 } from "@/lib/orders-db";
 import { applyRepeatDiscount, customerQualifiesForRepeatDiscount } from "@/lib/repeat-purchase-discount";
@@ -244,21 +245,9 @@ export async function POST(request: Request) {
     const orderNumber = result.orderNumber;
     const base = siteBaseUrl(request);
 
-    const payment = await createMolliePayment({
-      amount: total,
-      currency,
-      description: `Bergasports bestelling ${orderNumber}`,
-      redirectUrl: `${base}/checkout/return?order=${encodeURIComponent(orderNumber)}`,
-      webhookUrl: `${base}/api/mollie/webhook`,
-      metadata: {
-        orderId: String(result.id),
-        orderNumber,
-      },
-      method,
-      locale,
-    }).catch(async (err) => {
-      if (!method) throw err;
-      return createMolliePayment({
+    let payment;
+    try {
+      payment = await createMolliePayment({
         amount: total,
         currency,
         description: `Bergasports bestelling ${orderNumber}`,
@@ -268,12 +257,40 @@ export async function POST(request: Request) {
           orderId: String(result.id),
           orderNumber,
         },
+        method,
         locale,
+      }).catch(async (err) => {
+        if (!method) throw err;
+        return createMolliePayment({
+          amount: total,
+          currency,
+          description: `Bergasports bestelling ${orderNumber}`,
+          redirectUrl: `${base}/checkout/return?order=${encodeURIComponent(orderNumber)}`,
+          webhookUrl: `${base}/api/mollie/webhook`,
+          metadata: {
+            orderId: String(result.id),
+            orderNumber,
+          },
+          locale,
+        });
       });
-    });
+    } catch (err) {
+      // Avoid leaving unpaid ghost orders when Mollie rejects the payment create.
+      try {
+        await cancelOrder(result.id);
+      } catch (cancelErr) {
+        console.error("[orders] cancel after Mollie failure", result.id, cancelErr);
+      }
+      throw err;
+    }
     await attachMolliePaymentId(result.id, payment.id);
     const checkoutUrl = mollieCheckoutUrl(payment);
     if (!checkoutUrl) {
+      try {
+        await cancelOrder(result.id);
+      } catch (cancelErr) {
+        console.error("[orders] cancel after missing checkout URL", result.id, cancelErr);
+      }
       return NextResponse.json(
         { error: "Mollie checkout-URL ontbreekt. Probeer opnieuw." },
         { status: 502 },

@@ -364,7 +364,7 @@ export async function markMollieOrderPaid(orderId: number): Promise<OrderWithIte
 
   await prisma.order.update({
     where: { id: BigInt(orderId) },
-    data: { status: "pending" },
+    data: { status: "pending", paymentStatus: "paid" },
   });
   revalidatePath("/admin/orders");
 

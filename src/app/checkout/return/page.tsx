@@ -3,6 +3,7 @@ import LocalizedLink from "@/components/locale/LocalizedLink";
 
 import Footer from "@/components/layout/Footer";
 import Header from "@/components/layout/Header";
+import CheckoutReturnEffects from "@/components/checkout/CheckoutReturnEffects";
 import { getRequestLocale } from "@/lib/i18n/locale";
 import { ui } from "@/lib/i18n/ui";
 import { getMolliePayment } from "@/lib/mollie";
@@ -53,6 +54,7 @@ export default async function CheckoutReturnPage({ searchParams }: PageProps) {
   return (
     <main className="min-h-screen bg-[#faf8f5]">
       <Header />
+      {order && paid ? <CheckoutReturnEffects orderNumber={order.order_number} paid /> : null}
       <section className="mx-auto w-full max-w-lg px-4 py-12 md:py-16">
         {!order ? (
           <div className="rounded-2xl border border-[#e5dcc8] bg-white p-6 text-center">

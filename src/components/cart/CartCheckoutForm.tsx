@@ -6,6 +6,7 @@ import TikTokCheckoutEvents from "@/components/analytics/TikTokCheckoutEvents";
 import ApplePayButton from "@/components/payments/ApplePayButton";
 import MollieMethodPicker from "@/components/payments/MollieMethodPicker";
 import { useMollieMethods } from "@/components/payments/useMollieMethods";
+import { saveMollieCheckoutSnapshot } from "@/components/checkout/CheckoutReturnEffects";
 import { useShopLocale } from "@/components/locale/ShopLanguagesProvider";
 import { formatMollieMethodNames } from "@/lib/mollie-methods";
 import { getTtclidFromDocument } from "@/lib/tiktok-client";
@@ -210,6 +211,18 @@ export default function CartCheckoutForm({
       }
 
       if (data.checkoutUrl) {
+        saveMollieCheckoutSnapshot({
+          orderNumber: data.orderNumber,
+          total: payableTotal,
+          currency,
+          items: items.map((item) => ({
+            productId: item.productId,
+            name: item.name,
+            price: lineUnitPrice(item),
+            quantity: item.quantity,
+            currency: item.currency,
+          })),
+        });
         window.location.href = data.checkoutUrl;
         return;
       }
