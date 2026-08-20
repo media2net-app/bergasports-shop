@@ -2,7 +2,8 @@
  * Seed / refresh de CMS-pagina's in Postgres.
  * Run: npm run seed:site-pages
  *
- * De teksten komen uit src/lib/legal-site-pages-content.ts — dat is de enige bron.
+ * De teksten komen uit src/lib/legal-site-pages-content.ts (LaFuga: src/lib/lafuga-copy.ts).
+ * translations.nl wordt meegeschreven zodat de meertalige JSON gelijk blijft.
  * De homepage wordt alleen aangemaakt als hij nog niet bestaat, zodat hero-teksten
  * die via de admin zijn aangepast blijven staan.
  */
@@ -15,6 +16,12 @@ import {
   legalSitePagesSeed,
   retiredSitePageSlugs,
 } from "../src/lib/legal-site-pages-content.ts";
+import {
+  LAFUGA_META_DESCRIPTION,
+  LAFUGA_SEO_INTRO,
+  lafugaNlCategoryTranslation,
+  lafugaSeoFooterHtml,
+} from "../src/lib/lafuga-copy.ts";
 
 const root = path.resolve(import.meta.dirname, "..");
 
@@ -66,11 +73,21 @@ type SeedPage = {
 };
 
 async function upsertPage(client: pg.Client, page: SeedPage) {
+  const nl = {
+    title: page.title,
+    heading: page.heading ?? "",
+    slug: page.slug,
+    path: page.path,
+    bodyHtml: page.body_html ?? "",
+    metaTitle: page.meta_title ?? "",
+    metaDescription: page.meta_description ?? "",
+    imageAlt: page.image_alt ?? "",
+  };
   await client.query(
     `INSERT INTO site_pages (
       slug, path, title, heading, body_html, blocks, meta_title, meta_description,
-      social_image, image_alt, is_published, sort_order, updated_at
-    ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,true,$11,NOW())
+      social_image, image_alt, translations, is_published, sort_order, updated_at
+    ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11::jsonb,true,$12,NOW())
     ON CONFLICT (slug) DO UPDATE SET
       path = EXCLUDED.path,
       title = EXCLUDED.title,
@@ -81,6 +98,8 @@ async function upsertPage(client: pg.Client, page: SeedPage) {
       meta_description = EXCLUDED.meta_description,
       social_image = EXCLUDED.social_image,
       image_alt = EXCLUDED.image_alt,
+      translations = COALESCE(site_pages.translations, '{}'::jsonb)
+        || jsonb_build_object('nl', EXCLUDED.translations->'nl'),
       is_published = EXCLUDED.is_published,
       sort_order = EXCLUDED.sort_order,
       updated_at = NOW()`,
@@ -95,10 +114,33 @@ async function upsertPage(client: pg.Client, page: SeedPage) {
       page.meta_description ?? null,
       page.social_image ?? null,
       page.image_alt ?? null,
+      JSON.stringify({ nl }),
       page.sort_order ?? 0,
     ],
   );
   console.log("Geseed:", page.slug, page.path);
+}
+
+async function upsertLafugaCategoryCopy(client: pg.Client) {
+  const nl = lafugaNlCategoryTranslation();
+  const result = await client.query(
+    `UPDATE categories
+     SET seo_intro = $1,
+         seo_footer_html = $2,
+         seo_meta_title = $3,
+         seo_meta_description = $4,
+         translations = COALESCE(translations, '{}'::jsonb) || jsonb_build_object('nl', $5::jsonb),
+         updated_at = NOW()
+     WHERE slug IN ('lafuga-wear', 'lafuga')`,
+    [
+      LAFUGA_SEO_INTRO,
+      lafugaSeoFooterHtml(),
+      nl.seoTitle,
+      LAFUGA_META_DESCRIPTION,
+      JSON.stringify(nl),
+    ],
+  );
+  console.log(`Geseed: LaFuga-categorie (${result.rowCount ?? 0} rij(en))`);
 }
 
 async function main() {
@@ -122,6 +164,8 @@ async function main() {
   for (const page of legalSitePagesSeed) {
     await upsertPage(client, { ...page, blocks: null });
   }
+
+  await upsertLafugaCategoryCopy(client);
 
   if (retiredSitePageSlugs.length > 0) {
     const retired = await client.query(

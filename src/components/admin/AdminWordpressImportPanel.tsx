@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import type { WordpressImportResult } from "@/lib/wordpress-import-run";
 import type { WordpressImportType } from "@/lib/wordpress-import-shared";
@@ -58,6 +58,8 @@ function formatTypeResult(
   return `${label}: ${row.fetched} opgehaald · ${row.created} nieuw · ${row.updated} bijgewerkt · ${row.skipped} overgeslagen`;
 }
 
+type LocaleMode = "auto" | "nl" | "en";
+
 export default function AdminWordpressImportPanel({ wooConfigured }: { wooConfigured: boolean }) {
   const [selected, setSelected] = useState<Record<WordpressImportType, boolean>>({
     products: wooConfigured,
@@ -72,6 +74,36 @@ export default function AdminWordpressImportPanel({ wooConfigured }: { wooConfig
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [result, setResult] = useState<WordpressImportResult | null>(null);
+  const [baseUrl, setBaseUrl] = useState("");
+  const [detectedLocale, setDetectedLocale] = useState("nl");
+  const [localeMode, setLocaleMode] = useState<LocaleMode>("auto");
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const res = await fetch("/api/admin/wordpress-import", { credentials: "include", cache: "no-store" });
+        if (!res.ok) return;
+        const data = (await res.json()) as { baseUrl?: string; detectedLocale?: string };
+        if (cancelled) return;
+        if (data.baseUrl) setBaseUrl(data.baseUrl);
+        if (data.detectedLocale) setDetectedLocale(data.detectedLocale);
+      } catch {
+        /* ignore */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const effectiveLocale = useMemo(() => {
+    if (localeMode !== "auto") return localeMode;
+    const host = baseUrl.toLowerCase();
+    if (host.includes("bergasports.com")) return "en";
+    if (host.includes("bergasports.nl")) return "nl";
+    return detectedLocale || "nl";
+  }, [localeMode, baseUrl, detectedLocale]);
 
   function toggle(id: WordpressImportType) {
     setSelected((prev) => ({ ...prev, [id]: !prev[id] }));
@@ -92,7 +124,12 @@ export default function AdminWordpressImportPanel({ wooConfigured }: { wooConfig
         credentials: "include",
         cache: "no-store",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ types, dryRun }),
+        body: JSON.stringify({
+          types,
+          dryRun,
+          locale: localeMode === "auto" ? undefined : localeMode,
+          baseUrl: baseUrl.trim() || undefined,
+        }),
       });
       const data = (await res.json()) as WordpressImportResult & { error?: string };
       if (!res.ok) {
@@ -110,15 +147,14 @@ export default function AdminWordpressImportPanel({ wooConfigured }: { wooConfig
   return (
     <div className="admin-panel admin-stack-tight">
       <div>
-        <h2 className="admin-panel-title admin-m-0">Overnemen van bergasports.com</h2>
+        <h2 className="admin-panel-title admin-m-0">Overnemen van WordPress</h2>
         <p className="admin-muted admin-m-0 admin-mt-05">
-          Importeer producten, categorieën, eigenschappen, klanten, orders, nieuws en pagina&apos;s vanaf de oude
-          WordPress/WooCommerce-site.
-          Oude URL&apos;s (productpermalinks, WP-berichten op de root, cart/account, /nl/…) worden als{" "}
-          <strong>301-redirects</strong> opgeslagen. Juridische pagina&apos;s en de homepage worden niet omgeleid.
-          Producten, klanten en orders vragen REST-sleutels hierboven. Nieuws en pagina&apos;s gaan via de publieke
-          WordPress REST API (Woo-sleutels worden níet meegestuurd). Voor concepten:{" "}
-          <code>WP_APP_USER</code> / <code>WP_APP_PASSWORD</code>. Voor een volledige catalogus is het script{" "}
+          Importeer vanaf de oude WooCommerce-site. De REST-API staat op{" "}
+          <strong>www.bergasports.com</strong> (WPML). Een .nl-URL wordt automatisch doorgestuurd naar .com met{" "}
+          <code>?lang=nl</code> — bergasports.nl zelf heeft geen <code>/wp-json</code> (dat gaf eerder HTML i.p.v.
+          JSON). Nederlands vult de primaire velden; Engels alleen <code>translations.en</code> zonder NL te
+          overschrijven. Producten worden gematcht via WPML-vertalings-IDs. Oude URL&apos;s worden als{" "}
+          <strong>301-redirects</strong> opgeslagen. Voor een volledige catalogus is{" "}
           <code>npm run import:wordpress</code> betrouwbaarder (geen time-out).
         </p>
       </div>
@@ -129,6 +165,44 @@ export default function AdminWordpressImportPanel({ wooConfigured }: { wooConfig
           WooCommerce → Instellingen → Geavanceerd → REST API (rechten: Lezen).
         </p>
       ) : null}
+
+      <div className="admin-stack-tight">
+        <label className="admin-label" htmlFor="wp-import-base">
+          Bron-URL
+        </label>
+        <input
+          id="wp-import-base"
+          className="admin-field"
+          value={baseUrl}
+          onChange={(e) => setBaseUrl(e.target.value)}
+          placeholder="https://www.bergasports.com"
+          disabled={loading}
+        />
+        <p className="admin-muted admin-m-0" style={{ fontSize: "0.85rem" }}>
+          Aanbevolen: <code>https://www.bergasports.com</code> + taal hieronder. .nl mag ook (wordt herschreven naar
+          .com + lang=nl).
+        </p>
+        <label className="admin-label" htmlFor="wp-import-locale">
+          Taal voor deze import
+        </label>
+        <select
+          id="wp-import-locale"
+          className="admin-field"
+          value={localeMode}
+          onChange={(e) => setLocaleMode(e.target.value as LocaleMode)}
+          disabled={loading}
+        >
+          <option value="auto">Automatisch van URL (.nl → NL, .com → EN)</option>
+          <option value="nl">Nederlands (primaire velden)</option>
+          <option value="en">Engels (translations.en)</option>
+        </select>
+        <p className="admin-muted admin-m-0" style={{ fontSize: "0.85rem" }}>
+          Deze run schrijft naar: <strong>{effectiveLocale === "en" ? "Engels" : "Nederlands"}</strong>
+          {effectiveLocale === "en"
+            ? " — bestaande NL-teksten blijven staan."
+            : " — vult de standaardvelden (+ translations.nl)."}
+        </p>
+      </div>
 
       <fieldset className="admin-stack-tight" style={{ border: 0, padding: 0, margin: 0 }}>
         <legend className="admin-muted" style={{ fontSize: "0.85rem" }}>
@@ -174,6 +248,9 @@ export default function AdminWordpressImportPanel({ wooConfigured }: { wooConfig
       {result ? (
         <div className="admin-muted admin-stack-tight">
           {result.dryRun ? <p className="admin-m-0">Dry-run — niets opgeslagen.</p> : null}
+          <p className="admin-m-0">
+            Bron {result.baseUrl} · taal <strong>{result.locale}</strong>
+          </p>
           {[
             formatTypeResult("Producten", result.products),
             formatTypeResult("Categorieën", result.categories),

@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useMemo } from "react";
+
+import AdminClickableTableRow from "@/components/admin/AdminClickableTableRow";
 
 import type { AdminCategory } from "@/lib/categories-admin";
 import { shopCategoryPath } from "@/lib/shop-category-filter";
@@ -41,7 +42,6 @@ function flattenTree(categories: AdminCategory[]): { category: AdminCategory; de
 }
 
 export default function AdminCategoriesList({ rows }: Props) {
-  const router = useRouter();
   const tree = useMemo(() => flattenTree(rows), [rows]);
 
   if (tree.length === 0) {
@@ -78,10 +78,9 @@ export default function AdminCategoriesList({ rows }: Props) {
                 const href = `/admin/categories/${category.id}`;
                 const path = shopCategoryPath(category.slug);
                 return (
-                  <tr
+                  <AdminClickableTableRow
                     key={category.id}
-                    className="admin-table-row-click"
-                    onClick={() => router.push(href)}
+                    href={href}
                     title="Klik om te bewerken"
                   >
                     <td>
@@ -104,7 +103,7 @@ export default function AdminCategoriesList({ rows }: Props) {
                         Bewerken
                       </Link>
                     </td>
-                  </tr>
+                  </AdminClickableTableRow>
                 );
               })}
             </tbody>

@@ -1,11 +1,16 @@
 import Link from "next/link";
 
-import { HOME_PILLARS } from "@/lib/site-content";
+import { getRequestLocale } from "@/lib/i18n/locale";
+import { localizedHomePillars, ui } from "@/lib/i18n/ui";
 
-export default function HomePillarsSection() {
+export default async function HomePillarsSection() {
+  const locale = await getRequestLocale();
+  const t = ui(locale);
+  const pillars = localizedHomePillars(locale);
+
   return (
-    <section aria-label="Hoofdcollecties" className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-      {HOME_PILLARS.map((pillar) => (
+    <section aria-label={t.collectionsTitle} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {pillars.map((pillar) => (
         <Link
           key={pillar.href}
           href={pillar.href}
@@ -22,7 +27,7 @@ export default function HomePillarsSection() {
             {pillar.text}
           </p>
           <span className="mt-4 inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--brand)]">
-            Bekijken
+            {t.view}
             <span aria-hidden className="transition-transform duration-300 group-hover:translate-x-1">
               →
             </span>

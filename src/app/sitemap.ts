@@ -1,13 +1,11 @@
 import type { MetadataRoute } from "next";
 
 import { loadRalexCategories } from "@/lib/categories-db";
-import { withLocalePrefix } from "@/lib/i18n/locale-shared";
-import { listEnabledShopLanguages } from "@/lib/i18n/shop-languages";
-import { DEFAULT_LOCALE } from "@/lib/i18n/locale-codes";
 import { productPath } from "@/lib/product-slug";
 import { loadCatalogProducts } from "@/lib/products-db";
 import { flattenRalexCategoryTree } from "@/lib/ralex-categories";
 import { shopCategoryPath } from "@/lib/shop-category-filter";
+import { isOmittedFromPublicNav } from "@/lib/shop-nav-tree";
 import { requirePrisma } from "@/lib/database";
 import { loadNewsPosts } from "@/lib/news-db";
 import { LEGAL_PAGE_PATHS } from "@/lib/site-content";
@@ -42,18 +40,12 @@ const SITEMAP_EXCLUDED = new Set(["/account", "/checkout", "/despre-noi"]);
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = siteUrl();
   const now = new Date();
-  const languages = await listEnabledShopLanguages().catch(() => []);
-  const defaultLocale = languages.find((row) => row.isDefault)?.code ?? DEFAULT_LOCALE;
-  const extraLocales = languages.filter((row) => row.enabled && row.code !== defaultLocale).map((row) => row.code);
 
   function pushPath(
     path: string,
     meta: { lastModified?: Date; changeFrequency?: MetadataRoute.Sitemap[number]["changeFrequency"]; priority?: number },
   ) {
     entries.push({ url: `${base}${path}`, ...meta });
-    for (const loc of extraLocales) {
-      entries.push({ url: `${base}${withLocalePrefix(path, loc, defaultLocale)}`, ...meta });
-    }
   }
 
   const entries: MetadataRoute.Sitemap = [];
@@ -80,7 +72,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }
 
   for (const cat of flattenRalexCategoryTree(categoriesFile.tree)) {
-    if (!cat.slug?.trim()) continue;
+    if (!cat.slug?.trim() || isOmittedFromPublicNav(cat)) continue;
     pushPath(shopCategoryPath(cat.slug), {
       lastModified: now,
       changeFrequency: "weekly",

@@ -2,12 +2,14 @@
 
 import { useMemo, useState } from "react";
 import { useCart } from "@/components/cart/CartProvider";
+import { useShopLocale } from "@/components/locale/ShopLanguagesProvider";
 import {
   formatProductPrice,
   isProductInStock,
   type Product,
 } from "@/lib/products";
 import { useProductVariation } from "@/components/product/ProductVariationContext";
+import { ui } from "@/lib/i18n/ui";
 import { shortVariationLabel } from "@/lib/wc-variations";
 
 type ProductPurchaseActionsProps = {
@@ -97,6 +99,8 @@ export default function ProductPurchaseActions({
   product,
   initialVariationId: _initialVariationId,
 }: ProductPurchaseActionsProps) {
+  const { locale } = useShopLocale();
+  const t = ui(locale);
   const variationCtx = useProductVariation();
   const variations = variationCtx?.variations;
   const selectedId = variationCtx?.selectedId ?? null;
@@ -224,7 +228,7 @@ export default function ProductPurchaseActions({
       ) : null}
 
       {catalogUnit == null && needsChoice ? (
-        <p className="text-sm text-[var(--foreground)]/65">Kies eerst een variant om verder te gaan.</p>
+        <p className="text-sm text-[var(--foreground)]/65">{t.chooseVariantFirst}</p>
       ) : null}
 
       {/* Aantal + hoofd-CTA: op elke breedte direct naast/onder elkaar in beeld */}
@@ -236,7 +240,7 @@ export default function ProductPurchaseActions({
           className="min-h-12 flex-1 rounded-full bg-[#B38F27] px-6 text-base font-bold text-white transition duration-300 enabled:hover:bg-[#96741f] disabled:cursor-not-allowed disabled:opacity-50"
           onClick={handleAddToCart}
         >
-          In winkelwagen
+          {t.inCart}
         </button>
       </div>
 
@@ -252,14 +256,14 @@ export default function ProductPurchaseActions({
           <rect x="5" y="10" width="14" height="10" rx="2" />
           <path d="M8 10V7a4 4 0 018 0v3" strokeLinecap="round" />
         </svg>
-        Veilig afrekenen · geen verborgen kosten
+        {t.safeCheckout}
       </p>
 
       {/* Mobiele sticky bar — vast onderaan viewport */}
       <div
         className="product-mobile-cart-bar fixed inset-x-0 bottom-0 z-50 border-t border-[#e5dcc8] bg-white/95 backdrop-blur-md lg:hidden"
         role="region"
-        aria-label="In winkelwagen"
+        aria-label={t.inCart}
       >
         <div className="mx-auto w-full max-w-[1440px] px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom,0px))]">
           <p className="mb-2 truncate text-xs font-semibold text-[var(--foreground)]/70">
@@ -273,7 +277,7 @@ export default function ProductPurchaseActions({
                   {formatProductPrice(catalogUnit, product.currency)}
                 </p>
               ) : needsChoice ? (
-                <p className="text-xs text-[var(--foreground)]/65">Kies variant</p>
+                <p className="text-xs text-[var(--foreground)]/65">{t.chooseVariant}</p>
               ) : null}
             </div>
             <button
@@ -282,7 +286,7 @@ export default function ProductPurchaseActions({
               className="min-h-11 shrink-0 rounded-full bg-[#B38F27] px-4 py-2.5 text-sm font-semibold text-white transition enabled:hover:bg-[#96741f] disabled:cursor-not-allowed disabled:opacity-50"
               onClick={handleAddToCart}
             >
-              Toevoegen
+              {t.addToCart}
             </button>
           </div>
         </div>

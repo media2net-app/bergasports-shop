@@ -1,5 +1,11 @@
 import type { PrismaClient } from "@/generated/prisma/client";
-import { brandSlugFromName, type ShopBrand } from "@/lib/brands-shared";
+import {
+  brandSlugFromName,
+  inferProductBrandName,
+  isShopNameBrand,
+  KNOWN_PRODUCT_BRANDS,
+  type ShopBrand,
+} from "@/lib/brands-shared";
 import type { TrendyolJsonProduct } from "@/lib/products";
 
 type BrandRow = {
@@ -40,7 +46,7 @@ export async function ensureBrandRow(
   cache?: Map<string, BrandRow>,
 ): Promise<BrandRow | null> {
   const trimmed = name.trim();
-  if (!trimmed) {
+  if (!trimmed || isShopNameBrand(trimmed)) {
     return null;
   }
   const slug = brandSlugFromName(trimmed) || "merk";
@@ -53,12 +59,13 @@ export async function ensureBrandRow(
     cache?.set(slug, existing);
     return existing;
   }
+  const known = KNOWN_PRODUCT_BRANDS.find((brand) => brand.name === trimmed);
   const created = await prisma.brand.create({
     data: {
       name: trimmed,
       slug,
       visible: true,
-      sortOrder: 0,
+      sortOrder: known?.sortOrder ?? 0,
     },
   });
   cache?.set(slug, created);
@@ -70,34 +77,32 @@ export async function assignBrandOnProduct(
   product: TrendyolJsonProduct,
   cache?: Map<string, BrandRow>,
 ): Promise<TrendyolJsonProduct> {
-  const name = product.brand?.trim() ?? "";
+  const inferred = inferProductBrandName({
+    ...product,
+    brand: isShopNameBrand(product.brand) ? undefined : product.brand,
+  });
   const brandId =
     typeof product.brandId === "number" && Number.isFinite(product.brandId) && product.brandId > 0
       ? Math.floor(product.brandId)
       : null;
 
-  if (!name && brandId == null) {
-    const next = { ...product };
-    delete next.brand;
-    delete next.brandId;
-    return next;
-  }
-
   let row: BrandRow | null = null;
   if (brandId != null) {
     row = (await prisma.brand.findUnique({ where: { id: brandId } })) ?? null;
-    if (row) {
+    if (row && isShopNameBrand(row.name)) {
+      row = null;
+    } else if (row) {
       cache?.set(row.slug, row);
     }
   }
-  if (!row && name) {
-    row = await ensureBrandRow(prisma, name, cache);
+  if (!row && inferred) {
+    row = await ensureBrandRow(prisma, inferred, cache);
   }
 
   if (!row) {
     const next = { ...product };
+    delete next.brand;
     delete next.brandId;
-    if (!name) delete next.brand;
     return next;
   }
 

@@ -11,6 +11,7 @@ import {
 } from "@/lib/email-template-render";
 import { loadAdminNewOrderEmailPreviewInput, loadOrderForEmailPreview } from "@/lib/email-preview-data";
 import { getEmailLogoUrlSetting, getWinBackEmailSettings } from "@/lib/shop-runtime";
+import { getRuntimeSetting } from "@/lib/site-settings-db";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -44,6 +45,7 @@ export async function POST(request: Request) {
     const extra = {
       winBackCode: winBack.code,
       winBackExpiry: expiryDateNl(winBack.expiryDays),
+      welcomeCode: (await getRuntimeSetting("NEWSLETTER_PROMO_CODE")).trim().toUpperCase() || "WELCOME5",
     };
     let previewOrder = order;
     if (key === "order.admin_new") {

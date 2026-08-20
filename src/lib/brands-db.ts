@@ -6,7 +6,7 @@ import type { Prisma } from "@/generated/prisma/client";
 import { nextBrandSlug, toShopBrand } from "@/lib/brands-write";
 import type { ShopBrand } from "@/lib/brands-shared";
 import { requirePrisma } from "@/lib/database";
-import { brandSlugFromName } from "@/lib/brands-shared";
+import { brandSlugFromName, isShopNameBrand } from "@/lib/brands-shared";
 
 export type { ShopBrand };
 
@@ -27,7 +27,7 @@ export async function listAdminBrands(): Promise<ShopBrand[]> {
 
 export async function listVisibleBrands(): Promise<ShopBrand[]> {
   const rows = await listShopBrands().catch(() => []);
-  return rows.filter((row) => row.visible);
+  return rows.filter((row) => row.visible && !isShopNameBrand(row.name));
 }
 
 export async function listShopBrands(): Promise<ShopBrand[]> {
@@ -48,7 +48,10 @@ export async function backfillBrandsFromProducts(): Promise<number> {
     select: { id: true, brand: true, data: true },
     take: 2000,
   });
-  const pending = orphans.filter((row) => (row.brand ?? "").trim().length > 0);
+  const pending = orphans.filter((row) => {
+    const name = (row.brand ?? "").trim();
+    return name.length > 0 && !isShopNameBrand(name);
+  });
   if (!pending.length) {
     return 0;
   }

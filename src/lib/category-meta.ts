@@ -5,6 +5,7 @@
  */
 
 import { toCanonicalWcSlug, toPublicCategorySlug } from "@/lib/category-slugs";
+import { LAFUGA_HEADING, LAFUGA_META_DESCRIPTION } from "@/lib/lafuga-copy";
 import { SITE_BRAND_NAME } from "@/lib/site-brand";
 
 export type CategoryMeta = {
@@ -64,14 +65,14 @@ export const CATEGORY_META: Record<string, CategoryMeta> = {
     seoDescription: `Scope carbon wielsets met outletvoordeel, met volledige garantie. ${ADVICE_TAIL}`,
   },
   "cycling-shoes": {
-    name: "Wielrenschoenen",
+    name: "Nimbl",
     seoTitle: `Wielrenschoenen kopen: Nimbl & meer | ${SITE_BRAND_NAME}`,
     seoDescription: `Wielrenschoenen van Nimbl en andere topmerken, met aandacht voor pasvorm en voetstand. ${ADVICE_TAIL}`,
   },
   "lafuga-wear": {
     name: "LaFuga",
-    seoTitle: `LaFuga fietskleding kopen | ${SITE_BRAND_NAME}`,
-    seoDescription: `LaFuga fietskleding: shirts, broeken en jassen voor elk seizoen. ${ADVICE_TAIL}`,
+    seoTitle: `${LAFUGA_HEADING} | ${SITE_BRAND_NAME}`,
+    seoDescription: LAFUGA_META_DESCRIPTION,
   },
   glasses: {
     name: "Brillen",
@@ -98,6 +99,11 @@ export const CATEGORY_META: Record<string, CategoryMeta> = {
     seoTitle: `Groepsets kopen: Shimano, SRAM & Campagnolo | ${SITE_BRAND_NAME}`,
     seoDescription: `Complete groepsets en onderdelen voor je racefiets of gravelbike. ${ADVICE_TAIL}`,
   },
+  "schoenen-kleding": {
+    name: "Schoenen & kleding",
+    seoTitle: `Wielrenschoenen & fietskleding | ${SITE_BRAND_NAME}`,
+    seoDescription: `Nimbl wielrenschoenen en LaFuga fietskleding, te passen in Dedemsvaart. ${ADVICE_TAIL}`,
+  },
 };
 
 /** Woo/EN namen (en gangbare varianten) → NL shop-label. */
@@ -113,8 +119,9 @@ const IMPORTED_NAME_TO_NL: Record<string, string> = {
   "cycling helmets": "Helmen",
   helmets: "Helmen",
   helmen: "Helmen",
-  "cycling shoes": "Wielrenschoenen",
-  wielrenschoenen: "Wielrenschoenen",
+  "cycling shoes": "Nimbl",
+  wielrenschoenen: "Nimbl",
+  nimbl: "Nimbl",
   glasses: "Brillen",
   brillen: "Brillen",
   gravel: "Gravel",
@@ -153,8 +160,9 @@ const WC_IMPORTED_NAMES: Record<string, string[]> = {
   "used-bikes": ["Used bikes", "Tweedehands fietsen"],
   wheels: ["Wheels", "Wielen"],
   "scope-outlet": ["Scope outlet", "Scope Outlet"],
-  "cycling-shoes": ["Cycling shoes", "Wielrenschoenen"],
+  "cycling-shoes": ["Cycling shoes", "Wielrenschoenen", "Nimbl"],
   "lafuga-wear": ["Cycling clothing", "LaFuga", "LaFuga fietskleding"],
+  "schoenen-kleding": ["Schoenen & kleding", "Cycling shoes", "Cycling clothing", "Nimbl", "LaFuga"],
   glasses: ["Glasses", "Brillen"],
   accessories: ["Accessories", "Accessoires"],
   "cycling-helmets": ["Cycling helmets", "Helmen", "Helmets"],

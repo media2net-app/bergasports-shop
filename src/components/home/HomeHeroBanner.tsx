@@ -1,22 +1,44 @@
 import Image from "next/image";
 import LocalizedLink from "@/components/locale/LocalizedLink";
 
+import { getRequestLocale } from "@/lib/i18n/locale";
+import { localizedHomeHero, toUiLocale, ui } from "@/lib/i18n/ui";
 import type { HomepageBlocks } from "@/lib/site-pages";
 import { DEFAULT_HOMEPAGE_BLOCKS } from "@/lib/site-pages";
 import { HOME_HERO_IMAGE_SRC, SITE_BRAND_NAME, SITE_SLOGAN, SITE_TAGLINE } from "@/lib/site-brand";
 
 type Props = {
   blocks?: HomepageBlocks | null;
+  locale?: string;
 };
 
-export default function HomeHeroBanner({ blocks }: Props) {
-  const hero = { ...DEFAULT_HOMEPAGE_BLOCKS.hero, ...blocks?.hero };
+const NL_HERO = DEFAULT_HOMEPAGE_BLOCKS.hero!;
+
+export default async function HomeHeroBanner({ blocks, locale: localeProp }: Props) {
+  const locale = localeProp ?? (await getRequestLocale());
+  const t = ui(locale);
+  const en = toUiLocale(locale) === "en";
+  const heroDefaults = localizedHomeHero(locale);
+  // NL CMS-blocks niet tonen als EN-locale zonder EN-overlay — gebruik EN-fallback.
+  const cmsHero = en && !blocks?.hero ? undefined : blocks?.hero;
+  const hero = {
+    ...(en ? {} : NL_HERO),
+    ...cmsHero,
+  };
+  const titleFallback = en
+    ? `${heroDefaults.titleLine1}\n${heroDefaults.titleLine2}`
+    : (NL_HERO.title ?? `Welkom bij ${SITE_BRAND_NAME}`);
+  const subtitleFallback = en ? heroDefaults.lead : SITE_TAGLINE;
+  const ctaShopFallback = en ? heroDefaults.primaryCta : (NL_HERO.ctaShop ?? "Naar de shop");
+  const ctaStoryFallback = en ? t.myStory : (NL_HERO.ctaOffers ?? "Mijn verhaal");
+  const alt = en ? `${SITE_BRAND_NAME} shop in Dedemsvaart` : `${SITE_BRAND_NAME} winkel in Dedemsvaart`;
+  const slogan = en ? "Your sports partner" : SITE_SLOGAN;
 
   return (
     <section className="relative isolate w-full overflow-hidden bg-[#1a1a1a]">
       <Image
         src={HOME_HERO_IMAGE_SRC}
-        alt={`${SITE_BRAND_NAME} winkel in Dedemsvaart`}
+        alt={alt}
         fill
         priority
         quality={92}
@@ -40,20 +62,20 @@ export default function HomeHeroBanner({ blocks }: Props) {
               className="h-px w-8 bg-gradient-to-r from-[var(--brand-mid)] to-transparent"
               aria-hidden
             />
-            {hero.eyebrow ?? SITE_SLOGAN}
+            {hero.eyebrow ?? slogan}
           </p>
           <h1 className="fade-up fade-up-1 mt-4 whitespace-pre-line font-[family-name:var(--font-heading)] text-3xl font-semibold leading-[1.1] tracking-tight text-white sm:text-4xl md:text-5xl lg:text-[3.25rem]">
-            {hero.title ?? `Welkom bij ${SITE_BRAND_NAME}`}
+            {hero.title ?? titleFallback}
           </h1>
           <p className="fade-up fade-up-2 mt-5 max-w-lg text-sm leading-relaxed text-white/85 md:text-base">
-            {hero.subtitle ?? SITE_TAGLINE}
+            {hero.subtitle ?? subtitleFallback}
           </p>
           <div className="fade-up fade-up-3 mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
             <LocalizedLink
               href="/shop"
               className="group inline-flex items-center justify-center gap-2 rounded-full bg-[var(--brand-mid)] px-7 py-3.5 text-sm font-bold text-[#1a1a1a] transition duration-300 hover:bg-[#f2d680]"
             >
-              {hero.ctaShop ?? "Naar de shop"}
+              {hero.ctaShop ?? ctaShopFallback}
               <span aria-hidden className="transition duration-300 group-hover:translate-x-1">
                 →
               </span>
@@ -62,7 +84,7 @@ export default function HomeHeroBanner({ blocks }: Props) {
               href="/over-ons"
               className="inline-flex items-center justify-center rounded-full border border-white/40 bg-white/10 px-7 py-3.5 text-sm font-semibold text-white backdrop-blur-md transition duration-300 hover:-translate-y-0.5 hover:border-white hover:bg-white/20"
             >
-              {hero.ctaOffers ?? "Mijn verhaal"}
+              {hero.ctaOffers ?? ctaStoryFallback}
             </LocalizedLink>
           </div>
         </div>

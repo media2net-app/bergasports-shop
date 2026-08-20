@@ -15,21 +15,25 @@ import { normalizeWpBaseUrl, wpAuthFromEnv, type WordpressImportCredentials } fr
 
 export type { WordpressImportResult } from "@/lib/wordpress-import-run";
 
-export async function getWordpressImportCredentials(): Promise<WordpressImportCredentials> {
+export async function getWordpressImportCredentials(
+  baseUrlOverride?: string | null,
+): Promise<WordpressImportCredentials> {
   const woo = await getWooCommerceCredentials();
   const baseSetting = await getRuntimeSetting("WC_STORE_BASE_URL");
   return {
-    baseUrl: normalizeWpBaseUrl(woo?.baseUrl || baseSetting || getWcStoreBaseUrl()),
+    baseUrl: normalizeWpBaseUrl(
+      baseUrlOverride?.trim() || woo?.baseUrl || baseSetting || getWcStoreBaseUrl(),
+    ),
     auth: woo ? { key: woo.key, secret: woo.secret } : null,
     wpAuth: wpAuthFromEnv(),
   };
 }
 
 export async function importWordpressFromSettings(
-  options: WordpressImportRunOptions,
+  options: WordpressImportRunOptions & { baseUrl?: string },
 ): Promise<WordpressImportResult> {
   const prisma = requirePrisma();
-  const creds = await getWordpressImportCredentials();
+  const creds = await getWordpressImportCredentials(options.baseUrl);
   const result = await runWordpressImport(prisma, creds, options);
   revalidatePath("/admin/settings/woocommerce");
   revalidatePath("/admin/categories");

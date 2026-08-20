@@ -1,10 +1,15 @@
+"use client";
+
 import LocalizedLink from "@/components/locale/LocalizedLink";
 
 import ShopProductCardVariationChips from "@/components/shop/ShopProductCardVariationChips";
 import OptimizedProductImage, {
   type OptimizedProductImageVariant,
 } from "@/components/ui/OptimizedProductImage";
+import { useShopLocale } from "@/components/locale/ShopLanguagesProvider";
 import { dutchLabelFromImportedName } from "@/lib/category-meta";
+import { isShopNameBrand } from "@/lib/brands-shared";
+import { ui } from "@/lib/i18n/ui";
 import { productPath } from "@/lib/product-slug";
 import { formatProductCardPrice, formatProductPrice, isProductInStock, type Product } from "@/lib/products";
 
@@ -23,11 +28,13 @@ type Props = {
 export default function ShopProductCard({
   product,
   catalogBadge,
-  ctaLabel = "Bekijk product",
+  ctaLabel,
   className = "",
   priority = false,
   imageVariant = "card",
 }: Props) {
+  const { locale } = useShopLocale();
+  const resolvedCta = ctaLabel ?? ui(locale).viewProduct;
   const href = productPath(product);
   const inStock = isProductInStock(product);
 
@@ -62,7 +69,9 @@ export default function ShopProductCard({
           ) : null}
 
           <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--foreground)]/60">
-            {product.brand || dutchLabelFromImportedName(product.category)}
+            {product.brand && !isShopNameBrand(product.brand)
+              ? product.brand
+              : dutchLabelFromImportedName(product.category)}
           </p>
 
           {catalogBadge ? (
@@ -100,7 +109,7 @@ export default function ShopProductCard({
             href={href}
             className="mt-3 block w-full rounded-full bg-[#B38F27] px-4 py-2.5 text-center text-sm font-semibold text-white transition duration-300 group-hover:bg-[#96741f] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B38F27] focus-visible:ring-offset-2"
           >
-            {ctaLabel}
+            {resolvedCta}
           </LocalizedLink>
         ) : (
           <span className="mt-3 block w-full rounded-full border border-[#e5dcc8] bg-[#faf9fc] px-4 py-2.5 text-center text-sm font-semibold text-[var(--foreground)]/60">

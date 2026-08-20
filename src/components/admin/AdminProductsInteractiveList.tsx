@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+import AdminClickableTableRow from "@/components/admin/AdminClickableTableRow";
+
 import { PRODUCT_STATUS_LABEL } from "@/lib/product-status";
 import { stockStateLabel, type StockState } from "@/lib/stock";
 
@@ -183,10 +185,9 @@ export default function AdminProductsInteractiveList({ rows, exportHref, canWrit
                 </tr>
               ) : (
                 rows.map((p) => (
-                  <tr
+                  <AdminClickableTableRow
                     key={p.id}
-                    className="admin-table-row-click"
-                    onClick={() => router.push(`/admin/products/${p.id}`)}
+                    href={`/admin/products/${p.id}`}
                     title="Klik om te bewerken"
                   >
                     <td className="admin-td-checkbox" onClick={(e) => e.stopPropagation()}>
@@ -242,7 +243,7 @@ export default function AdminProductsInteractiveList({ rows, exportHref, canWrit
                         Bewerken
                       </Link>
                     </td>
-                  </tr>
+                  </AdminClickableTableRow>
                 ))
               )}
             </tbody>

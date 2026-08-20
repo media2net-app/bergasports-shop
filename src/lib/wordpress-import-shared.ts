@@ -7,13 +7,31 @@ import { categoryDisplayName } from "@/lib/category-meta";
 import {
   extractBrandNameFromAttributes,
   extractBrandNameFromTaxonomy,
+  inferProductBrandName,
   isBrandAttributeKey,
   preserveProductBrand,
 } from "@/lib/brands-shared";
 import { toCanonicalWcSlug, toPublicCategorySlug } from "@/lib/category-slugs";
-import type { TrendyolJsonProduct, WcProductAttributeJson, WcVariationJson } from "@/lib/products";
+import { DEFAULT_LOCALE, isLocaleCode } from "@/lib/i18n/locale-codes";
+import { localeFromHost } from "@/lib/i18n/locale-shared";
+import {
+  compactLocaleMap,
+  parseLocaleMap,
+  setLocaleFields,
+  type CategoryLocaleFields,
+  type NewsLocaleFields,
+  type PageLocaleFields,
+  type ProductLocaleFields,
+} from "@/lib/i18n/translations";
+import {
+  decodeImportedProductTitle,
+  type TrendyolJsonProduct,
+  type WcProductAttributeJson,
+  type WcVariationJson,
+} from "@/lib/products";
 import { uniqueProductSlug } from "@/lib/product-slug";
 import { isExcludedShopCategorySlug } from "@/lib/ralex-categories";
+import { normalizeNewsCategoryNl } from "@/lib/news-format";
 
 export const WORDPRESS_IMPORT_TYPES = [
   "products",
@@ -212,6 +230,9 @@ export type WcRestProduct = {
   tags?: WcRestCategory[];
   brands?: WcRestCategory[];
   attributes?: WcRestAttribute[];
+  /** WPML: { en: "11863", nl: "11867" } */
+  lang?: string;
+  translations?: Record<string, string | number>;
 };
 
 export type WcRestVariation = {
@@ -292,6 +313,49 @@ export function normalizeWpBaseUrl(raw: string): string {
   return raw.trim().replace(/\/$/, "") || "https://www.bergasports.com";
 }
 
+/**
+ * Woo/WP REST draait op bergasports.com (WPML).
+ * bergasports.nl is de Nederlandse shop-host zonder /wp-json — die geeft HTML terug.
+ */
+export function wordpressRestBaseUrl(configured: string): string {
+  const normalized = normalizeWpBaseUrl(configured);
+  try {
+    const host = new URL(normalized).hostname.toLowerCase();
+    if (host === "bergasports.nl" || host === "www.bergasports.nl" || host.endsWith(".bergasports.nl")) {
+      return "https://www.bergasports.com";
+    }
+  } catch {
+    /* ignore */
+  }
+  return normalized;
+}
+
+/**
+ * Taal van de importbron: bergasports.nl → nl, bergasports.com → en.
+ * Zelfde regel als de storefront host-locale.
+ */
+export function importLocaleFromBaseUrl(baseUrl: string): string {
+  try {
+    return localeFromHost(new URL(normalizeWpBaseUrl(baseUrl)).hostname);
+  } catch {
+    return DEFAULT_LOCALE;
+  }
+}
+
+/** Expliciete `--locale` / admin-keuze, anders afgeleid van de bron-URL. */
+export function resolveWordpressImportLocale(
+  explicit: string | null | undefined,
+  baseUrl: string,
+): string {
+  const code = (explicit || "").trim().toLowerCase();
+  if (code && isLocaleCode(code)) return code;
+  return importLocaleFromBaseUrl(baseUrl);
+}
+
+export function isDefaultImportLocale(locale: string): boolean {
+  return locale === DEFAULT_LOCALE;
+}
+
 export function stripHtml(value: string | undefined | null): string {
   return String(value || "")
     .replace(/<[^>]*>/g, " ")
@@ -351,15 +415,32 @@ export async function fetchWordpressJson<T>(
   if (auth?.key && auth.secret) {
     headers.Authorization = `Basic ${Buffer.from(`${auth.key}:${auth.secret}`).toString("base64")}`;
   }
-  const res = await fetch(url, { headers, cache: "no-store" });
+  const res = await fetch(url, { headers, cache: "no-store", redirect: "follow" });
+  const text = await res.text().catch(() => "");
+  const trimmed = text.trimStart();
+  if (trimmed.startsWith("<!DOCTYPE") || trimmed.startsWith("<html") || trimmed.startsWith("<HTML")) {
+    return {
+      ok: false,
+      status: res.status,
+      text:
+        "HTML in plaats van JSON — dit is geen WooCommerce REST-endpoint. Gebruik https://www.bergasports.com (met lang=nl/en). bergasports.nl heeft geen /wp-json.",
+    };
+  }
   if (!res.ok) {
-    const text = await res.text().catch(() => "");
     return { ok: false, status: res.status, text: text.slice(0, 240) };
   }
-  const data = (await res.json()) as T;
-  const total = Number.parseInt(res.headers.get("X-WP-Total") || "0", 10) || 0;
-  const totalPages = Number.parseInt(res.headers.get("X-WP-TotalPages") || "0", 10) || 0;
-  return { ok: true, data, total, totalPages };
+  try {
+    const data = JSON.parse(text) as T;
+    const total = Number.parseInt(res.headers.get("X-WP-Total") || "0", 10) || 0;
+    const totalPages = Number.parseInt(res.headers.get("X-WP-TotalPages") || "0", 10) || 0;
+    return { ok: true, data, total, totalPages };
+  } catch {
+    return {
+      ok: false,
+      status: res.status,
+      text: `Ongeldige JSON van ${url.slice(0, 80)}… (${text.slice(0, 120).replace(/\s+/g, " ")})`,
+    };
+  }
 }
 
 export async function fetchWordpressPages<T>(options: {
@@ -408,7 +489,7 @@ export function wcV3Url(
     qs.set(key, String(value));
   }
   const suffix = qs.toString();
-  return `${normalizeWpBaseUrl(baseUrl)}/wp-json/wc/v3/${path.replace(/^\//, "")}${suffix ? `?${suffix}` : ""}`;
+  return `${wordpressRestBaseUrl(baseUrl)}/wp-json/wc/v3/${path.replace(/^\//, "")}${suffix ? `?${suffix}` : ""}`;
 }
 
 export function wpV2Url(
@@ -422,7 +503,60 @@ export function wpV2Url(
     qs.set(key, String(value));
   }
   const suffix = qs.toString();
-  return `${normalizeWpBaseUrl(baseUrl)}/wp-json/wp/v2/${path.replace(/^\//, "")}${suffix ? `?${suffix}` : ""}`;
+  return `${wordpressRestBaseUrl(baseUrl)}/wp-json/wp/v2/${path.replace(/^\//, "")}${suffix ? `?${suffix}` : ""}`;
+}
+
+/** WPML-vertalings-IDs van een Woo-product (eigen id + linked locales). */
+export function wpmlTranslationIds(product: {
+  id: number;
+  translations?: unknown;
+  wpmlTranslations?: Record<string, number> | null;
+}): number[] {
+  const ids = new Set<number>();
+  if (Number.isFinite(product.id) && product.id > 0) ids.add(product.id);
+  // Alleen wpmlTranslations of Woo-style translations (id-map), niet i18n LocaleMap
+  const raw = product.wpmlTranslations ?? (
+    product.translations &&
+    typeof product.translations === "object" &&
+    !Array.isArray(product.translations) &&
+    Object.values(product.translations).every(
+      (v) => typeof v === "string" || typeof v === "number",
+    )
+      ? (product.translations as Record<string, string | number>)
+      : null
+  );
+  if (raw && typeof raw === "object") {
+    for (const value of Object.values(raw)) {
+      const n = typeof value === "number" ? value : Number.parseInt(String(value), 10);
+      if (Number.isFinite(n) && n > 0) ids.add(n);
+    }
+  }
+  return [...ids];
+}
+
+/** Canonieke product-id: liever NL-vertaling (WPML), anders de huidige id. */
+export function canonicalWpmlProductId(product: WcRestProduct): number {
+  const nl = product.translations?.nl;
+  if (nl != null) {
+    const n = typeof nl === "number" ? nl : Number.parseInt(String(nl), 10);
+    if (Number.isFinite(n) && n > 0) return n;
+  }
+  return product.id;
+}
+
+export function wpmlTranslationsMap(
+  product: Pick<WcRestProduct, "id" | "lang" | "translations">,
+): Record<string, number> | undefined {
+  const out: Record<string, number> = {};
+  if (product.translations && typeof product.translations === "object") {
+    for (const [code, value] of Object.entries(product.translations)) {
+      const n = typeof value === "number" ? value : Number.parseInt(String(value), 10);
+      if (Number.isFinite(n) && n > 0) out[code] = n;
+    }
+  }
+  if (product.lang && !out[product.lang]) out[product.lang] = product.id;
+  if (!out.en && !out.nl) out[product.lang || "en"] = product.id;
+  return Object.keys(out).length ? out : undefined;
 }
 
 export function mapWcAttributeOptions(attr: WcRestAttribute): string[] {
@@ -461,7 +595,8 @@ export function extractWcProductBrand(p: WcRestProduct): string | undefined {
   return (
     extractBrandNameFromTaxonomy(p.brands) ||
     extractBrandNameFromAttributes(p.attributes) ||
-    extractBrandNameFromTaxonomy(p.tags?.filter((tag) => isBrandAttributeKey(tag.name, tag.slug)))
+    extractBrandNameFromTaxonomy(p.tags?.filter((tag) => isBrandAttributeKey(tag.name, tag.slug))) ||
+    inferProductBrandName({ name: p.name, wcCategories: p.categories })
   );
 }
 
@@ -562,7 +697,7 @@ export function mapWcRestProductToJson(
   const display = money(p.price || p.sale_price || p.regular_price);
   const regular = money(p.regular_price || p.price);
   const onSale = Boolean(p.on_sale && regular > display && display >= 0);
-  const name = decodeHtmlEntities(stripHtml(p.name) || `Product ${p.id}`);
+  const name = decodeImportedProductTitle(decodeHtmlEntities(stripHtml(p.name) || `Product ${p.id}`));
   const sku = p.sku?.trim() || "";
   const primaryCat = p.categories?.find((c) => c.name || c.slug) ?? p.categories?.[0];
   const category = primaryCat
@@ -578,7 +713,7 @@ export function mapWcRestProductToJson(
   }
 
   const base: TrendyolJsonProduct = {
-    id: p.id,
+    id: canonicalWpmlProductId(p),
     name,
     brand: extractWcProductBrand(p),
     category,
@@ -597,6 +732,9 @@ export function mapWcRestProductToJson(
     productStatus: p.status === "publish" ? "published" : "concept",
     inStock: p.stock_status ? p.stock_status !== "outofstock" : true,
   };
+
+  const wpml = wpmlTranslationsMap(p);
+  if (wpml) base.wpmlTranslations = wpml;
 
   if (variations?.length) {
     const mapped = variations.map(mapWcVariation);
@@ -706,6 +844,215 @@ export function mergeImportedProduct(
   };
 }
 
+export function productLocaleFieldsFromImport(product: TrendyolJsonProduct): ProductLocaleFields {
+  const fields: ProductLocaleFields = {};
+  if (product.name?.trim()) fields.name = product.name.trim();
+  if (product.slug?.trim()) fields.slug = product.slug.trim();
+  if (product.wcShortDescriptionHtml?.trim()) fields.shortDescriptionHtml = product.wcShortDescriptionHtml.trim();
+  if (product.wcDescriptionHtml?.trim()) fields.descriptionHtml = product.wcDescriptionHtml.trim();
+  if (product.specsText?.trim()) fields.specsText = product.specsText.trim();
+  if (product.seoTitle?.trim()) fields.seoTitle = product.seoTitle.trim();
+  if (product.seoDescription?.trim()) fields.seoDescription = product.seoDescription.trim();
+  if (product.ogTitle?.trim()) fields.ogTitle = product.ogTitle.trim();
+  if (product.ogDescription?.trim()) fields.ogDescription = product.ogDescription.trim();
+  if (product.imageAlt?.trim()) fields.imageAlt = product.imageAlt.trim();
+  return fields;
+}
+
+/**
+ * NL (default): tekstvelden bijwerken + translations.nl; andere talen in translations behouden.
+ * Andere taal: nooit primaire NL-tekst overschrijven — alleen translations[locale].
+ * Nieuw product in EN: alleen naam/sku/prijs/beeld in primary; teksten uitsluitend in translations.en.
+ */
+export function mergeImportedProductForLocale(
+  incoming: TrendyolJsonProduct,
+  existing: TrendyolJsonProduct | null,
+  usedBySlug: Map<string, number>,
+  locale: string,
+): TrendyolJsonProduct {
+  const localeFields = productLocaleFieldsFromImport(incoming);
+  const existingTranslations = parseLocaleMap<ProductLocaleFields>(existing?.translations);
+
+  if (isDefaultImportLocale(locale)) {
+    const merged = mergeImportedProduct(incoming, existing, usedBySlug);
+    const map = setLocaleFields(
+      { ...existingTranslations, ...parseLocaleMap<ProductLocaleFields>(merged.translations) },
+      DEFAULT_LOCALE,
+      localeFields,
+    );
+    // Behoud EN (en andere) vertalingen bij NL-import
+    for (const [code, fields] of Object.entries(existingTranslations)) {
+      if (code === DEFAULT_LOCALE) continue;
+      if (!map[code]) map[code] = fields;
+      else map[code] = { ...fields, ...map[code] };
+    }
+    return { ...merged, translations: compactLocaleMap(map) };
+  }
+
+  if (!existing) {
+    const created = mergeImportedProduct(incoming, null, usedBySlug);
+    const map = setLocaleFields({}, locale, localeFields);
+    return {
+      ...created,
+      // Geen vreemde taal in NL-kolommen — alleen korte naam zodat het product bestaat
+      wcShortDescriptionHtml: undefined,
+      wcDescriptionHtml: undefined,
+      specsText: undefined,
+      seoTitle: undefined,
+      seoDescription: undefined,
+      ogTitle: undefined,
+      ogDescription: undefined,
+      imageAlt: undefined,
+      translations: compactLocaleMap(map, locale),
+    };
+  }
+
+  const kept = mergeImportedProduct(
+    {
+      ...incoming,
+      name: existing.name,
+      wcShortDescriptionHtml: existing.wcShortDescriptionHtml,
+      wcDescriptionHtml: existing.wcDescriptionHtml,
+      specsText: existing.specsText,
+      seoTitle: existing.seoTitle,
+      seoDescription: existing.seoDescription,
+      ogTitle: existing.ogTitle,
+      ogDescription: existing.ogDescription,
+      imageAlt: existing.imageAlt,
+      slug: existing.slug,
+      translations: existing.translations,
+    },
+    existing,
+    usedBySlug,
+  );
+  const map = setLocaleFields(existingTranslations, locale, localeFields);
+  return {
+    ...kept,
+    name: existing.name,
+    wcShortDescriptionHtml: existing.wcShortDescriptionHtml,
+    wcDescriptionHtml: existing.wcDescriptionHtml,
+    specsText: existing.specsText,
+    seoTitle: existing.seoTitle,
+    seoDescription: existing.seoDescription,
+    ogTitle: existing.ogTitle,
+    ogDescription: existing.ogDescription,
+    imageAlt: existing.imageAlt,
+    slug: existing.slug,
+    translations: compactLocaleMap(map),
+  };
+}
+
+/** Simpele NL/EN-check op producttekst (voor herstel na verkeerde .com-import). */
+export function textLooksDutch(text: string): boolean {
+  const t = text.toLowerCase();
+  if (!t.trim()) return false;
+  const dutchHits = (
+    t.match(
+      /\b(de|het|een|van|voor|met|op|bij|naar|fiets|fietsen|schoenen|kleding|gratis|verzending|advies|maat|kleur|omschrijving|bekijk|bestel|onze|jouw|niet|zijn|wordt|worden)\b/g,
+    ) || []
+  ).length;
+  const englishHits = (
+    t.match(
+      /\b(the|and|with|for|from|bike|bikes|shoes|shipping|free|your|this|that|description|view|order|size|color|colour|our|are|is|will)\b/g,
+    ) || []
+  ).length;
+  return dutchHits > englishHits;
+}
+
+export type RepairPrimaryAsEnglishResult = {
+  movedToEn: boolean;
+  clearedPrimaryCopy: boolean;
+  product: TrendyolJsonProduct;
+};
+
+/**
+ * Herstel: Engelse teksten stonden per ongeluk in NL-primary.
+ * → kopieer naar translations.en, wis lange NL-primary copy (naam blijft tot NL-herimport).
+ */
+export function repairProductPrimaryEnglishContamination(
+  product: TrendyolJsonProduct,
+): RepairPrimaryAsEnglishResult {
+  const map = parseLocaleMap<ProductLocaleFields>(product.translations);
+  const primary = productLocaleFieldsFromImport(product);
+  const sample = [primary.name, primary.shortDescriptionHtml, primary.descriptionHtml, primary.specsText]
+    .filter(Boolean)
+    .join("\n");
+  const enExisting = map.en;
+  const hasEn = Boolean(
+    enExisting &&
+      [enExisting.name, enExisting.shortDescriptionHtml, enExisting.descriptionHtml]
+        .some((v) => Boolean(v?.trim())),
+  );
+
+  // Alleen verplaatsen als primary Engels oogt en EN nog leeg is
+  if (!sample.trim() || textLooksDutch(sample) || hasEn) {
+    return { movedToEn: false, clearedPrimaryCopy: false, product };
+  }
+
+  const nextMap = setLocaleFields(map, "en", primary);
+  return {
+    movedToEn: true,
+    clearedPrimaryCopy: true,
+    product: {
+      ...product,
+      wcShortDescriptionHtml: undefined,
+      wcDescriptionHtml: undefined,
+      specsText: undefined,
+      seoTitle: undefined,
+      seoDescription: undefined,
+      ogTitle: undefined,
+      ogDescription: undefined,
+      imageAlt: undefined,
+      translations: compactLocaleMap(nextMap),
+    },
+  };
+}
+
+export function categoryLocaleFieldsFromWoo(name: string, description?: string | null): CategoryLocaleFields {
+  const fields: CategoryLocaleFields = {};
+  if (name.trim()) fields.name = name.trim();
+  if (description?.trim()) fields.description = description.trim();
+  return fields;
+}
+
+export function newsLocaleFieldsFromMapped(mapped: {
+  title: string;
+  slug: string;
+  excerpt: string | null;
+  bodyHtml: string;
+  seoTitle: string | null;
+  seoDescription: string | null;
+}): NewsLocaleFields {
+  const fields: NewsLocaleFields = {};
+  if (mapped.title.trim()) fields.title = mapped.title.trim();
+  if (mapped.slug.trim()) fields.slug = mapped.slug.trim();
+  if (mapped.excerpt?.trim()) fields.excerpt = mapped.excerpt.trim();
+  if (mapped.bodyHtml.trim()) fields.bodyHtml = mapped.bodyHtml.trim();
+  if (mapped.seoTitle?.trim()) fields.seoTitle = mapped.seoTitle.trim();
+  if (mapped.seoDescription?.trim()) fields.seoDescription = mapped.seoDescription.trim();
+  return fields;
+}
+
+export function pageLocaleFieldsFromMapped(mapped: {
+  title: string;
+  heading: string | null;
+  slug: string;
+  path: string;
+  bodyHtml: string;
+  metaTitle: string | null;
+  metaDescription: string | null;
+}): PageLocaleFields {
+  const fields: PageLocaleFields = {};
+  if (mapped.title.trim()) fields.title = mapped.title.trim();
+  if (mapped.heading?.trim()) fields.heading = mapped.heading.trim();
+  if (mapped.slug.trim()) fields.slug = mapped.slug.trim();
+  if (mapped.path.trim()) fields.path = mapped.path.trim();
+  if (mapped.bodyHtml.trim()) fields.bodyHtml = mapped.bodyHtml.trim();
+  if (mapped.metaTitle?.trim()) fields.metaTitle = mapped.metaTitle.trim();
+  if (mapped.metaDescription?.trim()) fields.metaDescription = mapped.metaDescription.trim();
+  return fields;
+}
+
 export function mapWpPostToNews(post: WpPost): MappedNewsPost {
   const title = decodeHtmlEntities(stripHtml(rendered(post.title) || post.slug));
   const slug = slugifyWp(post.slug || title);
@@ -717,10 +1064,11 @@ export function mapWpPostToNews(post: WpPost): MappedNewsPost {
     post.yoast_head_json?.og_image?.[0]?.url ||
     null;
   const terms = post._embedded?.["wp:term"]?.flat() ?? [];
-  const category =
+  const categoryRaw =
     terms.find((t) => t.taxonomy === "category")?.name ||
     terms[0]?.name ||
     "Nieuws";
+  const category = normalizeNewsCategoryNl(categoryRaw);
   const publishedAt = post.date_gmt || post.date ? new Date(post.date_gmt || post.date || "") : null;
   return {
     slug,

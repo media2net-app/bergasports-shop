@@ -1,26 +1,33 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
-import { TRUST_BAR_USPS } from "@/lib/site-content";
+import { useShopLocale } from "@/components/locale/ShopLanguagesProvider";
+import { localizedTrustBarUsps } from "@/lib/i18n/ui";
 
 const ROTATE_MS = 4500;
 
 /** Boven de header — roterende USPs. */
 export default function TrustBar() {
+  const { locale } = useShopLocale();
+  const usps = useMemo(() => localizedTrustBarUsps(locale), [locale]);
   const [index, setIndex] = useState(0);
 
   useEffect(() => {
-    if (TRUST_BAR_USPS.length <= 1) {
+    setIndex(0);
+  }, [locale]);
+
+  useEffect(() => {
+    if (usps.length <= 1) {
       return;
     }
     const id = window.setInterval(() => {
-      setIndex((i) => (i + 1) % TRUST_BAR_USPS.length);
+      setIndex((i) => (i + 1) % usps.length);
     }, ROTATE_MS);
     return () => window.clearInterval(id);
-  }, []);
+  }, [usps]);
 
-  const message = TRUST_BAR_USPS[index] ?? TRUST_BAR_USPS[0];
+  const message = usps[index] ?? usps[0];
 
   return (
     <div className="bg-gradient-to-r from-[var(--brand-dark)] via-[var(--brand)] to-[var(--brand-dark)] text-white">

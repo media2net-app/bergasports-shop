@@ -18,7 +18,7 @@ function prefixHref(href: Props["href"], locale: string, defaultLocale: string):
   return href;
 }
 
-/** Storefront Link that keeps the current locale prefix (`/en/...`). */
+/** Storefront Link — dezelfde padstructuur op .nl en .com (geen /en-prefix). */
 export default function LocalizedLink({ href, ...props }: Props) {
   const { locale, defaultLocale } = useShopLocale();
   return <Link href={prefixHref(href, locale, defaultLocale)} {...props} />;

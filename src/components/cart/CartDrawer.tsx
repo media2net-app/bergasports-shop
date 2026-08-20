@@ -7,8 +7,10 @@ import CartBundlePromoPanel from "@/components/cart/CartBundlePromoPanel";
 import CartCheckoutForm from "@/components/cart/CartCheckoutForm";
 import type { CartItem } from "@/components/cart/CartProvider";
 import { useProductLookup } from "@/components/cart/ProductLookupProvider";
+import { useShopLocale } from "@/components/locale/ShopLanguagesProvider";
 import MollieMethodsHint from "@/components/payments/MollieMethodsHint";
 import OptimizedProductImage from "@/components/ui/OptimizedProductImage";
+import { ui } from "@/lib/i18n/ui";
 import { productPath } from "@/lib/product-slug";
 import { formatProductPrice, type Product } from "@/lib/products";
 import { formatFreeShippingThreshold, meetsFreeShippingThreshold } from "@/lib/shop-delivery-trust";
@@ -99,6 +101,8 @@ function FreeShippingHint({
   currency: string;
   threshold?: number;
 }) {
+  const { locale } = useShopLocale();
+  const t = ui(locale);
   if (threshold == null || threshold <= 0) {
     return null;
   }
@@ -117,17 +121,12 @@ function FreeShippingHint({
       </div>
       <p className="text-xs leading-relaxed text-[var(--foreground)]/65">
         {qualifies ? (
-          <span className="font-semibold text-[#166534]">
-            Gratis verzending naar Nederland. Afhalen in Dedemsvaart is altijd gratis.
-          </span>
+          <span className="font-semibold text-[#166534]">{t.freeShippingNl}</span>
         ) : (
-          <>
-            Nog{" "}
-            <span className="font-semibold text-[var(--foreground)]">
-              {formatProductPrice(remaining, currency)}
-            </span>{" "}
-            tot gratis verzending naar Nederland (vanaf {formatFreeShippingThreshold(currency, threshold)}).
-          </>
+          t.freeShippingRemaining(
+            formatProductPrice(remaining, currency),
+            formatFreeShippingThreshold(currency, threshold),
+          )
         )}
       </p>
     </div>
@@ -275,6 +274,8 @@ export default function CartDrawer({
   freeShippingThreshold,
   onCheckoutSuccess,
 }: CartDrawerProps) {
+  const { locale } = useShopLocale();
+  const t = ui(locale);
   const titleId = useId();
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   if ((!isOpen || items.length === 0) && checkoutOpen) {
@@ -301,7 +302,7 @@ export default function CartDrawer({
     };
   }, [isOpen, onClose]);
 
-  const heading = orderSuccess ? "Bestelling geplaatst" : showCheckout ? "Afrekenen" : "Winkelwagen";
+  const heading = orderSuccess ? t.orderPlaced : showCheckout ? t.checkout : t.cart;
 
   return (
     <div
@@ -365,7 +366,7 @@ export default function CartDrawer({
             <button
               type="button"
               className="mt-1 inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/20 text-[var(--topbar-foreground)] transition hover:border-[var(--brand-mid)] hover:text-[var(--brand-mid)]"
-              aria-label="Winkelwagen sluiten"
+              aria-label={t.closeCart}
               onClick={onClose}
             >
               <CloseIcon />
@@ -387,19 +388,19 @@ export default function CartDrawer({
             </div>
           ) : items.length === 0 ? (
             <div className="flex min-h-[60%] flex-col items-center justify-center rounded-3xl border border-dashed border-[var(--brand-border)] bg-white px-6 py-12 text-center">
-              <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[var(--brand)]">Winkelwagen</p>
+              <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[var(--brand)]">{t.cart}</p>
               <h3 className="section-rule section-rule-center mt-2 font-[family-name:var(--font-heading)] text-lg tracking-tight">
-                Nog niets in je mandje
+                {t.cartEmptyTitle}
               </h3>
               <p className="mt-2 max-w-xs text-sm leading-relaxed text-[var(--foreground)]/65">
-                Ontdek fietsen, kleding en accessoires — of kom langs in Dedemsvaart.
+                {t.cartEmptyText}
               </p>
               <div className="mt-6 flex w-full max-w-xs flex-col gap-2.5">
                 <LocalizedLink href="/shop" className={btnGold} onClick={onClose}>
-                  Naar de webshop
+                  {t.toWebshop}
                 </LocalizedLink>
                 <LocalizedLink href="/fietsen" className={btnGhost} onClick={onClose}>
-                  Bekijk fietsen
+                  {t.viewBikes}
                 </LocalizedLink>
               </div>
             </div>
@@ -489,11 +490,11 @@ export default function CartDrawer({
             <div className={`flex flex-col gap-2.5 ${showBundlePromos ? "" : "mt-4"}`}>
               {showBundlePromos ? null : (
                 <button type="button" className={btnGold} onClick={() => setCheckoutOpen(true)}>
-                  Afrekenen
+                  {t.checkout}
                 </button>
               )}
               <button type="button" className={btnGhost} onClick={onClose}>
-                Verder winkelen
+                {t.continueShopping}
               </button>
             </div>
             <div className="mt-3">

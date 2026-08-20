@@ -8,7 +8,7 @@ import {
 } from "@/lib/ralex-categories-file";
 import { applyRalexPriceMarkup, shouldApplyRalexPriceMarkup } from "@/lib/ralex-price-markup";
 import type { TrendyolJsonProduct, WcVariationJson } from "@/lib/products";
-import { extractBrandNameFromAttributes, preserveProductBrand } from "@/lib/brands-shared";
+import { inferProductBrandName, preserveProductBrand } from "@/lib/brands-shared";
 import { getProductRawById, upsertProductRaw } from "@/lib/trendyol-json-store";
 import type { WcStoreProduct } from "@/lib/ralex-wc-store-api";
 import {
@@ -82,13 +82,16 @@ export function wcStoreProductToTrendyolJson(
   const currency =
     currencyCode === "EUR" ? "EUR" : currencyCode === "RON" ? "Lei" : currencyCode;
 
-  const brand = extractBrandNameFromAttributes(
-    p.attributes?.map((attr) => ({
+  const brand = inferProductBrandName({
+    attributes: p.attributes?.map((attr) => ({
       name: attr.name,
       slug: attr.taxonomy,
       terms: attr.terms,
     })),
-  );
+    name,
+    category: categoryLabel,
+    wcCategories,
+  });
 
   const base: TrendyolJsonProduct = {
     id: p.id,

@@ -2,7 +2,11 @@ import { NextResponse } from "next/server";
 
 import { guardAdminApi } from "@/lib/admin-api-guard";
 import { importWordpressFromSettings, getWordpressImportCredentials } from "@/lib/wordpress-import";
-import { parseImportTypes, WORDPRESS_IMPORT_TYPES } from "@/lib/wordpress-import-shared";
+import {
+  importLocaleFromBaseUrl,
+  parseImportTypes,
+  WORDPRESS_IMPORT_TYPES,
+} from "@/lib/wordpress-import-shared";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -15,6 +19,7 @@ export async function GET() {
   const creds = await getWordpressImportCredentials();
   return NextResponse.json({
     baseUrl: creds.baseUrl,
+    detectedLocale: importLocaleFromBaseUrl(creds.baseUrl),
     wooConfigured: Boolean(creds.auth),
     wpAuthConfigured: Boolean(creds.wpAuth),
     types: WORDPRESS_IMPORT_TYPES,
@@ -28,16 +33,26 @@ export async function POST(request: Request) {
   let types: ReturnType<typeof parseImportTypes>;
   let dryRun = false;
   let maxPages: number | undefined;
+  let locale: string | undefined;
+  let baseUrl: string | undefined;
   try {
     const body = (await request.json().catch(() => ({}))) as {
       types?: unknown;
       dryRun?: boolean;
       maxPages?: number;
+      locale?: string;
+      baseUrl?: string;
     };
     types = parseImportTypes(body.types);
     dryRun = Boolean(body.dryRun);
     if (typeof body.maxPages === "number" && body.maxPages > 0) {
       maxPages = Math.min(200, body.maxPages);
+    }
+    if (typeof body.locale === "string" && body.locale.trim()) {
+      locale = body.locale.trim().toLowerCase();
+    }
+    if (typeof body.baseUrl === "string" && body.baseUrl.trim()) {
+      baseUrl = body.baseUrl.trim();
     }
   } catch (e) {
     return NextResponse.json(
@@ -47,7 +62,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    const result = await importWordpressFromSettings({ types, dryRun, maxPages });
+    const result = await importWordpressFromSettings({ types, dryRun, maxPages, locale, baseUrl });
     return NextResponse.json(result);
   } catch (e) {
     const message = e instanceof Error ? e.message : "Import mislukt";

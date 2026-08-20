@@ -19,6 +19,7 @@ import {
   wpQueryRedirectSource,
 } from "@/lib/seo-redirects-static";
 import { formatRalexCategoryName } from "@/lib/ralex-categories";
+import { compactLocaleMap, parseLocaleMap, setLocaleFields } from "@/lib/i18n/translations";
 import {
   applyGlobalAttributeTerms,
   decodeHtmlEntities,
@@ -28,7 +29,12 @@ import {
   mapWcRestProductToJson,
   mapWpPageToSitePage,
   mapWpPostToNews,
-  mergeImportedProduct,
+  mergeImportedProductForLocale,
+  newsLocaleFieldsFromMapped,
+  pageLocaleFieldsFromMapped,
+  categoryLocaleFieldsFromWoo,
+  isDefaultImportLocale,
+  resolveWordpressImportLocale,
   shouldReplaceImportedCategory,
   shouldUpdateImportedNews,
   sortWooCategoriesParentsFirst,
@@ -38,6 +44,8 @@ import {
   wooCustomerAddress,
   wooCustomerDisplayName,
   wooCustomerPhone,
+  wordpressRestBaseUrl,
+  wpmlTranslationIds,
   wpRestAuth,
   wpV2Url,
   type MappedSitePage,
@@ -67,6 +75,8 @@ export type WordpressImportResult = {
   ok: boolean;
   dryRun: boolean;
   baseUrl: string;
+  /** Taal waarin content wordt geschreven (nl/en/…). */
+  locale: string;
   wooConfigured: boolean;
   types: WordpressImportType[];
   products?: WordpressImportTypeResult;
@@ -85,6 +95,8 @@ export type WordpressImportRunOptions = {
   types: WordpressImportType[];
   dryRun?: boolean;
   maxPages?: number;
+  /** Expliciete taal; anders afgeleid van bron-URL (.nl→nl, .com→en). */
+  locale?: string;
   log?: (message: string) => void;
 };
 
@@ -154,12 +166,17 @@ function requireAuth(creds: WordpressImportCredentials, type: string): { key: st
 async function fetchWcVariations(
   creds: WordpressImportCredentials,
   productId: number,
+  lang?: string,
 ): Promise<WcRestVariation[]> {
   const auth = creds.auth;
   if (!auth) return [];
   const { items } = await fetchWordpressPages<WcRestVariation>({
     urlForPage: (page, perPage) =>
-      wcV3Url(creds.baseUrl, `products/${productId}/variations`, { page, per_page: perPage }),
+      wcV3Url(creds.baseUrl, `products/${productId}/variations`, {
+        page,
+        per_page: perPage,
+        ...(lang ? { lang } : {}),
+      }),
     auth,
     perPage: 100,
     maxPages: 5,
@@ -306,6 +323,9 @@ async function importProducts(
   const auth = requireAuth(creds, "producten");
   const log = options.log;
   const maxPages = options.maxPages ?? 200;
+  const locale = resolveWordpressImportLocale(options.locale, creds.baseUrl);
+  const apiBase = wordpressRestBaseUrl(creds.baseUrl);
+  log?.(`Woo REST: ${apiBase} · lang=${locale}`);
   const { items, pages } = await fetchWordpressPages<WcRestProduct>({
     urlForPage: (page, perPage) =>
       wcV3Url(creds.baseUrl, "products", {
@@ -314,6 +334,7 @@ async function importProducts(
         status: "publish",
         orderby: "id",
         order: "asc",
+        lang: locale,
       }),
     auth,
     perPage: 50,
@@ -325,7 +346,7 @@ async function importProducts(
   const result = emptyResult();
   result.fetched = items.length;
   result.pages = pages;
-  log?.(`Producten opgehaald: ${items.length}`);
+  log?.(`Producten opgehaald: ${items.length} · taal ${locale}`);
 
   const existingRows = await prisma.product.findMany({
     select: { id: true, data: true, slug: true },
@@ -341,6 +362,9 @@ async function importProducts(
     const data = row.data as TrendyolJsonProduct;
     const id = Number(row.id);
     const product = { ...data, id, slug: row.slug ?? data.slug };
+    for (const wpmlId of wpmlTranslationIds(product)) {
+      byId.set(wpmlId, product);
+    }
     byId.set(id, product);
     const sku = product.wcSku?.trim().toLowerCase();
     if (sku && !bySku.has(sku)) bySku.set(sku, product);
@@ -354,12 +378,25 @@ async function importProducts(
     }
     let variations: WcRestVariation[] | undefined;
     if (raw.type === "variable") {
-      variations = await fetchWcVariations(creds, raw.id);
+      variations = await fetchWcVariations(creds, raw.id, locale);
     }
     const incoming = mapWcRestProductToJson(raw, variations);
     const skuKey = incoming.wcSku?.trim().toLowerCase();
-    const existing = byId.get(incoming.id) ?? (skuKey ? bySku.get(skuKey) ?? null : null);
-    const merged = mergeImportedProduct(incoming, existing, usedBySlug);
+    let existing: TrendyolJsonProduct | null = null;
+    for (const wpmlId of wpmlTranslationIds({ id: raw.id, translations: raw.translations })) {
+      existing = byId.get(wpmlId) ?? null;
+      if (existing) break;
+    }
+    if (!existing && skuKey) existing = bySku.get(skuKey) ?? null;
+    // Bestaand product: behoud canonieke id (meestal NL)
+    if (existing) {
+      incoming.id = existing.id;
+      incoming.wpmlTranslations = {
+        ...(existing.wpmlTranslations ?? {}),
+        ...(incoming.wpmlTranslations ?? {}),
+      };
+    }
+    const merged = mergeImportedProductForLocale(incoming, existing, usedBySlug, locale);
     const withBrand = await assignBrandOnProduct(prisma, merged, brandCache);
 
     if (options.dryRun) {
@@ -371,40 +408,62 @@ async function importProducts(
     const featuredOnHomepage = Boolean(withBrand.featuredOnHomepage);
     const catalogSource = withBrand.catalogSource === "ralex" ? "ralex" : "manual";
     const data = { ...withBrand, featuredOnHomepage, catalogSource } as Prisma.InputJsonValue;
-    await prisma.product.upsert({
-      where: { id: productIdToBigInt(withBrand.id) },
-      create: {
-        id: productIdToBigInt(withBrand.id),
-        data,
-        slug: withBrand.slug ?? null,
-        name: withBrand.name,
-        brand: withBrand.brand ?? null,
-        brandId: typeof withBrand.brandId === "number" ? withBrand.brandId : null,
-        category: withBrand.category ?? null,
-        catalogSource,
-        priceCurrent: withBrand.priceCurrent ?? null,
-        priceDiscounted: withBrand.priceDiscounted ?? null,
-        currency: withBrand.currency ?? "EUR",
-        image: withBrand.image || null,
-        url: withBrand.url,
-        featuredOnHomepage,
-      },
-      update: {
-        data,
-        slug: withBrand.slug ?? null,
-        name: withBrand.name,
-        brand: withBrand.brand ?? null,
-        brandId: typeof withBrand.brandId === "number" ? withBrand.brandId : null,
-        category: withBrand.category ?? null,
-        catalogSource,
-        priceCurrent: withBrand.priceCurrent ?? null,
-        priceDiscounted: withBrand.priceDiscounted ?? null,
-        currency: withBrand.currency ?? "EUR",
-        image: withBrand.image || null,
-        url: withBrand.url,
-        featuredOnHomepage,
-      },
-    });
+    const writePrimaryText = isDefaultImportLocale(locale);
+
+    if (existing && !writePrimaryText) {
+      // EN (of andere taal): alleen data/translations + prijs/beeld — geen NL-naam/tekst overschrijven
+      await prisma.product.update({
+        where: { id: productIdToBigInt(existing.id) },
+        data: {
+          data,
+          brand: withBrand.brand ?? existing.brand ?? null,
+          brandId: typeof withBrand.brandId === "number" ? withBrand.brandId : existing.brandId ?? null,
+          category: withBrand.category ?? existing.category ?? null,
+          catalogSource,
+          priceCurrent: withBrand.priceCurrent ?? null,
+          priceDiscounted: withBrand.priceDiscounted ?? null,
+          currency: withBrand.currency ?? "EUR",
+          image: withBrand.image || existing.image || null,
+          url: withBrand.url || existing.url,
+          featuredOnHomepage: Boolean(existing.featuredOnHomepage),
+        },
+      });
+    } else {
+      await prisma.product.upsert({
+        where: { id: productIdToBigInt(withBrand.id) },
+        create: {
+          id: productIdToBigInt(withBrand.id),
+          data,
+          slug: withBrand.slug ?? null,
+          name: withBrand.name,
+          brand: withBrand.brand ?? null,
+          brandId: typeof withBrand.brandId === "number" ? withBrand.brandId : null,
+          category: withBrand.category ?? null,
+          catalogSource,
+          priceCurrent: withBrand.priceCurrent ?? null,
+          priceDiscounted: withBrand.priceDiscounted ?? null,
+          currency: withBrand.currency ?? "EUR",
+          image: withBrand.image || null,
+          url: withBrand.url,
+          featuredOnHomepage,
+        },
+        update: {
+          data,
+          slug: withBrand.slug ?? null,
+          name: withBrand.name,
+          brand: withBrand.brand ?? null,
+          brandId: typeof withBrand.brandId === "number" ? withBrand.brandId : null,
+          category: withBrand.category ?? null,
+          catalogSource,
+          priceCurrent: withBrand.priceCurrent ?? null,
+          priceDiscounted: withBrand.priceDiscounted ?? null,
+          currency: withBrand.currency ?? "EUR",
+          image: withBrand.image || null,
+          url: withBrand.url,
+          featuredOnHomepage,
+        },
+      });
+    }
     if (existing) result.updated += 1;
     else result.created += 1;
     byId.set(withBrand.id, withBrand);
@@ -449,6 +508,7 @@ async function persistWooCategoryRedirects(
         orderby: "id",
         order: "asc",
         hide_empty: "0",
+        lang: resolveWordpressImportLocale(options.locale, creds.baseUrl),
       }),
     auth,
     perPage: 50,
@@ -479,6 +539,7 @@ type ExistingCategoryRow = {
   parentId: number;
   productCount: number;
   link: string | null;
+  translations?: unknown;
 };
 
 function nextFreeCategoryId(used: Set<number>): number {
@@ -506,6 +567,7 @@ async function importCategories(
   redirectCounts: WordpressImportTypeResult,
 ): Promise<WordpressImportTypeResult> {
   const auth = requireAuth(creds, "categorieën");
+  const locale = resolveWordpressImportLocale(options.locale, creds.baseUrl);
   const { items, pages } = await fetchWordpressPages<WcRestProductCategory>({
     urlForPage: (page, perPage) =>
       wcV3Url(creds.baseUrl, "products/categories", {
@@ -514,6 +576,7 @@ async function importCategories(
         orderby: "id",
         order: "asc",
         hide_empty: 0,
+        lang: locale,
       }),
     auth,
     perPage: 50,
@@ -525,7 +588,8 @@ async function importCategories(
   const result = emptyResult();
   result.fetched = items.length;
   result.pages = pages;
-  options.log?.(`Categorieën opgehaald: ${items.length}`);
+  options.log?.(`Categorieën opgehaald: ${items.length} · taal ${locale} · API ${wordpressRestBaseUrl(creds.baseUrl)}`);
+  const writePrimary = isDefaultImportLocale(locale);
 
   const existingRows = await prisma.category.findMany();
   const byId = new Map(existingRows.map((row) => [row.id, row as ExistingCategoryRow]));
@@ -541,6 +605,8 @@ async function importCategories(
       continue;
     }
     const name = formatRalexCategoryName(decodeHtmlEntities(stripHtml(woo.name || slug)), slug);
+    const description = stripHtml(woo.description || "") || null;
+    const localeFields = categoryLocaleFieldsFromWoo(name || slug, description);
     const parentWoo = woo.parent ?? 0;
     const parentId = parentWoo ? (wooIdToLocal.get(parentWoo) ?? 0) : 0;
     const match = findMatchingCategory(woo, byId, bySlug);
@@ -548,11 +614,15 @@ async function importCategories(
     if (match) {
       wooIdToLocal.set(woo.id, match.id);
       const nextParent = parentId === match.id ? match.parentId : parentId;
-      const dutchName = name || match.name;
+      const nextName = writePrimary ? name || match.name : match.name;
+      const nextTranslations = compactLocaleMap(
+        setLocaleFields(parseLocaleMap(match.translations), locale, localeFields),
+      );
       const changed =
-        match.name !== dutchName ||
+        match.name !== nextName ||
         match.parentId !== nextParent ||
-        match.productCount !== (woo.count ?? match.productCount);
+        match.productCount !== (woo.count ?? match.productCount) ||
+        JSON.stringify(match.translations ?? {}) !== JSON.stringify(nextTranslations);
       if (options.dryRun) {
         result.updated += 1;
         continue;
@@ -561,10 +631,11 @@ async function importCategories(
         const updated = await prisma.category.update({
           where: { id: match.id },
           data: {
-            name: dutchName,
+            name: nextName,
             parentId: nextParent,
             productCount: woo.count ?? match.productCount,
             link: normalizeCategoryShopLink(match.slug, match.link),
+            translations: nextTranslations as Prisma.InputJsonValue,
           },
         });
         const row: ExistingCategoryRow = {
@@ -574,6 +645,7 @@ async function importCategories(
           parentId: updated.parentId,
           productCount: updated.productCount,
           link: updated.link,
+          translations: updated.translations,
         };
         byId.set(row.id, row);
         bySlug.set(row.slug.toLowerCase(), row);
@@ -591,6 +663,7 @@ async function importCategories(
 
     const id = usedIds.has(woo.id) ? nextFreeCategoryId(usedIds) : woo.id;
     usedIds.add(id);
+    const translations = compactLocaleMap(setLocaleFields({}, locale, localeFields), locale);
     const created = await prisma.category.create({
       data: {
         id,
@@ -599,6 +672,7 @@ async function importCategories(
         parentId,
         productCount: woo.count ?? 0,
         link: normalizeCategoryShopLink(slug, woo.permalink),
+        translations: translations as Prisma.InputJsonValue,
       },
     });
     const row: ExistingCategoryRow = {
@@ -608,6 +682,7 @@ async function importCategories(
       parentId: created.parentId,
       productCount: created.productCount,
       link: created.link,
+      translations: created.translations,
     };
     byId.set(row.id, row);
     bySlug.set(row.slug.toLowerCase(), row);
@@ -621,12 +696,12 @@ async function importCategories(
       create: {
         id: 1,
         source: "https://www.bergasports.com/",
-        sourceApi: `${creds.baseUrl}/wp-json/wc/v3/products/categories`,
+        sourceApi: `${wordpressRestBaseUrl(creds.baseUrl)}/wp-json/wc/v3/products/categories?lang=${locale}`,
         fetchedAt: new Date().toISOString(),
       },
       update: {
         source: "https://www.bergasports.com/",
-        sourceApi: `${creds.baseUrl}/wp-json/wc/v3/products/categories`,
+        sourceApi: `${wordpressRestBaseUrl(creds.baseUrl)}/wp-json/wc/v3/products/categories?lang=${locale}`,
         fetchedAt: new Date().toISOString(),
       },
     });
@@ -669,11 +744,18 @@ async function importAttributes(
   options: WordpressImportRunOptions,
 ): Promise<WordpressImportTypeResult> {
   const auth = requireAuth(creds, "eigenschappen");
+  const locale = resolveWordpressImportLocale(options.locale, creds.baseUrl);
   const termsByAttrId = new Map<number, string[]>();
 
   const { items: globalAttrs } = await fetchWordpressPages<WcRestGlobalAttribute>({
     urlForPage: (page, perPage) =>
-      wcV3Url(creds.baseUrl, "products/attributes", { page, per_page: perPage, orderby: "id", order: "asc" }),
+      wcV3Url(creds.baseUrl, "products/attributes", {
+        page,
+        per_page: perPage,
+        orderby: "id",
+        order: "asc",
+        lang: locale,
+      }),
     auth,
     perPage: 100,
     maxPages: 5,
@@ -691,6 +773,7 @@ async function importAttributes(
           per_page: perPage,
           orderby: "id",
           order: "asc",
+          lang: locale,
         }),
       auth,
       perPage: 100,
@@ -711,6 +794,7 @@ async function importAttributes(
         status: "publish",
         orderby: "id",
         order: "asc",
+        lang: locale,
       }),
     auth,
     perPage: 50,
@@ -722,7 +806,7 @@ async function importAttributes(
   const result = emptyResult();
   result.fetched = items.length;
   result.pages = pages;
-  options.log?.(`Producten voor eigenschappen: ${items.length}`);
+  options.log?.(`Producten voor eigenschappen: ${items.length} · taal ${locale}`);
 
   const existingRows = await prisma.product.findMany({ select: { id: true, data: true } });
   const byId = new Map<number, { id: bigint; data: TrendyolJsonProduct }>();
@@ -746,15 +830,33 @@ async function importAttributes(
     const attrs: WcRestAttribute[] = applyGlobalAttributeTerms(raw.attributes, termsByAttrId);
     const incoming = mapWcRestProductToJson({ ...raw, attributes: attrs });
     const specs = incoming.specsText?.trim() || "";
-    const keepSpecs = Boolean(existing.data.specsText?.trim());
-    const next: TrendyolJsonProduct = {
-      ...existing.data,
-      wcAttributes: incoming.wcAttributes?.length ? incoming.wcAttributes : existing.data.wcAttributes,
-      specsText: keepSpecs ? existing.data.specsText : specs || existing.data.specsText,
-    };
+
+    let next: TrendyolJsonProduct;
+    if (isDefaultImportLocale(locale)) {
+      const keepSpecs = Boolean(existing.data.specsText?.trim());
+      next = {
+        ...existing.data,
+        wcAttributes: incoming.wcAttributes?.length ? incoming.wcAttributes : existing.data.wcAttributes,
+        specsText: keepSpecs ? existing.data.specsText : specs || existing.data.specsText,
+      };
+      if (specs) {
+        next.translations = compactLocaleMap(
+          setLocaleFields(parseLocaleMap(existing.data.translations), locale, { specsText: specs }),
+        );
+      }
+    } else {
+      next = {
+        ...existing.data,
+        translations: compactLocaleMap(
+          setLocaleFields(parseLocaleMap(existing.data.translations), locale, specs ? { specsText: specs } : {}),
+        ),
+      };
+    }
+
     const unchanged =
       JSON.stringify(next.wcAttributes ?? []) === JSON.stringify(existing.data.wcAttributes ?? []) &&
-      (next.specsText ?? "") === (existing.data.specsText ?? "");
+      (next.specsText ?? "") === (existing.data.specsText ?? "") &&
+      JSON.stringify(next.translations ?? {}) === JSON.stringify(existing.data.translations ?? {});
     if (unchanged) {
       result.skipped += 1;
       continue;
@@ -904,12 +1006,16 @@ async function importNews(
   redirectCounts: WordpressImportTypeResult,
 ): Promise<WordpressImportTypeResult> {
   const wpAuth = wpRestAuth(creds);
+  const locale = resolveWordpressImportLocale(options.locale, creds.baseUrl);
+  const writePrimary = isDefaultImportLocale(locale);
+  options.log?.(`Berichten: API ${wordpressRestBaseUrl(creds.baseUrl)} · lang=${locale}`);
   const { items, pages } = await fetchWordpressPages<WpPost>({
     urlForPage: (page, perPage) =>
       wpV2Url(creds.baseUrl, "posts", {
         page,
         per_page: perPage,
         _embed: "1",
+        lang: locale,
         ...(wpAuth ? { status: "publish" } : {}),
       }),
     auth: wpAuth,
@@ -922,15 +1028,24 @@ async function importNews(
   const result = emptyResult();
   result.fetched = items.length;
   result.pages = pages;
-  options.log?.(`Berichten opgehaald: ${items.length}`);
+  options.log?.(`Berichten opgehaald: ${items.length} · taal ${locale}`);
 
   for (const post of items) {
     const mapped = mapWpPostToNews(post);
-    const existing = await prisma.newsPost.findUnique({
-      where: { slug: mapped.slug },
-      select: { id: true, sourceUrl: true, slug: true },
+    const localeFields = newsLocaleFieldsFromMapped(mapped);
+    const existing = await prisma.newsPost.findFirst({
+      where: writePrimary
+        ? { slug: mapped.slug }
+        : {
+            OR: [
+              { slug: mapped.slug },
+              { slugEn: mapped.slug },
+              ...(mapped.sourceUrl ? [{ sourceUrl: mapped.sourceUrl }] : []),
+            ],
+          },
+      select: { id: true, sourceUrl: true, slug: true, translations: true, titleEn: true },
     });
-    if (existing && !shouldUpdateImportedNews(existing)) {
+    if (existing && writePrimary && !shouldUpdateImportedNews(existing)) {
       result.skipped += 1;
       if (!options.dryRun) {
         addRedirectCounts(
@@ -950,38 +1065,77 @@ async function importNews(
       else result.created += 1;
       continue;
     }
-    await prisma.newsPost.upsert({
-      where: { slug: mapped.slug },
-      create: {
-        slug: mapped.slug,
-        title: mapped.title,
-        excerpt: mapped.excerpt,
-        bodyHtml: mapped.bodyHtml,
-        coverImage: mapped.coverImage,
-        category: mapped.category,
-        publishedAt: mapped.publishedAt,
-        sourceUrl: mapped.sourceUrl,
-        seoTitle: mapped.seoTitle,
-        seoDescription: mapped.seoDescription,
-        isPublished: true,
-        locale: "nl",
-      },
-      update: {
-        title: mapped.title,
-        excerpt: mapped.excerpt,
-        bodyHtml: mapped.bodyHtml,
-        coverImage: mapped.coverImage,
-        category: mapped.category,
-        publishedAt: mapped.publishedAt ?? undefined,
-        sourceUrl: mapped.sourceUrl,
-        seoTitle: mapped.seoTitle,
-        seoDescription: mapped.seoDescription,
-      },
-    });
-    if (existing) result.updated += 1;
-    else result.created += 1;
 
-    const dest = `/nieuws/${mapped.slug}`;
+    const nextTranslations = compactLocaleMap(
+      setLocaleFields(parseLocaleMap(existing?.translations), locale, localeFields),
+    ) as Prisma.InputJsonValue;
+
+    if (existing && !writePrimary) {
+      await prisma.newsPost.update({
+        where: { id: existing.id },
+        data: {
+          translations: nextTranslations,
+          ...(locale === "en"
+            ? {
+                titleEn: mapped.title,
+                excerptEn: mapped.excerpt,
+                bodyHtmlEn: mapped.bodyHtml,
+                slugEn: mapped.slug,
+              }
+            : {}),
+          coverImage: mapped.coverImage ?? undefined,
+          sourceUrl: existing.sourceUrl || mapped.sourceUrl,
+        },
+      });
+      result.updated += 1;
+    } else {
+      await prisma.newsPost.upsert({
+        where: { slug: mapped.slug },
+        create: {
+          slug: mapped.slug,
+          title: mapped.title,
+          excerpt: mapped.excerpt,
+          bodyHtml: mapped.bodyHtml,
+          coverImage: mapped.coverImage,
+          category: mapped.category,
+          publishedAt: mapped.publishedAt,
+          sourceUrl: mapped.sourceUrl,
+          seoTitle: mapped.seoTitle,
+          seoDescription: mapped.seoDescription,
+          isPublished: true,
+          locale,
+          translations: nextTranslations,
+          ...(locale === "en"
+            ? {
+                titleEn: mapped.title,
+                excerptEn: mapped.excerpt,
+                bodyHtmlEn: mapped.bodyHtml,
+                slugEn: mapped.slug,
+              }
+            : {}),
+        },
+        update: writePrimary
+          ? {
+              title: mapped.title,
+              excerpt: mapped.excerpt,
+              bodyHtml: mapped.bodyHtml,
+              coverImage: mapped.coverImage,
+              category: mapped.category,
+              publishedAt: mapped.publishedAt ?? undefined,
+              sourceUrl: mapped.sourceUrl,
+              seoTitle: mapped.seoTitle,
+              seoDescription: mapped.seoDescription,
+              translations: nextTranslations,
+            }
+          : {
+              translations: nextTranslations,
+            },
+      });
+      if (existing) result.updated += 1;
+      else result.created += 1;
+    }
+
+    const dest = `/nieuws/${existing?.slug || mapped.slug}`;
     const sources = [
       ...wordpressSourcePaths(post.link, [`/${post.slug}`, `/blog/${post.slug}`]),
       wpQueryRedirectSource("p", post.id),
@@ -999,12 +1153,16 @@ async function importPages(
   redirectCounts: WordpressImportTypeResult,
 ): Promise<WordpressImportTypeResult> {
   const wpAuth = wpRestAuth(creds);
+  const locale = resolveWordpressImportLocale(options.locale, creds.baseUrl);
+  const writePrimary = isDefaultImportLocale(locale);
+  options.log?.(`Pagina's: API ${wordpressRestBaseUrl(creds.baseUrl)} · lang=${locale}`);
   const { items, pages } = await fetchWordpressPages<WpPage>({
     urlForPage: (page, perPage) =>
       wpV2Url(creds.baseUrl, "pages", {
         page,
         per_page: perPage,
         _embed: "1",
+        lang: locale,
         ...(wpAuth ? { status: "publish" } : {}),
       }),
     auth: wpAuth,
@@ -1017,7 +1175,7 @@ async function importPages(
   const result = emptyResult();
   result.fetched = items.length;
   result.pages = pages;
-  options.log?.(`Pagina's opgehaald: ${items.length}`);
+  options.log?.(`Pagina's opgehaald: ${items.length} · taal ${locale}`);
 
   for (const page of items) {
     const wpSlug = (page.slug || "").trim().toLowerCase();
@@ -1039,19 +1197,47 @@ async function importPages(
       result.skipped += 1;
       continue;
     }
-    const existing = await prisma.sitePage.findUnique({
-      where: { slug: mapped.slug },
-      select: { id: true, path: true },
+
+    const localeFields = pageLocaleFieldsFromMapped(mapped);
+    const existing = await prisma.sitePage.findFirst({
+      where: writePrimary
+        ? { slug: mapped.slug }
+        : { OR: [{ slug: mapped.slug }, { path: mapped.path }] },
+      select: { id: true, path: true, slug: true, translations: true },
     });
+
+    if (existing && writePrimary) {
+      await recordRedirects(existing.path || mapped.path);
+      result.skipped += 1;
+      continue;
+    }
+
+    if (options.dryRun) {
+      if (existing) result.updated += 1;
+      else result.created += 1;
+      continue;
+    }
+
+    const nextTranslations = compactLocaleMap(
+      setLocaleFields(parseLocaleMap(existing?.translations), locale, localeFields),
+    ) as Prisma.InputJsonValue;
+
+    if (existing && !writePrimary) {
+      await prisma.sitePage.update({
+        where: { id: existing.id },
+        data: { translations: nextTranslations },
+      });
+      await recordRedirects(existing.path || mapped.path);
+      result.updated += 1;
+      continue;
+    }
+
     if (existing) {
       await recordRedirects(existing.path || mapped.path);
       result.skipped += 1;
       continue;
     }
-    if (options.dryRun) {
-      result.created += 1;
-      continue;
-    }
+
     await prisma.sitePage.create({
       data: {
         slug: mapped.slug,
@@ -1064,6 +1250,7 @@ async function importPages(
         socialImage: mapped.socialImage,
         isPublished: true,
         sortOrder: 200,
+        translations: nextTranslations,
       },
     });
     await recordRedirects(mapped.path);
@@ -1081,15 +1268,24 @@ export async function runWordpressImport(
   const warnings: string[] = [];
   const wooConfigured = Boolean(creds.auth?.key && creds.auth.secret);
   const types = options.types;
+  const locale = resolveWordpressImportLocale(options.locale, creds.baseUrl);
   const result: WordpressImportResult = {
     ok: true,
     dryRun: Boolean(options.dryRun),
     baseUrl: creds.baseUrl,
+    locale,
     wooConfigured,
     types,
     warnings,
     errors: {},
   };
+
+  options.log?.(
+    `Taal: ${locale} (${isDefaultImportLocale(locale) ? "primaire velden + translations.nl" : `alleen translations.${locale}, NL blijft staan`})`,
+  );
+  options.log?.(
+    `REST-API: ${wordpressRestBaseUrl(creds.baseUrl)} (bergasports.nl → .com + ?lang=${locale})`,
+  );
 
   const needsWoo = types.some(
     (t) => t === "products" || t === "categories" || t === "attributes" || t === "customers" || t === "orders",

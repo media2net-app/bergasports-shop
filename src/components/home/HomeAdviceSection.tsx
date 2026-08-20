@@ -2,11 +2,15 @@ import Image from "next/image";
 import Link from "next/link";
 
 import { CONTENT_PHOTOS } from "@/lib/content-photos";
-import { HOME_ADVICE } from "@/lib/site-content";
+import { getRequestLocale } from "@/lib/i18n/locale";
+import { localizedHomeAdvice, ui } from "@/lib/i18n/ui";
 import { shopPhoneTelHref, whatsappHref } from "@/lib/site-contact";
 import { getShopPublicContact } from "@/lib/shop-runtime";
 
 export default async function HomeAdviceSection() {
+  const locale = await getRequestLocale();
+  const t = ui(locale);
+  const advice = localizedHomeAdvice(locale);
   const contact = await getShopPublicContact();
   const wa = contact.whatsappHref ?? whatsappHref(contact.phone);
   const photo = CONTENT_PHOTOS.workshopIngmar;
@@ -24,20 +28,20 @@ export default async function HomeAdviceSection() {
       </div>
       <div className="relative px-6 py-10 md:px-10 md:py-14">
         <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[var(--brand)]">
-          Werkplaats &amp; advies
+          {t.workshopAdvice}
         </p>
         <h2 className="section-rule mt-2 font-[family-name:var(--font-heading)] text-2xl tracking-tight text-[var(--foreground)] md:text-3xl">
-          {HOME_ADVICE.title}
+          {advice.title}
         </h2>
         <p className="mt-4 max-w-xl text-sm leading-relaxed text-[var(--foreground)]/75 md:text-base">
-          {HOME_ADVICE.text}
+          {advice.text}
         </p>
         <div className="mt-8 flex flex-wrap gap-3">
           <Link
-            href={HOME_ADVICE.ctaHref}
+            href={advice.ctaHref}
             className="group inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-[var(--topbar)] px-7 text-xs font-bold uppercase tracking-[0.14em] text-white transition duration-300 hover:-translate-y-0.5 hover:bg-[#2a2a2a]"
           >
-            {HOME_ADVICE.cta}
+            {advice.cta}
             <span aria-hidden className="transition-transform duration-300 group-hover:translate-x-1">
               →
             </span>
@@ -46,7 +50,7 @@ export default async function HomeAdviceSection() {
             href={shopPhoneTelHref(contact.phone)}
             className="inline-flex min-h-12 items-center rounded-full border border-[var(--brand-border)] bg-white px-6 text-xs font-bold uppercase tracking-[0.14em] transition hover:border-[var(--brand)] hover:text-[var(--brand)]"
           >
-            Bel {contact.phone}
+            {t.callPhone(contact.phone)}
           </a>
           {wa ? (
             <a

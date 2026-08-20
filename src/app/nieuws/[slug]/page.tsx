@@ -9,7 +9,7 @@ import ContentCtaCard from "@/components/site/ContentCtaCard";
 import { loadNewsPostBySlug, loadNewsPosts } from "@/lib/news-db";
 import { getRequestLocale, localizedPublicPath } from "@/lib/i18n/locale";
 import { pickTranslation, type NewsLocaleFields } from "@/lib/i18n/translations";
-import { formatNewsDate } from "@/lib/news-format";
+import { formatNewsCategory, formatNewsDate } from "@/lib/news-format";
 import { buildPageMetadata, newsArticleJsonLd } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
@@ -53,7 +53,7 @@ export default async function NieuwsArticlePage({ params }: Props) {
   const bodyHtml = overlay?.bodyHtml || post.bodyHtml;
   const related = (await loadNewsPosts({ limit: 6 })).filter((p) => p.id !== post.id).slice(0, 3);
   const date = formatNewsDate(post.publishedAt);
-  const meta = [date, post.category].filter(Boolean).join(" · ");
+  const meta = [date, formatNewsCategory(post.category)].filter(Boolean).join(" · ");
 
   return (
     <main className="min-h-screen bg-[#faf8f5]/40">

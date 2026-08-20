@@ -16,6 +16,7 @@ import {
   withPublicCategoryLabel,
 } from "@/lib/ralex-categories";
 import { buildCategoryTreeFromRecords } from "@/lib/ralex-categories-file";
+import { toPublicShopNavTree, visiblePublicNavTree, isOmittedFromPublicNav } from "@/lib/shop-nav-tree";
 
 type CategoryRow = {
   id: number;
@@ -184,15 +185,19 @@ function loadRalexCategoriesFromJson(): RalexCategoriesFile {
   };
 }
 
+function withPublicShopNavTree(file: RalexCategoriesFile): RalexCategoriesFile {
+  return { ...file, tree: toPublicShopNavTree(file.tree) };
+}
+
 export async function loadRalexCategories(): Promise<RalexCategoriesFile> {
   if (!isDatabaseConfigured()) {
-    return loadRalexCategoriesFromJson();
+    return withPublicShopNavTree(loadRalexCategoriesFromJson());
   }
   try {
-    return await loadCategoriesCached();
+    return withPublicShopNavTree(await loadCategoriesCached());
   } catch (err) {
     console.warn("[categories] DB unavailable, using JSON fallback:", err);
-    return loadRalexCategoriesFromJson();
+    return withPublicShopNavTree(loadRalexCategoriesFromJson());
   }
 }
 
@@ -203,7 +208,7 @@ export async function listShopCategoryOptions(): Promise<{ slug: string; name: s
 
   const walk = (nodes: RalexCategoryNode[], parentName: string) => {
     for (const node of nodes) {
-      if (isExcludedShopCategorySlug(node.slug)) {
+      if (isExcludedShopCategorySlug(node.slug) || isOmittedFromPublicNav(node)) {
         continue;
       }
       const slug = node.slug.trim().toLowerCase();
@@ -217,7 +222,7 @@ export async function listShopCategoryOptions(): Promise<{ slug: string; name: s
     }
   };
 
-  walk(file.tree, "");
+  walk(visiblePublicNavTree(file.tree), "");
   return out;
 }
 

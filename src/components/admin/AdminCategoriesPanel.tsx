@@ -258,7 +258,7 @@ export default function AdminCategoriesPanel({ category, categories }: Props) {
         value={editLocale}
         onChange={setEditLocale}
         filledLocales={filled}
-        hint="Naam, slug en SEO per taal. De Nederlandse slug blijft de canonieke URL; andere talen krijgen /en/… plus hun eigen slug."
+        hint="Naam, slug en SEO per taal. De Nederlandse slug is de canonieke URL op .nl én .com (zelfde padstructuur)."
       />
 
       {message ? (

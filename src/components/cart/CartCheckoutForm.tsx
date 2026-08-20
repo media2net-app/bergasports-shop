@@ -453,7 +453,8 @@ export default function CartCheckoutForm({
               onChange={(e) => setMarketingConsent(e.target.checked)}
             />
             <span>
-              Ik wil aanbiedingen en nieuws per e-mail ontvangen (optioneel). Je kunt je altijd uitschrijven.
+              Ik wil aanbiedingen en nieuws per e-mail ontvangen (optioneel) — inclusief welkomstkorting. Je kunt je
+              altijd uitschrijven.
             </span>
           </label>
           <label className="flex cursor-pointer items-start gap-2 rounded-2xl border border-[var(--brand-border)] bg-white px-3 py-2.5 text-xs text-[var(--foreground)]/85">

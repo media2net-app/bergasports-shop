@@ -25,6 +25,7 @@ export const WC_TO_NL_SLUG: Record<string, string> = {
   "cycling-helmets": "helmen",
   cleats: "schoenplaatjes",
   "group-sets": "groepsets",
+  "schoenen-kleding": "schoenen-kleding",
 };
 
 /** WC slug → EN public slug */
@@ -45,6 +46,7 @@ export const WC_TO_EN_SLUG: Record<string, string> = {
   "cycling-helmets": "cycling-helmets",
   cleats: "cleats",
   "group-sets": "group-sets",
+  "schoenen-kleding": "schoenen-kleding",
 };
 
 /** NL public → preferred WC slug */
@@ -52,6 +54,7 @@ export const NL_TO_WC_SLUG: Record<string, string> = {
   fietsen: "bikes",
   racefietsen: "road-bike",
   gravel: "gravelbike",
+  "gravel-bike": "gravelbike",
   mtb: "mtb",
   skeelers: "speed-skates",
   tweedehands: "used-bikes",
@@ -64,6 +67,7 @@ export const NL_TO_WC_SLUG: Record<string, string> = {
   helmen: "cycling-helmets",
   schoenplaatjes: "cleats",
   groepsets: "group-sets",
+  "schoenen-kleding": "schoenen-kleding",
 };
 
 /** EN public → preferred WC slug */
@@ -83,6 +87,8 @@ export const EN_TO_WC_SLUG: Record<string, string> = {
   "cycling-helmets": "cycling-helmets",
   cleats: "cleats",
   "group-sets": "group-sets",
+  "gravel-bike": "gravelbike",
+  "schoenen-kleding": "schoenen-kleding",
 };
 
 export function normalizeCategorySlug(slug: string): string {
@@ -100,11 +106,9 @@ export function toCanonicalWcSlug(slug: string, locale: AppLocale = DEFAULT_LOCA
 }
 
 /** Public path slug for links. */
-export function toPublicCategorySlug(wcOrAnySlug: string, locale: AppLocale = DEFAULT_LOCALE): string {
-  const canonical = toCanonicalWcSlug(wcOrAnySlug, locale);
-  if (locale === "en") {
-    return WC_TO_EN_SLUG[canonical] ?? canonical;
-  }
+export function toPublicCategorySlug(wcOrAnySlug: string, _locale: AppLocale = DEFAULT_LOCALE): string {
+  // Zelfde publieke URL op .nl en .com (NL-slugs).
+  const canonical = toCanonicalWcSlug(wcOrAnySlug, DEFAULT_LOCALE);
   return WC_TO_NL_SLUG[canonical] ?? canonical;
 }
 

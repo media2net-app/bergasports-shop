@@ -1,6 +1,6 @@
 import LocalizedLink from "@/components/locale/LocalizedLink";
 
-import { formatNewsDate, type NewsCardPost } from "@/lib/news-format";
+import { formatNewsCategory, formatNewsDate, type NewsCardPost } from "@/lib/news-format";
 
 type NewsCardProps = {
   post: NewsCardPost;
@@ -10,7 +10,7 @@ type NewsCardProps = {
 export default function NewsCard({ post, variant = "card" }: NewsCardProps) {
   const date = formatNewsDate(post.publishedAt);
   const featured = variant === "featured";
-  const meta = [date, post.category].filter(Boolean).join(" · ");
+  const meta = [date, formatNewsCategory(post.category)].filter(Boolean).join(" · ");
 
   return (
     <LocalizedLink

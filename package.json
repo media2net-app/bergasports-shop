@@ -10,6 +10,8 @@
     "postinstall": "prisma db push",
     "import:wordpress": "npx tsx scripts/import-wordpress.ts",
     "import:wordpress:dry-run": "npx tsx scripts/import-wordpress.ts --dry-run",
+    "fix:product-locales": "npx tsx scripts/fix-product-locales.ts",
+    "fix:nl-content": "npx tsx scripts/fix-nl-content.ts",
     "export:seo-redirects": "npx tsx scripts/export-seo-redirects.ts",
     "import:bergasports": "node scripts/import-bergasports-catalog.mjs",
     "import:bergasports:dry-run": "node scripts/import-bergasports-catalog.mjs --dry-run",

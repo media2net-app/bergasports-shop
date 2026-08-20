@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import AdminClickableTableRow from "@/components/admin/AdminClickableTableRow";
 import {
   ORDER_STATUSES,
   ORDER_STATUS_LABEL,
@@ -171,7 +172,11 @@ export default async function AdminOrdersPage({ searchParams }: PageProps) {
             </thead>
             <tbody>
               {orders.map((order) => (
-                <tr key={order.id} className="admin-table-row-click">
+                <AdminClickableTableRow
+                  key={order.id}
+                  href={`/admin/orders/${order.id}`}
+                  title="Klik om te openen"
+                >
                   <td className="admin-td-order">
                     <Link href={`/admin/orders/${order.id}`}>{order.order_number}</Link>
                   </td>
@@ -210,7 +215,7 @@ export default async function AdminOrdersPage({ searchParams }: PageProps) {
                       Open
                     </Link>
                   </td>
-                </tr>
+                </AdminClickableTableRow>
               ))}
             </tbody>
           </table>

@@ -159,7 +159,7 @@ export default function AdminNewsEditor({ post }: Props) {
         value={editLocale}
         onChange={setEditLocale}
         filledLocales={filled}
-        hint="Titel, slug, tekst en SEO per taal. Nederlandse slug blijft /nieuws/…; andere talen /en/nieuws/…"
+        hint="Titel, slug, tekst en SEO per taal. Nederlandse slug is /nieuws/… op .nl én .com (geen /en-prefix)."
       />
 
       {saveOk ? (

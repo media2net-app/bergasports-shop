@@ -617,8 +617,9 @@ export const SITE_SETTING_DEFS: SiteSettingDef[] = [
     manual: {
       summary: "URL van de oude WordPress/WooCommerce-shop voor sync.",
       steps: [
-        "Meestal https://www.bergasports.com (zonder trailing slash).",
-        "Alleen wijzigen als de oude site op een ander domein draait.",
+        "Meestal https://www.bergasports.nl (Nederlands) of https://www.bergasports.com (Engels).",
+        "De import koppelt automatisch: .nl → NL, .com → EN. Override in het importpaneel of met --locale=.",
+        "Importeer eerst .nl, daarna .com — zo blijven Nederlandse teksten staan en vullen Engelse vertalingen bij.",
       ],
       whereUsed: "WordPress-import, order-sync en catalogus-scripts.",
     },
@@ -634,7 +635,7 @@ export const SITE_SETTING_DEFS: SiteSettingDef[] = [
     manual: {
       summary: "REST API-key vanaf de oude WooCommerce-site.",
       steps: [
-        "Log in op WordPress admin van bergasports.com.",
+        "Log in op WordPress admin van bergasports.nl of .com.",
         "WooCommerce → Instellingen → Geavanceerd → REST API → Sleutel toevoegen.",
         "Rechten: Lezen (of Lezen/Schrijven als sync dat nodig heeft).",
         "Kopieer de Consumer Key (ck_…) en secret (cs_…).",
@@ -880,6 +881,23 @@ export const SITE_SETTING_DEFS: SiteSettingDef[] = [
       summary: "Optionele absolute URL van het logo in ordermails. Leeg = standaard Bergasports-logo.",
       steps: ["Plak een https-URL naar een PNG/JPG.", "Sla op en stuur een testmail."],
       whereUsed: "Transactionele e-mails.",
+    },
+  },
+  {
+    key: "NEWSLETTER_PROMO_CODE",
+    envKey: "NEWSLETTER_PROMO_CODE",
+    label: "Nieuwsbrief-kortingscode",
+    group: "notifications",
+    secret: false,
+    optional: true,
+    placeholder: "WELCOME5",
+    manual: {
+      summary: "Code die bezoekers krijgen na aanmelden voor de nieuwsbrief (footer).",
+      steps: [
+        "Kies een code die ook onder Kortingscodes actief is (standaard WELCOME5 = 5%).",
+        "Sla op. De footer toont het percentage van deze code.",
+      ],
+      whereUsed: "Footer-aanmelding, welkomstmail, checkout-opt-in.",
     },
   },
   {

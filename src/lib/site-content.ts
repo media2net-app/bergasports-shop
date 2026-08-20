@@ -69,6 +69,7 @@ export const BERGASPORTS_CATEGORY_PATHS = {
   wheels: "/wielen",
   scopeOutlet: "/scope-outlet",
   cyclingShoes: "/wielrenschoenen",
+  shoesClothing: "/schoenen-kleding",
   lafugaWear: "/lafuga",
   glasses: "/brillen",
   accessories: "/accessoires",
@@ -82,10 +83,10 @@ export const WEBSHOP_MENU_LINKS: ShopMenuLink[] = [
   { href: BERGASPORTS_CATEGORY_PATHS.roadBikes, label: "Racefietsen" },
   { href: BERGASPORTS_CATEGORY_PATHS.gravel, label: "Gravel" },
   { href: BERGASPORTS_CATEGORY_PATHS.mtb, label: "MTB" },
-  { href: BERGASPORTS_CATEGORY_PATHS.wheels, label: "Fietswielen" },
-  { href: BERGASPORTS_CATEGORY_PATHS.cyclingShoes, label: "Wielrenschoenen" },
+  { href: BERGASPORTS_CATEGORY_PATHS.speedSkates, label: "Skeelers" },
+  { href: BERGASPORTS_CATEGORY_PATHS.cyclingShoes, label: "Nimbl" },
   { href: BERGASPORTS_CATEGORY_PATHS.lafugaWear, label: "LaFuga" },
-  { href: BERGASPORTS_CATEGORY_PATHS.glasses, label: "Brillen" },
+  { href: BERGASPORTS_CATEGORY_PATHS.wheels, label: "Wielen" },
   { href: BERGASPORTS_CATEGORY_PATHS.accessories, label: "Accessoires" },
 ];
 
@@ -114,31 +115,28 @@ export const WEBSHOP_MEGA_MENU = {
     },
     {
       title: "Schoenen & kleding",
+      href: BERGASPORTS_CATEGORY_PATHS.shoesClothing,
       links: [
-        { href: BERGASPORTS_CATEGORY_PATHS.cyclingShoes, label: "Wielrenschoenen" },
+        { href: BERGASPORTS_CATEGORY_PATHS.cyclingShoes, label: "Nimbl" },
         { href: BERGASPORTS_CATEGORY_PATHS.lafugaWear, label: "LaFuga" },
       ],
-    },
-    {
-      title: "Wielen",
-      href: BERGASPORTS_CATEGORY_PATHS.wheels,
-      links: [{ href: BERGASPORTS_CATEGORY_PATHS.scopeOutlet, label: "Scope Outlet" }],
     },
     {
       title: "Accessoires",
       href: BERGASPORTS_CATEGORY_PATHS.accessories,
       links: [
-        { href: BERGASPORTS_CATEGORY_PATHS.glasses, label: "Brillen" },
         { href: BERGASPORTS_CATEGORY_PATHS.cyclingHelmets, label: "Helmen" },
-        { href: BERGASPORTS_CATEGORY_PATHS.cleats, label: "Schoenplaatjes" },
+        { href: BERGASPORTS_CATEGORY_PATHS.glasses, label: "Brillen" },
+        { href: BERGASPORTS_CATEGORY_PATHS.wheels, label: "Wielen" },
         { href: BERGASPORTS_CATEGORY_PATHS.groupSets, label: "Groepsets" },
-        { href: BERGASPORTS_CATEGORY_PATHS.accessories, label: "Overige accessoires" },
+        { href: BERGASPORTS_CATEGORY_PATHS.cleats, label: "Schoenplaatjes" },
+        { href: BERGASPORTS_CATEGORY_PATHS.scopeOutlet, label: "Scope Outlet" },
       ],
     },
   ] satisfies ShopMegaMenuColumn[],
   promo: {
     title: "Persoonlijk advies in Dedemsvaart",
-    text: "Van racefiets tot wielrenschoenen — onze specialisten helpen je de juiste setup te kiezen.",
+    text: "Van racefiets tot wielrenschoenen — met persoonlijk advies helpen we je de juiste keuze te maken.",
     cta: "Plan een afspraak",
     ctaHref: "/afspraak#formulier",
     shopCta: "Bekijk alle producten",
@@ -188,7 +186,6 @@ export const HEADER_NAV_LEFT: HeaderNavItem[] = [
 export const ABOUT_MENU_LINKS: ShopMenuLink[] = [
   { href: "/over-ons", label: "Mijn verhaal" },
   { href: "/onderhoud", label: "Onderhoud & reparatie" },
-  { href: "/afspraak", label: "Afspraak" },
   { href: "/merken", label: "Merken" },
   { href: "/contact", label: "Contact & route" },
 ];
@@ -251,7 +248,7 @@ export const HOME_PILLARS = [
   },
   {
     title: "Schoenen & kleding",
-    text: "Performance materiaal voor training en wedstrijd.",
+    text: "Hoogwaardig materiaal voor training en wedstrijden.",
     href: BERGASPORTS_CATEGORY_PATHS.cyclingShoes,
   },
   {

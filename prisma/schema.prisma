@@ -388,6 +388,17 @@ model Coupon {
   @@map("coupons")
 }
 
+model NewsletterSubscriber {
+  id         String   @id @default(cuid())
+  email      String   @unique
+  source     String   @default("footer")
+  couponCode String?  @map("coupon_code")
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([createdAt(sort: Desc)])
+  @@map("newsletter_subscribers")
+}
+
 model Customer {
   id           String   @id @default(cuid())
   email        String   @unique

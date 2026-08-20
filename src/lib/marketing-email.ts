@@ -81,10 +81,14 @@ export async function sendWelcomeMarketingEmail(
   }
 
   const logoUrl = await getEmailLogoUrlSetting();
+  const { getNewsletterPromo } = await import("@/lib/newsletter");
+  const promo = await getNewsletterPromo();
   const template = await getEmailTemplate("marketing.welcome");
   const { subject, text, html } = renderEmailTemplate(
     template,
-    buildEmailVars(customerOnlyOrder(customerName.trim() || "klant")),
+    buildEmailVars(customerOnlyOrder(customerName.trim() || "klant"), {
+      welcomeCode: promo.code,
+    }),
     logoUrl,
   );
   const ok = await sendOutboundEmail({ to, subject, text, html });

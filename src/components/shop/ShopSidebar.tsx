@@ -244,20 +244,46 @@ export default function ShopSidebar({
             {visibleCategoryRoots.map((root) => {
               const active =
                 (activeCategorySlug ?? "").toLowerCase() === root.slug.toLowerCase();
+              const children = root.children ?? [];
               return (
-                <LocalizedLink
-                  key={root.id}
-                  href={buildShopListingUrl({
-                    cat: root.slug,
-                    ...listingBase,
-                    colors: [],
-                    sizes: [],
-                    view: null,
-                  })}
-                  className={`${linkBase} ${active ? linkActive : linkInactive}`}
-                >
-                  {formatRalexCategoryName(root.name, root.slug)}
-                </LocalizedLink>
+                <div key={root.id}>
+                  <LocalizedLink
+                    href={buildShopListingUrl({
+                      cat: root.slug,
+                      ...listingBase,
+                      colors: [],
+                      sizes: [],
+                      view: null,
+                    })}
+                    className={`${linkBase} ${active ? linkActive : linkInactive}`}
+                  >
+                    {formatRalexCategoryName(root.name, root.slug)}
+                  </LocalizedLink>
+                  {children.length > 0 ? (
+                    <ul className="mb-1 ml-2 border-l border-[#e5dcc8] pl-2">
+                      {children.map((child) => {
+                        const childActive =
+                          (activeCategorySlug ?? "").toLowerCase() === child.slug.toLowerCase();
+                        return (
+                          <li key={child.id}>
+                            <LocalizedLink
+                              href={buildShopListingUrl({
+                                cat: child.slug,
+                                ...listingBase,
+                                colors: [],
+                                sizes: [],
+                                view: null,
+                              })}
+                              className={`${linkBase} ${childActive ? linkActive : linkInactive}`}
+                            >
+                              {formatRalexCategoryName(child.name, child.slug)}
+                            </LocalizedLink>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  ) : null}
+                </div>
               );
             })}
             {hasMoreCategories ? (

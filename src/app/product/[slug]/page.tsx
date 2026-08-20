@@ -23,6 +23,7 @@ import {
   resolveShopCategoryMatch,
 } from "@/lib/shop-category-filter";
 import { categoryDisplayName, dutchLabelFromImportedName } from "@/lib/category-meta";
+import { isShopNameBrand } from "@/lib/brands-shared";
 import { isProductInStock } from "@/lib/products";
 import {
   productBreadcrumbJsonLd,
@@ -297,7 +298,9 @@ export default async function ProductDetailPage({ params, searchParams }: Produc
             {/* Koopkolom: titel → prijs → CTA binnen één schermhoogte */}
             <div className="lg:col-span-5">
               <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[var(--brand)]">
-                {product.brand || "Bergasports"}
+                {product.brand && !isShopNameBrand(product.brand)
+                  ? product.brand
+                  : dutchLabelFromImportedName(product.category)}
               </p>
               <h1 className="mt-2 font-[family-name:var(--font-heading)] text-2xl font-semibold tracking-tight text-[var(--foreground)] md:text-3xl">
                 {product.name}

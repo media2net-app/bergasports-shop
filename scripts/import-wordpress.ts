@@ -1,12 +1,15 @@
 /**
- * Importeer producten, klanten, orders, nieuws en pagina's van bergasports.com
- * (WooCommerce REST + WordPress REST) naar deze shop.
+ * Importeer producten, klanten, orders, nieuws en pagina's van bergasports.com (WPML)
+ * naar deze shop. bergasports.nl heeft geen /wp-json — .nl-URL's worden herschreven naar
+ * www.bergasports.com?lang=nl.
  *
  *   npx tsx scripts/import-wordpress.ts
  *   npx tsx scripts/import-wordpress.ts --dry-run
  *   npx tsx scripts/import-wordpress.ts --only=news,pages
- *   npx tsx scripts/import-wordpress.ts --only=products,customers,orders
+ *   npx tsx scripts/import-wordpress.ts --base-url=https://www.bergasports.com --locale=nl --only=products
+ *   npx tsx scripts/import-wordpress.ts --base-url=https://www.bergasports.com --locale=en --only=products
  *
+ * Taal: --locale=nl|en (of automatisch: .nl→nl, .com→en). NL → primaire velden; EN → translations.en.
  * Credentials: WC_STORE_BASE_URL + WC_CONSUMER_KEY + WC_CONSUMER_SECRET
  * (env of /admin/settings/woocommerce). Nieuws/pagina's: publieke WP REST.
  * Optioneel WP_APP_USER / WP_APP_PASSWORD — nooit de Woo ck_/cs_ daarvoor.
@@ -22,7 +25,9 @@ import { runWordpressImport } from "../src/lib/wordpress-import-run.ts";
 import {
   normalizeWpBaseUrl,
   parseImportTypes,
+  resolveWordpressImportLocale,
   WORDPRESS_IMPORT_TYPES,
+  wordpressRestBaseUrl,
   wpAuthFromEnv,
   type WordpressImportCredentials,
   type WordpressImportType,
@@ -106,8 +111,12 @@ function printHelp() {
   npx tsx scripts/import-wordpress.ts
   npx tsx scripts/import-wordpress.ts --dry-run
   npx tsx scripts/import-wordpress.ts --only=${WORDPRESS_IMPORT_TYPES.join(",")}
+  npx tsx scripts/import-wordpress.ts --base-url=https://www.bergasports.com --locale=nl --only=products
+  npx tsx scripts/import-wordpress.ts --base-url=https://www.bergasports.com --locale=en --only=products
 
 Types: ${WORDPRESS_IMPORT_TYPES.join(", ")}
+REST: altijd www.bergasports.com (WPML). .nl-URL → .com + ?lang=nl.
+Taal: --locale=nl|en, of automatisch (.nl→nl, .com→en)
 Sleutels: WooCommerce REST (ck_/cs_) in .env.local of /admin/settings/woocommerce.
 Nieuws/pagina's: publieke WP REST. Optioneel WP_APP_USER / WP_APP_PASSWORD (geen Woo-sleutels).`);
 }
@@ -139,7 +148,16 @@ async function main() {
   const prisma = createPrisma(databaseUrl);
   try {
     const creds = await resolveCredentials(prisma, env);
+    const baseOverride = argValue("base-url");
+    if (baseOverride?.trim()) {
+      creds.baseUrl = normalizeWpBaseUrl(baseOverride);
+    }
+    const locale = resolveWordpressImportLocale(argValue("locale"), creds.baseUrl);
     console.log(`Bron: ${creds.baseUrl}`);
+    console.log(`REST-API: ${wordpressRestBaseUrl(creds.baseUrl)} · lang=${locale}`);
+    console.log(
+      `Taal: ${locale} (${locale === "nl" ? "primaire velden + translations.nl" : `translations.${locale}, NL blijft staan`})`,
+    );
     console.log(`Woo REST: ${creds.auth ? "sleutels aanwezig" : "geen sleutels (alleen nieuws/pagina's)"}`);
     console.log(
       `WP REST: ${creds.wpAuth ? "application password" : "publiek (geen Woo-sleutels op /wp/v2)"}`,
@@ -150,6 +168,7 @@ async function main() {
       types,
       dryRun,
       maxPages,
+      locale,
       log: (message) => console.log(message),
     });
 

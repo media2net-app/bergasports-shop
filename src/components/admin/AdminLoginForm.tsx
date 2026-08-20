@@ -6,21 +6,12 @@ import { useState } from "react";
 import BrandWordmark from "@/components/layout/BrandWordmark";
 import { SITE_BRAND_NAME } from "@/lib/site-brand";
 
-/** Alleen voor lokale demo — productie-login blijft leeg. */
-const DEMO_ADMIN_EMAIL = "demo@bergasports.com";
-const DEMO_ADMIN_PASSWORD = "BgS7!kR9#mQx2$vL4nWp8";
-
-const defaultEmail =
-  process.env.NODE_ENV === "development" ? DEMO_ADMIN_EMAIL : "";
-const defaultPassword =
-  process.env.NODE_ENV === "development" ? DEMO_ADMIN_PASSWORD : "";
-
 export default function AdminLoginForm() {
   const router = useRouter();
   const params = useSearchParams();
   const errParam = params.get("err");
-  const [email, setEmail] = useState(defaultEmail);
-  const [password, setPassword] = useState(defaultPassword);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 

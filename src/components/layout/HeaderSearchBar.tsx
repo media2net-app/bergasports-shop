@@ -2,10 +2,11 @@
 
 import { startTransition, useCallback, useEffect, useId, useRef, useState } from "react";
 import LocalizedLink from "@/components/locale/LocalizedLink";
-import { useLocalizedHref } from "@/components/locale/ShopLanguagesProvider";
+import { useLocalizedHref, useShopLocale } from "@/components/locale/ShopLanguagesProvider";
 import { useRouter } from "next/navigation";
 
 import OptimizedProductImage from "@/components/ui/OptimizedProductImage";
+import { ui } from "@/lib/i18n/ui";
 import { productPath } from "@/lib/product-slug";
 import { trackTikTokSearch } from "@/lib/tiktok-pixel";
 
@@ -28,6 +29,8 @@ type Props = {
 
 export default function HeaderSearchBar({ variant = "light", autoFocus = false }: Props) {
   const isDark = variant === "dark";
+  const { locale } = useShopLocale();
+  const t = ui(locale);
   const router = useRouter();
   const localizedHref = useLocalizedHref();
   const listId = useId();
@@ -178,14 +181,14 @@ export default function HeaderSearchBar({ variant = "light", autoFocus = false }
             }
           }}
           onKeyDown={onKeyDown}
-          placeholder="Zoek producten…"
+          placeholder={t.searchProducts}
           className={`min-w-0 flex-1 bg-transparent text-sm outline-none ${
             isDark
               ? "text-white placeholder:text-white/45"
               : "text-[var(--foreground)] placeholder:text-[var(--foreground)]/45"
           }`}
           autoComplete="off"
-          aria-label="Zoek producten"
+          aria-label={t.searchProducts}
           aria-expanded={showPanel || showEmpty}
           aria-controls={showPanel || showEmpty ? listId : undefined}
           aria-autocomplete="list"
@@ -195,7 +198,7 @@ export default function HeaderSearchBar({ variant = "light", autoFocus = false }
           className={`shrink-0 rounded-full p-1.5 transition ${
             isDark ? "text-white/90 hover:bg-white/10" : "text-[var(--foreground)] hover:bg-[#faf8f5]"
           }`}
-          aria-label="Zoeken"
+          aria-label={t.search}
         >
           <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <circle cx="11" cy="11" r="7" />
@@ -206,7 +209,7 @@ export default function HeaderSearchBar({ variant = "light", autoFocus = false }
 
       {loading && query.trim().length >= MIN_CHARS ? (
         <p className="pointer-events-none absolute left-0 right-0 top-full z-[60] mt-1 rounded-xl border border-[#e5dcc8] bg-white px-3 py-2 text-xs text-[var(--foreground)]/70 shadow-lg">
-          Zoeken…
+          {t.searching}
         </p>
       ) : null}
 
@@ -214,7 +217,7 @@ export default function HeaderSearchBar({ variant = "light", autoFocus = false }
         <ul
           id={listId}
           role="listbox"
-          aria-label="Zoekresultaten"
+          aria-label={t.searchResults}
           className="absolute left-0 right-0 top-full z-[70] mt-1 max-h-[min(70vh,22rem)] overflow-y-auto rounded-xl border border-[#e5dcc8] bg-white py-1 shadow-2xl"
         >
           {hits.map((hit, idx) => (
@@ -255,7 +258,7 @@ export default function HeaderSearchBar({ variant = "light", autoFocus = false }
                 setActive(-1);
               }}
             >
-              Bekijk alle resultaten in de webshop
+              {t.searchAllResults}
             </LocalizedLink>
           </li>
         </ul>

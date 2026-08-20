@@ -58,6 +58,44 @@ function stripHtml(s) {
     .trim();
 }
 
+/** Manufacturer names — never default to the shop name Bergasports. */
+const CATALOG_BRANDS = [
+  ["Double FF", /double\s*ff/i],
+  ["CyclingCeramic", /cycling\s*ceramic/i],
+  ["Cipollini", /cipollini/i],
+  ["Colnago", /colnago/i],
+  ["Cervélo", /cervel[oó]/i],
+  ["Polygon", /polygon/i],
+  ["Powerslide", /powerslide/i],
+  ["LaFuga", /la\s*fuga/i],
+  ["Orbea", /orbea/i],
+  ["Basso", /basso/i],
+  ["Titici", /titici/i],
+  ["Sensa", /sensa/i],
+  ["Scope", /scope/i],
+  ["Nimbl", /nimbl/i],
+  ["KASK", /\bkask\b/i],
+  ["Favero", /\b(favero|assioma)\b/i],
+  ["Wahoo", /\b(wahoo|elemnt)\b/i],
+  ["Shokz", /\bshokz\b/i],
+  ["100%", /(?:ride|rid)\s*100%?|\b100%/i],
+  ["DMT", /\bdmt\b/i],
+  ["MPC", /\bmpc\b/i],
+  ["LGO", /\blgo\b/i],
+];
+
+function inferCatalogBrand(name, categories) {
+  const hay = String(name || "");
+  for (const [brand, re] of CATALOG_BRANDS) {
+    if (re.test(hay)) return brand;
+  }
+  const slugs = (categories ?? []).map((c) => String(c.slug || "").toLowerCase());
+  if (slugs.includes("lafuga-wear")) return "LaFuga";
+  if (slugs.includes("scope-outlet")) return "Scope";
+  if (slugs.includes("cycling-helmets")) return "KASK";
+  return null;
+}
+
 function decodeHtmlTitle(text) {
   let s = String(text || "");
   while (s.includes("&amp;")) s = s.replace(/&amp;/g, "&");
@@ -247,7 +285,7 @@ function wcProductToJson(p, categoryLabel, variationRows) {
   const base = {
     id: p.id,
     name,
-    brand: "Bergasports",
+    brand: inferCatalogBrand(name, wcCategories) || undefined,
     category: categoryLabel,
     url: p.permalink,
     image: primary,

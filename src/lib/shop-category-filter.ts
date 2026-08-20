@@ -1,7 +1,7 @@
 import { categoryMatchLabels, dutchLabelFromImportedName } from "@/lib/category-meta";
 import { publicCategoryPath, toCanonicalWcSlug, toPublicCategorySlug } from "@/lib/category-slugs";
 import { parseLocaleMap, type CategoryLocaleFields } from "@/lib/i18n/translations";
-import { brandSlugFromName, type ShopBrand } from "@/lib/brands-shared";
+import { brandSlugFromName, isShopNameBrand, type ShopBrand } from "@/lib/brands-shared";
 import {
   isSkippedSpecFacetName,
   parseSpecEntries,
@@ -864,7 +864,7 @@ export function applyShopSearchQuery(products: Product[], raw: string | null | u
 
 function productBrandSlug(product: Pick<Product, "brand">): string | null {
   const name = product.brand?.trim();
-  if (!name) return null;
+  if (!name || isShopNameBrand(name)) return null;
   const slug = brandSlugFromName(name);
   return slug || null;
 }

@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import AdminClickableTableRow from "@/components/admin/AdminClickableTableRow";
 import { DEFAULT_EMAIL_TEMPLATES, EMAIL_TEMPLATE_CATEGORY_LABEL, type EmailTemplateCategory } from "@/lib/email-template-defs";
 import { listEmailTemplates, type EmailTemplateRow } from "@/lib/email-templates-db";
 
@@ -51,23 +52,27 @@ export default async function AdminEmailTemplatesPage() {
                 const custom =
                   row.subject !== def.subject || row.title !== def.title || row.bodyHtml !== def.bodyHtml;
                 return (
-                <tr key={row.key}>
-                  <td>
-                    <div>{row.name}</div>
-                    <div className="admin-muted" style={{ fontSize: "0.8rem" }}>
-                      {row.description}
-                    </div>
-                  </td>
-                  <td className="admin-muted">{row.subject}</td>
-                  <td>
-                    <span className="admin-badge-src">{custom ? "Aangepast" : "Standaard"}</span>
-                  </td>
-                  <td className="admin-td-right">
-                    <Link href={`/admin/email/${encodeURIComponent(row.key)}`} className="admin-link-action">
-                      Bewerken
-                    </Link>
-                  </td>
-                </tr>
+                  <AdminClickableTableRow
+                    key={row.key}
+                    href={`/admin/email/${encodeURIComponent(row.key)}`}
+                    title="Klik om te bewerken"
+                  >
+                    <td>
+                      <div>{row.name}</div>
+                      <div className="admin-muted" style={{ fontSize: "0.8rem" }}>
+                        {row.description}
+                      </div>
+                    </td>
+                    <td className="admin-muted">{row.subject}</td>
+                    <td>
+                      <span className="admin-badge-src">{custom ? "Aangepast" : "Standaard"}</span>
+                    </td>
+                    <td className="admin-td-right">
+                      <Link href={`/admin/email/${encodeURIComponent(row.key)}`} className="admin-link-action">
+                        Bewerken
+                      </Link>
+                    </td>
+                  </AdminClickableTableRow>
                 );
               })}
             </tbody>

@@ -94,10 +94,11 @@ export default function AdminLanguagesPanel({ initialLanguages, catalog }: Props
       <div>
         <h2 className="admin-h2 admin-m-0">Talen</h2>
         <p className="admin-muted admin-m-0 admin-mt-05">
-          Standaardtaal is Nederlands (URLs zonder prefix: <code>/</code>). Extra talen krijgen{" "}
-          <code>/en/…</code>, <code>/de/…</code>, enzovoort. <code>/nl/…</code> gaat met een 301 naar de
-          versie zonder prefix. Een taalschakelaar in de shop verschijnt pas als minstens twee talen aan
-          staan. Vertalingen vul je zelf in op elk onderdeel — er wordt niets automatisch vertaald.
+          Standaardtaal is Nederlands op <code>bergasports.nl</code>; Engels op{" "}
+          <code>bergasports.com</code>. De URL-structuur is op beide domeinen gelijk (geen{" "}
+          <code>/en/…</code>-prefix). De taalschakelaar wisselt van domein en behoudt hetzelfde pad.
+          Lokaal (<code>localhost</code>) wissel je met <code>?lang=nl</code> / <code>?lang=en</code>.
+          Vertalingen vul je zelf in op elk onderdeel — er wordt niets automatisch vertaald.
         </p>
       </div>
 

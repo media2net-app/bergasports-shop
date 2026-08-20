@@ -3,6 +3,12 @@
  */
 
 import { CONTENT_PHOTOS, contentFigure } from "@/lib/content-photos";
+import {
+  LAFUGA_HEADING,
+  LAFUGA_META_DESCRIPTION,
+  lafugaBodyHtml,
+  lafugaMerkenSectionHtml,
+} from "@/lib/lafuga-copy";
 import { SITE_BRAND_NAME, SITE_EMAIL } from "@/lib/site-brand";
 import { SHOP_PHONE_LABEL, shopPhoneTelHref } from "@/lib/site-contact";
 import {
@@ -355,8 +361,9 @@ ${p([
       ]),
       "<h2>Wielen, schoenen, kleding en helmen</h2>",
       p([
-        'Wielen van merken als Scope, Ere en Campagnolo. <a href="/nimbl">Nimbl</a> wielrenschoenen — Italiaans, licht, en op voorraad om te passen. <a href="/lafuga">LaFuga</a> voor wielrenkleding. Helmen van <strong>KASK</strong> — van Mojito tot Protone Icon — passen we hier in Dedemsvaart.',
+        'Wielen van merken als Scope, Ere en Campagnolo. <a href="/nimbl">Nimbl</a> wielrenschoenen — Italiaans, licht, en op voorraad om te passen. Helmen van <strong>KASK</strong> — van Mojito tot Protone Icon — passen we hier in Dedemsvaart.',
       ]),
+      lafugaMerkenSectionHtml(),
       "<h2>Skeelers: Double FF</h2>",
       p([
         "Double FF is ons skeelermerk: boots, frames, wielen en lagers uit Italië. Dezelfde standaard als op de fiets: passen, afstellen, en alleen meenemen wat je écht nodig hebt.",
@@ -376,24 +383,14 @@ ${p([
   {
     slug: "lafuga",
     path: "/lafuga",
-    title: `LaFuga | ${SITE_BRAND_NAME}`,
-    heading: "LaFuga",
-    meta_title: `LaFuga fietskleding | ${SITE_BRAND_NAME}`,
-    meta_description: `LaFuga wielrenkleding bij ${SITE_BRAND_NAME} in Dedemsvaart. Advies en pasvorm in de winkel.`,
+    title: `${LAFUGA_HEADING} | ${SITE_BRAND_NAME}`,
+    heading: LAFUGA_HEADING,
+    meta_title: `${LAFUGA_HEADING} | ${SITE_BRAND_NAME}`,
+    meta_description: LAFUGA_META_DESCRIPTION,
     sort_order: 25,
     social_image: CONTENT_PHOTOS.showroom.src,
     image_alt: CONTENT_PHOTOS.showroom.alt,
-    body_html: [
-      p([
-        "LaFuga maakt wielrenkleding voor renners die comfort en prestaties willen combineren. In Dedemsvaart kun je passen, vergelijken en advies krijgen over maat en pasvorm — geen gokwerk vanuit een maattabel alleen.",
-        "Kom langs voor een pasafspraak of bekijk de collectie in de shop. We helpen je met truien, broeken en accessoires die bij jouw ritten horen.",
-      ]),
-      ctaRow([
-        { href: "/afspraak#formulier", label: "Pasafspraak", primary: true },
-        { href: "/shop", label: "LaFuga in de shop" },
-        { href: "/merken", label: "Alle merken" },
-      ]),
-    ].join("\n"),
+    body_html: lafugaBodyHtml(),
   },
   {
     slug: "nimbl",

@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, type KeyboardEvent } from "react";
 
+import AdminClickableTableRow from "@/components/admin/AdminClickableTableRow";
+
 import type { StockState } from "@/lib/stock";
 
 export type AdminInventoryRow = {
@@ -95,7 +97,10 @@ function QtyField({
   }
 
   return (
-    <div className={`admin-qty-field${saved ? " is-saved" : ""}`}>
+    <div
+      className={`admin-qty-field${saved ? " is-saved" : ""}`}
+      onClick={(event) => event.stopPropagation()}
+    >
       <button
         type="button"
         className="admin-qty-step"
@@ -230,7 +235,7 @@ export default function AdminInventoryTable({ rows, canWrite, lowStockThreshold 
             {row.state === "out_of_stock" ? "Op voorraad" : "Uitverkocht"}
           </button>
         ) : null}
-        <Link href={`/admin/products/${row.id}`} className="admin-link-action">
+        <Link href={`/admin/products/${row.id}`} className="admin-link-action" onClick={(e) => e.stopPropagation()}>
           Bewerken
         </Link>
       </div>
@@ -281,7 +286,11 @@ export default function AdminInventoryTable({ rows, canWrite, lowStockThreshold 
             </thead>
             <tbody>
               {rows.map((row) => (
-                <tr key={row.id}>
+                <AdminClickableTableRow
+                  key={row.id}
+                  href={`/admin/products/${row.id}`}
+                  title="Klik om te bewerken"
+                >
                   <td className="admin-thumb-cell">
                     <div className="admin-thumb-wrap">
                       {row.thumbUrl ? (
@@ -319,8 +328,10 @@ export default function AdminInventoryTable({ rows, canWrite, lowStockThreshold 
                   <td>
                     <StatusPill state={row.state} />
                   </td>
-                  <td className="admin-td-right">{rowActions(row)}</td>
-                </tr>
+                  <td className="admin-td-right" onClick={(e) => e.stopPropagation()}>
+                    {rowActions(row)}
+                  </td>
+                </AdminClickableTableRow>
               ))}
             </tbody>
           </table>
@@ -329,7 +340,28 @@ export default function AdminInventoryTable({ rows, canWrite, lowStockThreshold 
 
       <div className="admin-product-cards-mobile" aria-label="Voorraad (mobiel)">
         {rows.map((row) => (
-          <div key={row.id} className="admin-product-card admin-inventory-card">
+          <div
+            key={row.id}
+            className="admin-product-card admin-inventory-card admin-product-card-row--click"
+            onClick={(e) => {
+              if ((e.target as HTMLElement).closest("a, button, input, .admin-qty-field")) {
+                return;
+              }
+              router.push(`/admin/products/${row.id}`);
+            }}
+            onKeyDown={(e) => {
+              if ((e.target as HTMLElement).closest("a, button, input, .admin-qty-field")) {
+                return;
+              }
+              if (e.key === "Enter") {
+                e.preventDefault();
+                router.push(`/admin/products/${row.id}`);
+              }
+            }}
+            role="link"
+            tabIndex={0}
+            title="Klik om te bewerken"
+          >
             <div className="admin-thumb-wrap">
               {row.thumbUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element

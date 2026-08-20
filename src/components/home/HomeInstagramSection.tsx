@@ -1,8 +1,11 @@
 import SectionHeading from "@/components/home/SectionHeading";
-import { HOME_INSTAGRAM } from "@/lib/site-content";
+import { getRequestLocale } from "@/lib/i18n/locale";
+import { localizedHomeInstagram } from "@/lib/i18n/ui";
 import { getInstagramHandle, getInstagramPreviewPosts, getInstagramPublicUrl } from "@/lib/instagram";
 
 export default async function HomeInstagramSection() {
+  const locale = await getRequestLocale();
+  const copy = localizedHomeInstagram(locale);
   const [posts, profileUrl, handle] = await Promise.all([
     getInstagramPreviewPosts(6),
     getInstagramPublicUrl(),
@@ -13,8 +16,8 @@ export default async function HomeInstagramSection() {
     <section>
       <SectionHeading
         eyebrow={handle}
-        title={HOME_INSTAGRAM.title}
-        text={HOME_INSTAGRAM.text}
+        title={copy.title}
+        text={copy.text}
         action={
           <a
             href={profileUrl}
@@ -22,7 +25,7 @@ export default async function HomeInstagramSection() {
             rel="noopener noreferrer"
             className="arrow-link inline-flex min-h-11 items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] transition hover:text-[var(--brand)]"
           >
-            {HOME_INSTAGRAM.cta}
+            {copy.cta}
             <span aria-hidden className="arrow-link-icon">
               →
             </span>

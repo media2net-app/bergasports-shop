@@ -33,7 +33,7 @@ export default async function NieuwsPage() {
               Nieuws &amp; inspiratie
             </h1>
             <p className="mt-4 max-w-2xl text-base leading-relaxed text-[var(--foreground)]/70 md:text-lg">
-              Nieuwe fietsen, Nimbl, LaFuga, wedstrijden en wat er speelt in de winkel.
+              Updates uit de winkel, nieuwe producten en wat er speelt in Dedemsvaart.
             </p>
 
             {posts.length === 0 ? (

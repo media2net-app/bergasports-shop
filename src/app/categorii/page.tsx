@@ -4,6 +4,7 @@ import Footer from "@/components/layout/Footer";
 import Header from "@/components/layout/Header";
 import RalexCategoryTree from "@/components/shop/RalexCategoryTree";
 import { loadRalexCategories } from "@/lib/categories-db";
+import { visiblePublicNavTree } from "@/lib/shop-nav-tree";
 
 export const dynamic = "force-dynamic";
 
@@ -15,6 +16,7 @@ export const metadata = {
 
 export default async function CategoriiPage() {
   const { tree, fetchedAt, totalCategories } = await loadRalexCategories();
+  const navTree = visiblePublicNavTree(tree);
 
   return (
     <main className="min-h-screen bg-[#faf8f5]">
@@ -35,7 +37,7 @@ export default async function CategoriiPage() {
         </p>
 
         <div className="mt-8 rounded-2xl border border-[#e5dcc8] bg-white p-5 md:p-8">
-          <RalexCategoryTree tree={tree} />
+          <RalexCategoryTree tree={navTree} />
         </div>
       </section>
 

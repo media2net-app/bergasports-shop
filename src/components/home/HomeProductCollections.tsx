@@ -3,6 +3,9 @@
 import Link from "next/link";
 import { useState, type ReactNode } from "react";
 
+import { useShopLocale } from "@/components/locale/ShopLanguagesProvider";
+import { ui } from "@/lib/i18n/ui";
+
 type TabId = "fietsen" | "nimbl";
 
 type Props = {
@@ -18,26 +21,27 @@ export default function HomeProductCollections({
   fietsenGrid,
   nimblGrid,
 }: Props) {
+  const { locale } = useShopLocale();
+  const t = ui(locale);
   const [tab, setTab] = useState<TabId>("fietsen");
   const href = tab === "fietsen" ? fietsenHref : nimblHref;
-  const label = tab === "fietsen" ? "Alle fietsen" : "Alle Nimbl-schoenen";
+  const label = tab === "fietsen" ? t.allBikes : t.allNimbl;
 
   return (
     <section id="oferte" className="w-full">
       <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-end">
         <div>
           <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[var(--brand)]">
-            Bekijk onze producten
+            {t.collectionsEyebrow}
           </p>
           <h2 className="section-rule mt-2 font-[family-name:var(--font-heading)] text-2xl tracking-tight text-[var(--foreground)] md:text-3xl">
-            Fietsen en Nimbl
+            {t.collectionsTitle}
           </h2>
           <p className="mt-3 max-w-xl text-sm leading-relaxed text-[var(--foreground)]/70">
-            Twee collecties die we zelf rijden en in Dedemsvaart laten passen: race, gravel en
-            mountainbike, plus wielrenschoenen van Nimbl.
+            {t.collectionsText}
           </p>
         </div>
-        <div className="flex flex-wrap gap-2" role="tablist" aria-label="Productcollecties">
+        <div className="flex flex-wrap gap-2" role="tablist" aria-label={t.collectionsTabs}>
           <button
             type="button"
             role="tab"
@@ -49,7 +53,7 @@ export default function HomeProductCollections({
             }`}
             onClick={() => setTab("fietsen")}
           >
-            Fietsen
+            {t.bikesTab}
           </button>
           <button
             type="button"

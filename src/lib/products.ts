@@ -122,35 +122,118 @@ export type TrendyolJsonProduct = {
   imageAlt?: string;
   noindex?: boolean;
   translations?: LocaleMap<ProductLocaleFields>;
+  /** WPML Woo ids per locale, bijv. { nl: 11867, en: 11863 }. */
+  wpmlTranslations?: Record<string, number>;
 };
 
 type TrendyolRawProduct = TrendyolJsonProduct;
 
-/** Titels uit import-JSON (`&#8211;` etc.) leesbaar in UI. */
-export function decodeImportedProductTitle(text: string): string {
+import { DEFAULT_LOCALE } from "@/lib/i18n/locale-codes";
+
+/** Titels uit import-JSON (`&#8211;` etc.) leesbaar; NL-opschoning alleen voor NL. */
+export function decodeImportedProductTitle(text: string, locale: string = DEFAULT_LOCALE): string {
   let s = text;
   while (s.includes("&amp;")) {
     s = s.replace(/&amp;/g, "&");
   }
-  if (!s.includes("&")) {
-    return s;
+  if (s.includes("&")) {
+    s = s
+      .replace(/&#x([0-9a-fA-F]+);/gi, (full, hex: string) => {
+        const cp = Number.parseInt(hex, 16);
+        return Number.isFinite(cp) && cp >= 0 && cp <= 0x10ffff ? String.fromCodePoint(cp) : full;
+      })
+      .replace(/&#(\d+);/g, (full, dec: string) => {
+        const cp = Number.parseInt(dec, 10);
+        return Number.isFinite(cp) && cp >= 0 && cp <= 0x10ffff ? String.fromCodePoint(cp) : full;
+      })
+      .replace(/&nbsp;/gi, " ")
+      .replace(/&ndash;/gi, "\u2013")
+      .replace(/&mdash;/gi, "\u2014")
+      .replace(/&lt;/g, "<")
+      .replace(/&gt;/g, ">")
+      .replace(/&quot;/g, '"')
+      .replace(/&apos;/g, "'");
   }
-  return s
-    .replace(/&#x([0-9a-fA-F]+);/gi, (full, hex: string) => {
-      const cp = Number.parseInt(hex, 16);
-      return Number.isFinite(cp) && cp >= 0 && cp <= 0x10ffff ? String.fromCodePoint(cp) : full;
-    })
-    .replace(/&#(\d+);/g, (full, dec: string) => {
-      const cp = Number.parseInt(dec, 10);
-      return Number.isFinite(cp) && cp >= 0 && cp <= 0x10ffff ? String.fromCodePoint(cp) : full;
-    })
-    .replace(/&nbsp;/gi, " ")
-    .replace(/&ndash;/gi, "\u2013")
-    .replace(/&mdash;/gi, "\u2014")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&quot;/g, '"')
-    .replace(/&apos;/g, "'");
+  if (locale === "en") return normalizeProductTitleEn(s);
+  return normalizeProductTitleNl(s);
+}
+
+const PRODUCT_TITLE_COLOR_NL: Record<string, string> = {
+  blue: "Blauw",
+  yellow: "Geel",
+  white: "Wit",
+  black: "Zwart",
+  red: "Rood",
+  green: "Groen",
+  orange: "Oranje",
+  purple: "Paars",
+  pink: "Roze",
+  gold: "Goud",
+  silver: "Zilver",
+  grey: "Grijs",
+  gray: "Grijs",
+};
+
+/** Lichte opschoning voor Engelse titels — geen NL-vertaling van kleuren/and. */
+export function normalizeProductTitleEn(raw: string): string {
+  let s = String(raw || "").trim();
+  if (!s) return s;
+  s = s.replace(/\s+-\s+/g, " – ");
+  s = s.replace(/\b(\d+)\s*CM\b/gi, "$1 cm");
+  s = s.replace(/\bGrx\b/g, "GRX");
+  s = s.replace(/\bSram\b/g, "SRAM");
+  s = s.replace(/\bFulcrum lite\b/gi, "Fulcrum Lite");
+  s = s.replace(/\s{2,}/g, " ").replace(/\s+([–|,])/g, " $1").replace(/([–|,])\s+/g, "$1 ").trim();
+  return s;
+}
+
+/**
+ * Engelse importresten in producttitels opschonen voor de NL-shop.
+ * Merknamen en officiële productcodes blijven staan.
+ */
+export function normalizeProductTitleNl(raw: string): string {
+  let s = String(raw || "").trim();
+  if (!s) return s;
+
+  // Scheidingstekens: " - " → en-dash
+  s = s.replace(/\s+-\s+/g, " – ");
+
+  // Maten: "52 CM and 54 cm" → "52 en 54 cm"
+  s = s.replace(/\b(\d+)\s*CM\b/gi, "$1 cm");
+  s = s.replace(/\b(\d+)\s*cm\s+and\s+(\d+)\s*cm\b/gi, "$1 en $2 cm");
+  s = s.replace(/\b(\d+)\s+and\s+(\d+)\s*cm\b/gi, "$1 en $2 cm");
+
+  // Groepsets / componenten
+  s = s.replace(/\bGrx\b/g, "GRX");
+  s = s.replace(/\bSram\b/g, "SRAM");
+  s = s.replace(/\bFulcrum lite\b/gi, "Fulcrum Lite");
+
+  // Categorie-termen
+  s = s.replace(/\bCycling shoes?\b/gi, "Wielrenschoenen");
+  s = s.replace(/\bGravel shoes?\b/gi, "Gravelwielrenschoenen");
+  s = s.replace(/\bRace bikes?\b/gi, "Racefiets");
+  s = s.replace(/\bRoad bikes?\b/gi, "Racefiets");
+  s = s.replace(/\bMountain bikes?\b/gi, "Mountainbike");
+  s = s.replace(/\bBib shorts?\b/gi, "Fietsbroek met bretels");
+
+  // Kleuren: alleen als variantsegment (na scheidingsteken) of kleur/kleur-paar
+  const colorWord = Object.keys(PRODUCT_TITLE_COLOR_NL).join("|");
+  s = s.replace(
+    new RegExp(`\\b(${colorWord})\\s*(?:\\/|and|en)\\s*(${colorWord})\\b`, "gi"),
+    (_full, a: string, b: string) =>
+      `${PRODUCT_TITLE_COLOR_NL[a.toLowerCase()]} / ${PRODUCT_TITLE_COLOR_NL[b.toLowerCase()]}`,
+  );
+  s = s.replace(
+    new RegExp(`([–|,]\\s*)(${colorWord})\\s*$`, "i"),
+    (_full, sep: string, word: string) => `${sep}${PRODUCT_TITLE_COLOR_NL[word.toLowerCase()]}`,
+  );
+
+  // Overige "and" → "en" (maten/lijsten)
+  s = s.replace(/\band\b/gi, "en");
+
+  // Spaties opruimen
+  s = s.replace(/\s{2,}/g, " ").replace(/\s+([–|,])/g, " $1").replace(/([–|,])\s+/g, "$1 ").trim();
+  return s;
 }
 
 export type Product = {
@@ -331,7 +414,19 @@ export function hydrateProductTranslations(product: TrendyolJsonProduct): Locale
     ogDescription: product.ogDescription ?? "",
     imageAlt: product.imageAlt ?? "",
   };
-  return { ...existing, nl: { ...fromColumns, ...existing.nl } };
+  // Primary-kolommen = NL. Als daar nog Engelse restanten staan die al in en zitten, niet als NL presenteren.
+  const en = existing.en;
+  const nlBase: ProductLocaleFields = { ...fromColumns };
+  if (en) {
+    for (const key of Object.keys(nlBase) as (keyof ProductLocaleFields)[]) {
+      const primaryVal = (nlBase[key] ?? "").trim();
+      const enVal = (en[key] ?? "").trim();
+      if (primaryVal && enVal && primaryVal === enVal) {
+        nlBase[key] = "";
+      }
+    }
+  }
+  return { ...existing, nl: { ...nlBase, ...existing.nl } };
 }
 
 export function productMatchesSlug(
@@ -366,7 +461,7 @@ export function localizeProduct(product: Product, locale: string): Product {
   );
   return {
     ...product,
-    name: decodeImportedProductTitle(merged.name || product.name),
+    name: decodeImportedProductTitle(merged.name || product.name, locale),
     slug: merged.slug?.trim() || product.slug,
     wcShortDescriptionHtml: merged.shortDescriptionHtml || product.wcShortDescriptionHtml,
     wcDescriptionHtml: merged.descriptionHtml || product.wcDescriptionHtml,

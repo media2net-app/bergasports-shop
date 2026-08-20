@@ -38,7 +38,7 @@ import { formatRalexCategoryName } from "@/lib/ralex-categories";
 
 export const dynamic = "force-dynamic";
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 24;
 
 export type ShopListingSearchParams = {
   page?: string;

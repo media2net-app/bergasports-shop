@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+
+import AdminClickableTableRow from "@/components/admin/AdminClickableTableRow";
 
 export type AdminPageListRow = {
   id: number;
@@ -32,8 +33,6 @@ function StatusBadge({ published }: { published: boolean }) {
 }
 
 export default function AdminPagesList({ rows }: Props) {
-  const router = useRouter();
-
   if (rows.length === 0) {
     return (
       <div className="admin-panel">
@@ -69,10 +68,9 @@ export default function AdminPagesList({ rows }: Props) {
                 const href = `/admin/pages/${page.id}`;
                 const home = isHomepage(page);
                 return (
-                  <tr
+                  <AdminClickableTableRow
                     key={page.id}
-                    className="admin-table-row-click"
-                    onClick={() => router.push(href)}
+                    href={href}
                     title="Klik om te bewerken"
                   >
                     <td>
@@ -95,7 +93,7 @@ export default function AdminPagesList({ rows }: Props) {
                         Bewerken
                       </Link>
                     </td>
-                  </tr>
+                  </AdminClickableTableRow>
                 );
               })}
             </tbody>

@@ -1,12 +1,13 @@
 import type { OrderWithItems } from "@/lib/orders";
 import { customerOnlyOrder, renderDefaultEmailTemplate } from "@/lib/email-template-render";
 
-export type MarketingEmailKind = "welcome" | "post_purchase" | "win_back";
+export type MarketingEmailKind = "welcome" | "post_purchase" | "win_back" | "newsletter";
 
 export type MarketingEmailBrandOpts = {
   logoUrl?: string;
   winBackCode?: string;
   winBackExpiryDays?: number;
+  welcomeCode?: string;
 };
 
 function expiryDateNl(days: number): string {
@@ -28,7 +29,12 @@ export function buildWelcomeEmailParts(
   customerName: string,
   opts?: MarketingEmailBrandOpts,
 ): { subject: string; text: string; html: string } {
-  return renderDefaultEmailTemplate("marketing.welcome", customerOnlyOrder(customerName), opts?.logoUrl);
+  return renderDefaultEmailTemplate(
+    "marketing.welcome",
+    customerOnlyOrder(customerName),
+    opts?.logoUrl,
+    { welcomeCode: opts?.welcomeCode?.trim() || "" },
+  );
 }
 
 export function buildPostPurchaseEmailParts(

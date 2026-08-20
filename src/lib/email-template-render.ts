@@ -25,6 +25,7 @@ export type EmailRenderInput = {
 export type EmailTemplateExtraVars = {
   winBackCode?: string;
   winBackExpiry?: string;
+  welcomeCode?: string;
 };
 
 const TOKEN_RE = /\{\{\s*([a-z0-9_]+)\s*\}\}/gi;
@@ -219,6 +220,7 @@ export function buildEmailVars(
     admin_orders_url: textVar(adminUrl),
     winback_code: textVar(extra?.winBackCode ?? ""),
     winback_expiry: textVar(extra?.winBackExpiry ?? ""),
+    welcome_code: textVar(extra?.welcomeCode ?? ""),
     order_summary: order
       ? htmlVar(
           emailInfoBox("Bestelgegevens", orderSummaryRows(order)),

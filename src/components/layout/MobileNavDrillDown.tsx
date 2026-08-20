@@ -1,11 +1,14 @@
 "use client";
 
 import LocalizedLink from "@/components/locale/LocalizedLink";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 import LanguageSwitcher from "@/components/locale/LanguageSwitcher";
 import { useInstagramProfileUrl } from "@/components/layout/InstagramProfileProvider";
-import { MOBILE_NAV_TREE } from "@/lib/site-content";
+import { useShopNavBrands } from "@/components/layout/ShopNavBrandsProvider";
+import { useShopLocale } from "@/components/locale/ShopLanguagesProvider";
+import { shopBrandListingHref } from "@/lib/brands-shared";
+import { localizedMobileNavTree, ui } from "@/lib/i18n/ui";
 
 type Props = {
   onNavigate: () => void;
@@ -13,16 +16,36 @@ type Props = {
 };
 
 export default function MobileNavDrillDown({ onNavigate, isActive }: Props) {
+  const { locale } = useShopLocale();
+  const t = ui(locale);
   const instagramUrl = useInstagramProfileUrl();
+  const brands = useShopNavBrands();
+  const navTree = useMemo(() => {
+    const merken = {
+      label: t.brands,
+      children: [
+        { href: "/merken", label: t.allBrands },
+        ...brands.map((brand) => ({ href: shopBrandListingHref(brand.slug), label: brand.name })),
+      ],
+    };
+    const items = [...localizedMobileNavTree(locale)];
+    const nieuwsIndex = items.findIndex((item) => item.label === t.news);
+    if (nieuwsIndex >= 0) {
+      items.splice(nieuwsIndex, 0, merken);
+    } else {
+      items.push(merken);
+    }
+    return items;
+  }, [brands, locale, t.allBrands, t.brands, t.news]);
   const initialOpen =
-    MOBILE_NAV_TREE.find((item) => item.children?.some((child) => isActive(child.href)))?.label ?? null;
+    navTree.find((item) => item.children?.some((child) => isActive(child.href)))?.label ?? null;
   const [openGroup, setOpenGroup] = useState<string | null>(initialOpen);
 
   return (
     <div className="flex h-full flex-col">
-      <nav className="flex-1 overflow-y-auto px-4 py-3" aria-label="Mobiel menu">
+      <nav className="flex-1 overflow-y-auto px-4 py-3" aria-label={t.mobileMenu}>
         <ul className="space-y-0.5">
-          {MOBILE_NAV_TREE.map((item) => {
+          {navTree.map((item) => {
             if (item.children?.length) {
               const open = openGroup === item.label;
               const groupActive = item.children.some((child) => isActive(child.href));
@@ -52,9 +75,15 @@ export default function MobileNavDrillDown({ onNavigate, isActive }: Props) {
                     </svg>
                   </button>
                   {open ? (
-                    <ul className="mb-2 ml-2 space-y-0.5 border-l border-white/10 pl-3">
+                    <ul
+                      className={
+                        item.label === t.brands
+                          ? "mb-2 grid grid-cols-2 gap-x-1 gap-y-0.5 px-1"
+                          : "mb-2 ml-2 space-y-0.5 border-l border-white/10 pl-3"
+                      }
+                    >
                       {item.children.map((child) => (
-                        <li key={child.href}>
+                        <li key={child.href} className={item.label === t.brands && child.href === "/merken" ? "col-span-2" : undefined}>
                           <LocalizedLink
                             href={child.href}
                             className={`block rounded-lg px-3 py-2.5 text-sm ${
@@ -86,7 +115,7 @@ export default function MobileNavDrillDown({ onNavigate, isActive }: Props) {
                   onClick={onNavigate}
                 >
                   {item.label}
-                  {item.badge ? (
+                  {"badge" in item && item.badge ? (
                     <span className="rounded bg-[var(--brand-mid)] px-1.5 py-0.5 text-[9px] font-bold tracking-normal text-[#1a1a1a]">
                       {item.badge}
                     </span>
@@ -107,13 +136,6 @@ export default function MobileNavDrillDown({ onNavigate, isActive }: Props) {
         >
           Instagram
         </a>
-        <LocalizedLink
-          href="/afspraak#formulier"
-          onClick={onNavigate}
-          className="flex min-h-11 items-center justify-center rounded-md bg-[var(--brand-mid)] px-4 text-sm font-bold uppercase tracking-wide text-[#1a1a1a]"
-        >
-          Plan een afspraak
-        </LocalizedLink>
       </div>
     </div>
   );

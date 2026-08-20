@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import AdminClickableTableRow from "@/components/admin/AdminClickableTableRow";
 import { loadAdminNewsPosts } from "@/lib/news-db";
 
 export const dynamic = "force-dynamic";
@@ -39,7 +40,11 @@ export default async function AdminNewsPage() {
               </tr>
             ) : (
               posts.map((p) => (
-                <tr key={p.id}>
+                <AdminClickableTableRow
+                  key={p.id}
+                  href={`/admin/news/${p.id}`}
+                  title="Klik om te bewerken"
+                >
                   <td>{p.title}</td>
                   <td className="admin-muted">{p.category ?? "—"}</td>
                   <td>
@@ -53,7 +58,7 @@ export default async function AdminNewsPage() {
                       Bewerken
                     </Link>
                   </td>
-                </tr>
+                </AdminClickableTableRow>
               ))
             )}
           </tbody>

@@ -1,4 +1,5 @@
 import { categoryDisplayName, categorySeoDefaults } from "@/lib/category-meta";
+import { LAFUGA_HEADING } from "@/lib/lafuga-copy";
 import { productPath } from "@/lib/product-slug";
 import { decodeImportedProductTitle, type Product } from "@/lib/products";
 import { formatRalexCategoryName, type RalexCategoryNode } from "@/lib/ralex-categories";
@@ -163,20 +164,24 @@ export function buildCategorySeoContent(params: {
   const metaDescription =
     autoDescription.length > 155 ? `${autoDescription.slice(0, 152).trim()}…` : autoDescription;
 
-  const footerTitle = `${displayName} – online bij ${SITE_BRAND_SHORT}`;
+  const isLafuga = /lafuga/i.test(slug);
+  const footerTitle = isLafuga ? LAFUGA_HEADING : `${displayName} – online bij ${SITE_BRAND_SHORT}`;
+  const hasOfficialFooter = Boolean(params.customFooterHtml?.trim()) && isLafuga;
 
-  const footerParagraphs = [
-    `Bij ${SITE_BRAND_SHORT} vind je in de categorie ${displayName} een selectie ${topic} voor serieuze fietsers en atleten. ` +
-      `Vergelijk modellen, maten en specificaties direct op de site — van racefiets tot wielen, schoenen en accessoires.`,
-    `Bestellen is eenvoudig: voeg producten toe aan je winkelwagen, vul je bezorggegevens in en betaal veilig met iDEAL, Apple Pay of creditcard. ` +
-      `Controleer de productbeschrijving voor maat, materiaal en technische details vóór je bestelt.`,
-    count > 0
-      ? `In deze categorie staan nu ${count} artikelen in de webshop. ` +
-        `Gebruik de filters voor kleur en maat links om snel de juiste variant te vinden.`
-      : `Het assortiment in deze categorie wordt regelmatig bijgewerkt. Kom later terug of bekijk andere categorieën in de webshop.`,
-    `Vragen over beschikbaarheid of levering? Neem contact op via de contactpagina. ` +
-      `${SITE_BRAND_SHORT} helpt je met persoonlijk advies en een veilige online winkelervaring.`,
-  ];
+  const footerParagraphs = hasOfficialFooter
+    ? []
+    : [
+        `Bij ${SITE_BRAND_SHORT} vind je in de categorie ${displayName} een selectie ${topic} voor serieuze fietsers en atleten. ` +
+          `Vergelijk modellen, maten en specificaties direct op de site — van racefiets tot wielen, schoenen en accessoires.`,
+        `Bestellen is eenvoudig: voeg producten toe aan je winkelwagen, vul je bezorggegevens in en betaal veilig met iDEAL, Apple Pay of creditcard. ` +
+          `Controleer de productbeschrijving voor maat, materiaal en technische details vóór je bestelt.`,
+        count > 0
+          ? `In deze categorie staan nu ${count} artikelen in de webshop. ` +
+            `Gebruik de filters voor kleur en maat links om snel de juiste variant te vinden.`
+          : `Het assortiment in deze categorie wordt regelmatig bijgewerkt. Kom later terug of bekijk andere categorieën in de webshop.`,
+        `Vragen over beschikbaarheid of levering? Neem contact op via de contactpagina. ` +
+          `${SITE_BRAND_SHORT} helpt je met persoonlijk advies en een veilige online winkelervaring.`,
+      ];
 
   return {
     intro,

@@ -4,6 +4,9 @@ export type AppLocale = string;
 
 export { DEFAULT_LOCALE, isKnownLocalePrefix, isLocaleCode };
 
+/** Cookie voor lokale taalschakelaar (alleen localhost). */
+export const DEV_LOCALE_COOKIE = "bergasports_dev_locale";
+
 const NL_HOSTS = new Set([
   "bergasports.nl",
   "www.bergasports.nl",
@@ -11,7 +14,12 @@ const NL_HOSTS = new Set([
   "127.0.0.1",
 ]);
 
-/** Host-based fallback: .nl → nl, .com → en. Path prefix wins when present. */
+export function isLocalDevHost(host: string | null | undefined): boolean {
+  const h = (host || "").split(":")[0].toLowerCase();
+  return h === "localhost" || h === "127.0.0.1" || h.endsWith(".local");
+}
+
+/** Host bepaalt de taal: .nl → nl, .com → en. Geen pad-prefix (/en/…). */
 export function localeFromHost(host: string | null | undefined): AppLocale {
   const h = (host || "").split(":")[0].toLowerCase();
   if (!h) return DEFAULT_LOCALE;
@@ -22,10 +30,16 @@ export function localeFromHost(host: string | null | undefined): AppLocale {
   return DEFAULT_LOCALE;
 }
 
+/** Productie-peer-domein. Lokaal: zelfde origin + ?lang=. */
 export function peerDomainForLocale(locale: AppLocale): string {
-  return locale === "en" ? "https://bergasports.com" : "https://bergasports.nl";
+  return locale === "en" ? "https://www.bergasports.com" : "https://www.bergasports.nl";
 }
 
+function siteUrlFromEnv(): string {
+  return (process.env.NEXT_PUBLIC_SITE_URL || "").trim().replace(/\/$/, "");
+}
+
+/** Strip legacy /en|/de|… prefixes (worden 301’d). */
 export function stripLocalePrefix(pathname: string): { locale: string | null; pathname: string } {
   const raw = pathname.split("?")[0] || "/";
   const parts = raw.split("/").filter(Boolean);
@@ -37,25 +51,25 @@ export function stripLocalePrefix(pathname: string): { locale: string | null; pa
   return { locale: first, pathname: rest === "/" ? "/" : rest.replace(/\/+$/, "") || "/" };
 }
 
+/**
+ * Publieke URLs hebben geen taalprefix — .nl en .com delen dezelfde padstructuur.
+ * Locale-argument blijft voor API-compatibiliteit; het wordt genegeerd.
+ */
 export function withLocalePrefix(
   pathname: string,
-  locale: string,
-  defaultLocale: string = DEFAULT_LOCALE,
+  _locale?: string,
+  _defaultLocale: string = DEFAULT_LOCALE,
 ): string {
   const { pathname: clean } = stripLocalePrefix(pathname);
   const path = clean.startsWith("/") ? clean : `/${clean}`;
-  const normalized = path === "" ? "/" : path;
-  if (!locale || locale === defaultLocale) {
-    return normalized;
-  }
-  return normalized === "/" ? `/${locale}` : `/${locale}${normalized}`;
+  return path === "" ? "/" : path;
 }
 
-/** Prefix a storefront href (path + query + hash). Leaves admin/api/external URLs alone. */
+/** Storefront href zonder taalprefix. Admin/api/externe URL’s ongemoeid. */
 export function localizedHref(
   href: string,
-  locale: string,
-  defaultLocale: string = DEFAULT_LOCALE,
+  _locale?: string,
+  _defaultLocale: string = DEFAULT_LOCALE,
 ): string {
   const trimmed = href.trim();
   if (!trimmed) return href;
@@ -76,65 +90,48 @@ export function localizedHref(
   }
   try {
     const url = new URL(trimmed, "https://bergasports.invalid");
-    return `${withLocalePrefix(url.pathname, locale, defaultLocale)}${url.search}${url.hash}`;
+    return `${withLocalePrefix(url.pathname)}${url.search}${url.hash}`;
   } catch {
     return href;
   }
 }
 
-/** Map a path on the current locale to the peer locale path (best-effort, plus prefix). */
-export function mapPathToLocale(pathname: string, target: AppLocale): string {
-  const { pathname: path } = stripLocalePrefix(pathname);
-  const mapNlToEn: Record<string, string> = {
-    "/": "/",
-    "/nieuws": "/news",
-    "/over-ons": "/about-us",
-    "/onderhoud": "/service",
-    "/verzending": "/shipping",
-    "/retouren": "/returns",
-    "/racefietsen": "/road-bikes",
-    "/fietsen": "/bikes",
-    "/gravel": "/gravel",
-    "/mtb": "/mtb",
-    "/skeelers": "/speed-skates",
-    "/tweedehands": "/used-bikes",
-    "/wielen": "/wheels",
-    "/wielrenschoenen": "/cycling-shoes",
-    "/lafuga": "/lafuga",
-    "/brillen": "/glasses",
-    "/accessoires": "/accessories",
-    "/helmen": "/cycling-helmets",
-    "/schoenplaatjes": "/cleats",
-    "/groepsets": "/group-sets",
-    "/scope-outlet": "/scope-outlet",
-    "/contact": "/contact",
-    "/shop": "/shop",
-    "/account": "/account",
-  };
-  const mapEnToNl = Object.fromEntries(Object.entries(mapNlToEn).map(([nl, en]) => [en, nl]));
+/**
+ * Zelfde pad op het peer-domein (geen /en, geen slug-vertaling).
+ * Taal wisselen = domein wisselen (lokaal: ?lang=).
+ */
+export function mapPathToLocale(pathname: string, _target?: AppLocale): string {
+  return withLocalePrefix(pathname);
+}
 
-  let mapped = path;
-  if (path.startsWith("/nieuws/")) {
-    mapped = target === "en" ? path.replace("/nieuws/", "/news/") : path;
-  } else if (path.startsWith("/news/")) {
-    mapped = target === "nl" || target === DEFAULT_LOCALE ? path.replace("/news/", "/nieuws/") : path;
-  } else if (!path.startsWith("/product/")) {
-    const table = target === "en" ? mapNlToEn : mapEnToNl;
-    if (table[path]) mapped = table[path];
-    else {
-      const trimmed = path.endsWith("/") && path.length > 1 ? path.slice(0, -1) : path;
-      if (table[trimmed]) mapped = table[trimmed];
-    }
+function isLocalDevSiteUrl(siteUrl: string): boolean {
+  if (!siteUrl) return false;
+  try {
+    return isLocalDevHost(new URL(siteUrl).hostname);
+  } catch {
+    return /localhost|127\.0\.0\.1/i.test(siteUrl);
+  }
+}
+
+/**
+ * Taalschakelaar-URL.
+ * Productie: peer-domein + zelfde pad.
+ * Lokaal (NEXT_PUBLIC_SITE_URL=localhost): relatief pad + ?lang=nl|en.
+ */
+export function languageAlternateUrl(pathname: string, target: AppLocale): string {
+  const path = withLocalePrefix(pathname);
+  const site = siteUrlFromEnv();
+
+  if (isLocalDevSiteUrl(site)) {
+    const url = new URL(path === "/" ? "/" : path, "http://localhost");
+    url.searchParams.set("lang", target);
+    return `${url.pathname}?${url.searchParams.toString()}`;
   }
 
-  return withLocalePrefix(mapped, target);
+  const origin = peerDomainForLocale(target);
+  return path === "/" ? `${origin}/` : `${origin}${path}`;
 }
 
-export function languageAlternateUrl(pathname: string, target: AppLocale): string {
-  return mapPathToLocale(pathname, target);
-}
-
-export function localeFromPathname(pathname: string, fallback: AppLocale = DEFAULT_LOCALE): AppLocale {
-  const { locale } = stripLocalePrefix(pathname);
-  return locale && isLocaleCode(locale) ? locale : fallback;
+export function localeFromPathname(_pathname: string, fallback: AppLocale = DEFAULT_LOCALE): AppLocale {
+  return fallback;
 }

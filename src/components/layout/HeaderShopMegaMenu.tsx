@@ -5,8 +5,13 @@ import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { headerNavLinkActiveClass, headerNavLinkClass } from "@/components/layout/header-nav";
-import { isShopNavigationPath, WEBSHOP_MEGA_MENU } from "@/lib/site-content";
+import { useShopNavBrands } from "@/components/layout/ShopNavBrandsProvider";
+import { useShopLocale } from "@/components/locale/ShopLanguagesProvider";
+import { shopBrandListingHref } from "@/lib/brands-shared";
+import { localizedMegaMenu, ui } from "@/lib/i18n/ui";
+import { isShopNavigationPath } from "@/lib/site-content";
 import { stripLocalePrefix } from "@/lib/i18n/locale-shared";
+import { useMemo } from "react";
 
 const columnLinkClass =
   "block rounded-md px-1.5 py-1.5 text-sm font-normal text-white/75 transition hover:bg-white/5 hover:text-[var(--brand-mid)]";
@@ -24,9 +29,14 @@ function pathMatches(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`) || pathname.startsWith(`${href}?`);
 }
 
-export default function HeaderShopMegaMenu({ label = "Webshop" }: Props) {
+export default function HeaderShopMegaMenu({ label }: Props) {
+  const { locale } = useShopLocale();
+  const t = ui(locale);
+  const menu = useMemo(() => localizedMegaMenu(locale), [locale]);
+  const triggerLabel = label ?? t.webshop;
   const pathname = stripLocalePrefix(usePathname() || "/").pathname;
   const shopActive = isShopNavigationPath(pathname);
+  const brands = useShopNavBrands();
   const [open, setOpen] = useState(false);
   const [panelTop, setPanelTop] = useState(0);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -130,7 +140,7 @@ export default function HeaderShopMegaMenu({ label = "Webshop" }: Props) {
         onMouseEnter={handleEnter}
         onMouseLeave={scheduleClose}
         role="dialog"
-        aria-label="Webshop categorieën"
+        aria-label={t.shopCategories}
         aria-hidden={!panelVisible}
       >
         <div className="w-full" style={{ height: HOVER_BRIDGE_PX }} aria-hidden />
@@ -138,38 +148,21 @@ export default function HeaderShopMegaMenu({ label = "Webshop" }: Props) {
         <div className="mx-auto w-full max-w-[1440px] px-4 md:px-6">
           <div className="overflow-hidden rounded-b-2xl border border-white/10 bg-[#111111] shadow-2xl">
             <div className="flex items-center justify-between gap-4 border-b border-white/8 px-6 py-3 xl:px-10">
-              <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-white/45">Categorieën</p>
+              <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-white/45">{t.categories}</p>
               <LocalizedLink
                 href="/shop"
                 className="text-xs font-semibold text-[var(--brand-mid)] transition hover:text-[#f2d680]"
                 onClick={() => setOpen(false)}
               >
-                Alle producten →
+                {t.allProducts} →
               </LocalizedLink>
             </div>
-            <div className="grid grid-cols-2 gap-x-8 gap-y-8 px-6 py-7 md:grid-cols-3 xl:grid-cols-6 xl:px-10 xl:py-8">
-              {WEBSHOP_MEGA_MENU.columns.map((column) => {
+            <div className="grid grid-cols-2 gap-x-8 gap-y-8 px-6 py-7 md:grid-cols-3 xl:grid-cols-5 xl:px-10 xl:py-8">
+              {menu.columns.map((column) => {
                 const titleActive = column.href ? pathMatches(pathname, column.href) : false;
-                if (column.links.length === 0 && column.href) {
-                  return (
-                    <div key={column.title}>
-                      <LocalizedLink
-                        href={column.href}
-                        className={`block rounded-xl border px-3 py-3 transition ${
-                          titleActive
-                            ? "border-[var(--brand-mid)]/50 bg-white/5"
-                            : "border-white/10 hover:border-[var(--brand-mid)]/40"
-                        }`}
-                        onClick={() => setOpen(false)}
-                      >
-                        <span className="text-sm font-bold text-white">{column.title}</span>
-                        <span className="mt-1 block text-xs text-white/50">Bekijken →</span>
-                      </LocalizedLink>
-                    </div>
-                  );
-                }
+                const columnTitle = column.title;
                 return (
-                  <div key={column.title}>
+                  <div key={columnTitle}>
                     {column.href ? (
                       <LocalizedLink
                         href={column.href}
@@ -178,10 +171,10 @@ export default function HeaderShopMegaMenu({ label = "Webshop" }: Props) {
                         }`}
                         onClick={() => setOpen(false)}
                       >
-                        {column.title}
+                        {columnTitle}
                       </LocalizedLink>
                     ) : (
-                      <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-white">{column.title}</p>
+                      <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-white">{columnTitle}</p>
                     )}
                     {column.links.length > 0 ? (
                       <ul className="mt-3 space-y-0.5">
@@ -206,34 +199,70 @@ export default function HeaderShopMegaMenu({ label = "Webshop" }: Props) {
                 );
               })}
 
-              <div className="col-span-2 rounded-xl bg-gradient-to-br from-[#f5f0e6] via-[#faf8f5] to-[#e8f4e8] p-5 text-[var(--foreground)] md:col-span-1">
+              <div className="col-span-2 rounded-xl bg-gradient-to-br from-[#f5f0e6] via-[#faf8f5] to-[#e8f4e8] p-5 text-[var(--foreground)] xl:col-span-1">
                 <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[var(--brand-hover)]">
                   Bergasports
                 </p>
                 <p className="mt-2 font-[family-name:var(--font-heading)] text-base font-bold leading-snug">
-                  {WEBSHOP_MEGA_MENU.promo.title}
+                  {menu.promo.title}
                 </p>
                 <p className="mt-2 text-sm leading-relaxed text-[var(--foreground)]/75">
-                  {WEBSHOP_MEGA_MENU.promo.text}
+                  {menu.promo.text}
                 </p>
                 <div className="mt-4 flex flex-col gap-2">
                   <LocalizedLink
-                    href={WEBSHOP_MEGA_MENU.promo.ctaHref}
+                    href={menu.promo.ctaHref}
                     className="inline-flex w-fit rounded-full bg-[var(--topbar)] px-4 py-2 text-xs font-bold text-white transition hover:bg-[#333]"
                     onClick={() => setOpen(false)}
                   >
-                    {WEBSHOP_MEGA_MENU.promo.cta}
+                    {menu.promo.cta}
                   </LocalizedLink>
                   <LocalizedLink
-                    href={WEBSHOP_MEGA_MENU.promo.shopHref}
+                    href={menu.promo.shopHref}
                     className="text-xs font-semibold text-[var(--brand-hover)] underline underline-offset-2"
                     onClick={() => setOpen(false)}
                   >
-                    {WEBSHOP_MEGA_MENU.promo.shopCta} →
+                    {menu.promo.shopCta} →
                   </LocalizedLink>
                 </div>
               </div>
             </div>
+
+            {brands.length > 0 ? (
+              <div className="border-t border-white/8 px-6 py-5 xl:px-10">
+                <div className="mb-3 flex items-baseline justify-between gap-4">
+                  <LocalizedLink
+                    href="/merken"
+                    className={`text-[11px] font-bold uppercase tracking-[0.14em] transition hover:text-[var(--brand-mid)] ${
+                      pathname === "/merken" ? "text-[var(--brand-mid)]" : "text-white"
+                    }`}
+                    onClick={() => setOpen(false)}
+                  >
+                    {t.brands}
+                  </LocalizedLink>
+                  <LocalizedLink
+                    href="/merken"
+                    className="shrink-0 text-xs font-semibold text-[var(--brand-mid)] transition hover:text-[#f2d680]"
+                    onClick={() => setOpen(false)}
+                  >
+                    {t.allBrands} →
+                  </LocalizedLink>
+                </div>
+                <ul className="grid grid-cols-3 gap-x-4 gap-y-0.5 sm:grid-cols-4 md:grid-cols-5 xl:grid-cols-6">
+                  {brands.map((brand) => (
+                    <li key={brand.slug}>
+                      <LocalizedLink
+                        href={shopBrandListingHref(brand.slug)}
+                        className={`${columnLinkClass} truncate`}
+                        onClick={() => setOpen(false)}
+                      >
+                        {brand.name}
+                      </LocalizedLink>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
           </div>
         </div>
       </div>

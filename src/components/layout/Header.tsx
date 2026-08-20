@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { usePathname } from "next/navigation";
 
 import LocalizedLink from "@/components/locale/LocalizedLink";
@@ -9,8 +9,6 @@ import { useCart } from "@/components/cart/CartProvider";
 import BrandWordmark from "@/components/layout/BrandWordmark";
 import HeaderIconButton, { HeaderIconLink } from "@/components/layout/HeaderIconButton";
 import {
-  HEADER_NAV_LEFT,
-  HEADER_NAV_RIGHT,
   headerNavLinkActiveClass,
   headerNavLinkClass,
   type HeaderNavItem,
@@ -22,7 +20,9 @@ import MobileNavDrillDown from "@/components/layout/MobileNavDrillDown";
 import TrustBar from "@/components/layout/TrustBar";
 import { useInstagramProfileUrl } from "@/components/layout/InstagramProfileProvider";
 import LanguageSwitcher from "@/components/locale/LanguageSwitcher";
+import { useShopLocale } from "@/components/locale/ShopLanguagesProvider";
 import { stripLocalePrefix } from "@/lib/i18n/locale-shared";
+import { localizedHeaderNavLeft, localizedHeaderNavRight, ui } from "@/lib/i18n/ui";
 
 function HeaderNavLink({
   href,
@@ -120,6 +120,10 @@ export default function Header() {
   const rawPathname = usePathname();
   const pathname = stripLocalePrefix(rawPathname || "/").pathname;
   const { totalItems, openCart } = useCart();
+  const { locale } = useShopLocale();
+  const t = ui(locale);
+  const navLeft = useMemo(() => localizedHeaderNavLeft(locale), [locale]);
+  const navRight = useMemo(() => localizedHeaderNavRight(locale), [locale]);
   const instagramUrl = useInstagramProfileUrl();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -188,7 +192,7 @@ export default function Header() {
                 type="button"
                 className="inline-flex h-10 w-10 items-center justify-center rounded-full text-white/90 transition hover:bg-white/10 md:hidden"
                 onClick={() => setIsMenuOpen(true)}
-                aria-label="Menu openen"
+                aria-label={t.openMenu}
                 aria-expanded={isMenuOpen}
                 aria-controls="mobile-nav"
               >
@@ -198,7 +202,7 @@ export default function Header() {
                 className="hidden items-center justify-end gap-3 md:flex lg:gap-4 xl:gap-5"
                 aria-label="Navigatie links"
               >
-                {HEADER_NAV_LEFT.map((item) => renderNavItem(item, pathname))}
+                {navLeft.map((item) => renderNavItem(item, pathname))}
               </nav>
             </div>
 
@@ -211,18 +215,18 @@ export default function Header() {
                 className="hidden items-center justify-start gap-3 md:flex lg:gap-4 xl:gap-5"
                 aria-label="Navigatie rechts"
               >
-                {HEADER_NAV_RIGHT.map((item) => renderNavItem(item, pathname))}
+                {navRight.map((item) => renderNavItem(item, pathname))}
               </nav>
               <div className="ml-auto flex shrink-0 items-center gap-0.5 pl-1 sm:gap-1 sm:pl-2">
                 <LanguageSwitcher className="mr-1 hidden lg:inline-flex" />
                 <HeaderIconButton
-                  label={searchOpen ? "Zoeken sluiten" : "Zoeken"}
+                  label={searchOpen ? t.closeSearch : t.search}
                   onClick={() => setSearchOpen((v) => !v)}
                   aria-expanded={searchOpen}
                 >
                   <IconSearch />
                 </HeaderIconButton>
-                <HeaderIconLink href="/account" label="Account" className="hidden sm:inline-flex">
+                <HeaderIconLink href="/account" label={t.account} className="hidden sm:inline-flex">
                   <IconUser />
                 </HeaderIconLink>
                 <a
@@ -238,7 +242,7 @@ export default function Header() {
                     <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none" />
                   </svg>
                 </a>
-                <HeaderIconButton label="Winkelwagen" onClick={openCart} badge={totalItems}>
+                <HeaderIconButton label={t.cart} onClick={openCart} badge={totalItems}>
                   <IconBag />
                 </HeaderIconButton>
               </div>
