@@ -91,7 +91,7 @@ export default function ShopProductCard({
             {product.name}
           </h2>
 
-          <div className="mt-auto flex items-baseline gap-2 pt-3">
+          <div className="mt-auto flex flex-col gap-0.5 pt-3 sm:flex-row sm:flex-wrap sm:items-baseline sm:gap-2">
             <span className="text-xl font-bold tracking-tight text-[var(--foreground)]">
               {formatProductCardPrice(product)}
             </span>

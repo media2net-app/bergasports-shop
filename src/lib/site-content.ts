@@ -79,7 +79,6 @@ export const BERGASPORTS_CATEGORY_PATHS = {
   wheels: "/wielen",
   scopeOutlet: "/scope-outlet",
   cyclingShoes: "/wielrenschoenen",
-  /** @deprecated Gebruik cyclingShoes / lafugaWear — 301 via seo-redirects. */
   shoesClothing: "/schoenen-kleding",
   lafugaWear: "/kleding",
   lafugaCustom: "/lafuga",
@@ -95,8 +94,7 @@ export const BERGASPORTS_CATEGORY_PATHS = {
 export const WEBSHOP_MENU_LINKS: ShopMenuLink[] = [
   { href: BERGASPORTS_CATEGORY_PATHS.bikes, label: "Fietsen" },
   { href: BERGASPORTS_CATEGORY_PATHS.speedSkates, label: "Skeelers" },
-  { href: BERGASPORTS_CATEGORY_PATHS.cyclingShoes, label: "Schoenen" },
-  { href: BERGASPORTS_CATEGORY_PATHS.lafugaWear, label: "Kleding" },
+  { href: BERGASPORTS_CATEGORY_PATHS.shoesClothing, label: "Schoenen & kleding" },
   { href: BERGASPORTS_CATEGORY_PATHS.wheels, label: "Wielen" },
   { href: BERGASPORTS_CATEGORY_PATHS.accessories, label: "Accessoires" },
 ];
@@ -114,15 +112,18 @@ export const WEBSHOP_MEGA_MENU = {
       title: "Fietsen",
       href: BERGASPORTS_CATEGORY_PATHS.bikes,
       links: [
+        { href: BERGASPORTS_CATEGORY_PATHS.bikes, label: "Alle fietsen" },
         { href: BERGASPORTS_CATEGORY_PATHS.roadBikes, label: "Racefietsen" },
         { href: BERGASPORTS_CATEGORY_PATHS.gravel, label: "Gravel" },
         { href: BERGASPORTS_CATEGORY_PATHS.mtb, label: "MTB" },
+        { href: BERGASPORTS_CATEGORY_PATHS.usedBikes, label: "Tweedehands" },
       ],
     },
     {
       title: "Skeelers",
       href: BERGASPORTS_CATEGORY_PATHS.speedSkates,
       links: [
+        { href: BERGASPORTS_CATEGORY_PATHS.speedSkates, label: "Alle skeelers" },
         { href: BERGASPORTS_CATEGORY_PATHS.completeSkates, label: "Complete skeelers" },
         { href: BERGASPORTS_CATEGORY_PATHS.skateShoes, label: "Schoenen" },
         { href: BERGASPORTS_CATEGORY_PATHS.skateWheels, label: "Wielen" },
@@ -130,20 +131,20 @@ export const WEBSHOP_MEGA_MENU = {
       ],
     },
     {
-      title: "Schoenen",
-      href: BERGASPORTS_CATEGORY_PATHS.cyclingShoes,
-      links: [],
-    },
-    {
-      title: "Kleding",
-      href: BERGASPORTS_CATEGORY_PATHS.lafugaWear,
-      links: [],
+      title: "Schoenen & kleding",
+      href: BERGASPORTS_CATEGORY_PATHS.shoesClothing,
+      links: [
+        { href: BERGASPORTS_CATEGORY_PATHS.shoesClothing, label: "Alles" },
+        { href: BERGASPORTS_CATEGORY_PATHS.cyclingShoes, label: "Fietsschoenen" },
+        { href: BERGASPORTS_CATEGORY_PATHS.lafugaWear, label: "Kleding" },
+        { href: BERGASPORTS_CATEGORY_PATHS.lafugaCustom, label: "Custom / maatwerk" },
+      ],
     },
     {
       title: "Wielen",
       href: BERGASPORTS_CATEGORY_PATHS.wheels,
       links: [
-        { href: BERGASPORTS_CATEGORY_PATHS.wheels, label: "Wielsets" },
+        { href: BERGASPORTS_CATEGORY_PATHS.wheels, label: "Alle wielsets" },
         { href: BERGASPORTS_CATEGORY_PATHS.scopeOutlet, label: "Scope Outlet" },
       ],
     },
@@ -151,6 +152,7 @@ export const WEBSHOP_MEGA_MENU = {
       title: "Accessoires",
       href: BERGASPORTS_CATEGORY_PATHS.accessories,
       links: [
+        { href: BERGASPORTS_CATEGORY_PATHS.accessories, label: "Alle accessoires" },
         { href: BERGASPORTS_CATEGORY_PATHS.cyclingHelmets, label: "Helmen" },
         { href: BERGASPORTS_CATEGORY_PATHS.glasses, label: "Brillen" },
         { href: BERGASPORTS_CATEGORY_PATHS.groupSets, label: "Groepsets" },
@@ -267,14 +269,14 @@ export const HOME_PILLARS = [
     href: BERGASPORTS_CATEGORY_PATHS.speedSkates,
   },
   {
-    title: "Schoenen",
-    text: "Fietsschoenen van Nimbl en meer — te passen in Dedemsvaart.",
-    href: BERGASPORTS_CATEGORY_PATHS.cyclingShoes,
+    title: "Schoenen & kleding",
+    text: "Fietsschoenen van Nimbl en fietskleding van LaFuga — te passen in Dedemsvaart.",
+    href: BERGASPORTS_CATEGORY_PATHS.shoesClothing,
   },
   {
-    title: "Kleding",
-    text: "LaFuga shopcollectie — en custom kits via /lafuga.",
-    href: BERGASPORTS_CATEGORY_PATHS.lafugaWear,
+    title: "Wielen",
+    text: "Carbon wielsets en Scope Outlet — voor race, gravel en training.",
+    href: BERGASPORTS_CATEGORY_PATHS.wheels,
   },
 ] as const;
 
