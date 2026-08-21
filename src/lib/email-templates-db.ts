@@ -71,13 +71,16 @@ export async function ensureEmailTemplates(): Promise<void> {
       });
     }
 
-    // One-time repair: old COD copy must not go out for Mollie checkouts.
+    // Always keep order.received free of legacy COD/rembours copy.
     const received = await prisma.emailTemplate.findUnique({
       where: { key: "order.received" },
       select: { bodyHtml: true },
     });
-    if (received?.bodyHtml && /rembours/i.test(received.bodyHtml)) {
-      const def = DEFAULT_EMAIL_TEMPLATES["order.received"];
+    const def = DEFAULT_EMAIL_TEMPLATES["order.received"];
+    if (
+      received?.bodyHtml &&
+      (/rembours/i.test(received.bodyHtml) || !/\{\{\s*payment_method\s*\}\}/i.test(received.bodyHtml))
+    ) {
       await prisma.emailTemplate.update({
         where: { key: "order.received" },
         data: {

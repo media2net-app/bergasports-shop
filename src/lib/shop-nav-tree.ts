@@ -3,18 +3,14 @@ import {
   type RalexCategoryNode,
 } from "@/lib/ralex-categories";
 
-/**
- * Legacy virtueel ouder (pre-split). Blijft voor redirects / image-config;
- * niet meer in de publieke boom.
- */
+/** Ouder voor fietsschoenen + kleding in de publieke boom. */
 export const SHOES_CLOTHING_NAV_SLUG = "schoenen-kleding";
 
-/** Publieke top-order: Fietsen · Skeelers · Schoenen · Kleding · Wielen · Accessoires */
+/** Publieke top-order: Fietsen · Skeelers · Schoenen & kleding · Wielen · Accessoires */
 const NAV_ROOT_ORDER = [
   "bikes",
   "speed-skates",
-  "cycling-shoes",
-  "lafuga-wear",
+  SHOES_CLOTHING_NAV_SLUG,
   "wheels",
   "accessories",
 ];
@@ -22,15 +18,18 @@ const NAV_ROOT_ORDER = [
 const CHILD_ORDER: Record<string, string[]> = {
   bikes: ["road-bike", "gravelbike", "mtb", "used-bikes"],
   "speed-skates": ["complete-skates", "skate-shoes", "skate-wheels", "skate-bearings"],
+  [SHOES_CLOTHING_NAV_SLUG]: ["cycling-shoes", "lafuga-wear"],
   wheels: ["scope-outlet"],
   accessories: ["cycling-helmets", "glasses", "group-sets", "cleats"],
 };
 
-/** Woo top-level → gewenste NL-ouder (slug). Schoenen/Kleding blijven topniveau. */
+/** Woo top-level → gewenste NL-ouder (slug). */
 const REPARENT: Record<string, string> = {
   glasses: "accessories",
   "scope-outlet": "wheels",
   "used-bikes": "bikes",
+  "cycling-shoes": SHOES_CLOTHING_NAV_SLUG,
+  "lafuga-wear": SHOES_CLOTHING_NAV_SLUG,
 };
 
 function slugKey(slug: string): string {
@@ -102,12 +101,10 @@ export function toPublicShopNavTree(tree: RalexCategoryNode[]): RalexCategoryNod
     }
   }
 
-  // Schoenen + Kleding altijd topniveau (ook als Woo ze onder iets anders had).
-  for (const slug of ["cycling-shoes", "lafuga-wear"] as const) {
-    const node = bySlug.get(slug);
-    if (node) {
-      node.parent = 0;
-    }
+  // Schoenen & kleding altijd topniveau; children hangen via REPARENT.
+  const shoesClothing = bySlug.get(SHOES_CLOTHING_NAV_SLUG);
+  if (shoesClothing) {
+    shoesClothing.parent = 0;
   }
 
   const childrenByParent = new Map<number, RalexCategoryNode[]>();

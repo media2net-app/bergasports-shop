@@ -3,12 +3,14 @@
 import LocalizedLink from "@/components/locale/LocalizedLink";
 import { useMemo, useState } from "react";
 
+import { useCategories } from "@/components/categories/CategoriesProvider";
 import LanguageSwitcher from "@/components/locale/LanguageSwitcher";
 import { useInstagramProfileUrl } from "@/components/layout/InstagramProfileProvider";
 import { useShopNavBrands } from "@/components/layout/ShopNavBrandsProvider";
 import { useShopLocale } from "@/components/locale/ShopLanguagesProvider";
 import { shopBrandListingHref } from "@/lib/brands-shared";
-import { localizedMobileNavTree, ui } from "@/lib/i18n/ui";
+import { localizedAboutLinks, ui } from "@/lib/i18n/ui";
+import { mobileNavFromCategoryTree } from "@/lib/shop-mega-menu-from-tree";
 
 type Props = {
   onNavigate: () => void;
@@ -18,6 +20,7 @@ type Props = {
 export default function MobileNavDrillDown({ onNavigate, isActive }: Props) {
   const { locale } = useShopLocale();
   const t = ui(locale);
+  const { tree } = useCategories();
   const instagramUrl = useInstagramProfileUrl();
   const brands = useShopNavBrands();
   const navTree = useMemo(() => {
@@ -28,7 +31,16 @@ export default function MobileNavDrillDown({ onNavigate, isActive }: Props) {
         ...brands.map((brand) => ({ href: shopBrandListingHref(brand.slug), label: brand.name })),
       ],
     };
-    const items = [...localizedMobileNavTree(locale)];
+    const items = [
+      ...mobileNavFromCategoryTree(tree, {
+        allProducts: t.allProducts,
+        allIn: t.allIn,
+        news: t.news,
+        about: t.about,
+        customApparel: t.customApparel,
+        aboutLinks: localizedAboutLinks(locale),
+      }),
+    ];
     const nieuwsIndex = items.findIndex((item) => item.label === t.news);
     if (nieuwsIndex >= 0) {
       items.splice(nieuwsIndex, 0, merken);
@@ -36,7 +48,7 @@ export default function MobileNavDrillDown({ onNavigate, isActive }: Props) {
       items.push(merken);
     }
     return items;
-  }, [brands, locale, t.allBrands, t.brands, t.news]);
+  }, [brands, locale, t, tree]);
   const initialOpen =
     navTree.find((item) => item.children?.some((child) => isActive(child.href)))?.label ?? null;
   const [openGroup, setOpenGroup] = useState<string | null>(initialOpen);

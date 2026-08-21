@@ -99,12 +99,6 @@
       "kind": "static"
     },
     {
-      "source": "/schoenen-kleding",
-      "destination": "/wielrenschoenen",
-      "statusCode": 301,
-      "kind": "static"
-    },
-    {
       "source": "/schoenen",
       "destination": "/wielrenschoenen",
       "statusCode": 301,
@@ -1198,25 +1192,25 @@
     },
     {
       "source": "/product-category/schoenen-kleding",
-      "destination": "/wielrenschoenen",
+      "destination": "/schoenen-kleding",
       "statusCode": 301,
       "kind": "static"
     },
     {
       "source": "/product-categorie/schoenen-kleding",
-      "destination": "/wielrenschoenen",
+      "destination": "/schoenen-kleding",
       "statusCode": 301,
       "kind": "static"
     },
     {
       "source": "/nl/product-categorie/schoenen-kleding",
-      "destination": "/wielrenschoenen",
+      "destination": "/schoenen-kleding",
       "statusCode": 301,
       "kind": "static"
     },
     {
       "source": "/nl/product-category/schoenen-kleding",
-      "destination": "/wielrenschoenen",
+      "destination": "/schoenen-kleding",
       "statusCode": 301,
       "kind": "static"
     },
@@ -1372,7 +1366,7 @@
     },
     {
       "source": "/en/product-category/schoenen-kleding",
-      "destination": "/wielrenschoenen",
+      "destination": "/schoenen-kleding",
       "statusCode": 301,
       "kind": "static"
     },

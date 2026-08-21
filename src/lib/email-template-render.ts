@@ -70,13 +70,17 @@ function formatOrderDate(iso: string): string {
 
 export function paymentMethodLabel(method: string): string {
   const m = method.trim().toLowerCase();
-  if (m === "cash_on_delivery" || m === "ramburs" || m === "cod") {
+  if (m === "cash_on_delivery" || m === "ramburs" || m === "cod" || m === "rembours") {
     return "Rembours (bij aflevering)";
   }
   if (m.startsWith("mollie:")) return mollieMethodLabel(m.slice("mollie:".length));
   if (m === "mollie" || m === "online" || m === "card") {
     return "Online (Mollie)";
   }
+  // Geïmporteerde Woo-labels
+  if (m === "ideal") return mollieMethodLabel("ideal");
+  if (m === "paypal") return mollieMethodLabel("paypal");
+  if (m === "apple_pay" || m === "applepay") return mollieMethodLabel("applepay");
   return mollieMethodLabel(m);
 }
 
