@@ -2,16 +2,17 @@
 
 import LocalizedLink from "@/components/locale/LocalizedLink";
 import { usePathname } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+import { useCategories } from "@/components/categories/CategoriesProvider";
 import { headerNavLinkActiveClass, headerNavLinkClass } from "@/components/layout/header-nav";
 import { useShopNavBrands } from "@/components/layout/ShopNavBrandsProvider";
 import { useShopLocale } from "@/components/locale/ShopLanguagesProvider";
 import { shopBrandListingHref } from "@/lib/brands-shared";
-import { localizedMegaMenu, ui } from "@/lib/i18n/ui";
-import { isShopNavigationPath } from "@/lib/site-content";
+import { ui } from "@/lib/i18n/ui";
 import { stripLocalePrefix } from "@/lib/i18n/locale-shared";
-import { useMemo } from "react";
+import { megaMenuColumnsFromCategoryTree } from "@/lib/shop-mega-menu-from-tree";
+import { isShopNavigationPath } from "@/lib/site-content";
 
 const columnLinkClass =
   "block rounded-md px-1.5 py-1.5 text-sm font-normal text-white/75 transition hover:bg-white/5 hover:text-[var(--brand-mid)]";
@@ -32,7 +33,15 @@ function pathMatches(pathname: string, href: string) {
 export default function HeaderShopMegaMenu({ label }: Props) {
   const { locale } = useShopLocale();
   const t = ui(locale);
-  const menu = useMemo(() => localizedMegaMenu(locale), [locale]);
+  const { tree } = useCategories();
+  const menuColumns = useMemo(
+    () =>
+      megaMenuColumnsFromCategoryTree(tree, {
+        allLabel: locale === "en" ? "All" : "Alles",
+        customApparelLabel: t.customApparel,
+      }),
+    [tree, locale, t.customApparel],
+  );
   const triggerLabel = label ?? t.webshop;
   const pathname = stripLocalePrefix(usePathname() || "/").pathname;
   const shopActive = isShopNavigationPath(pathname);
@@ -93,6 +102,12 @@ export default function HeaderShopMegaMenu({ label }: Props) {
   }, [clearCloseTimer, setOpen]);
 
   const panelVisible = open;
+  const xlCols =
+    menuColumns.length <= 4
+      ? "xl:grid-cols-4"
+      : menuColumns.length === 5
+        ? "xl:grid-cols-5"
+        : "xl:grid-cols-6";
 
   return (
     <>
@@ -120,7 +135,7 @@ export default function HeaderShopMegaMenu({ label }: Props) {
           aria-current={shopActive ? "page" : undefined}
           onFocus={handleEnter}
         >
-          {label}
+          {triggerLabel}
           <svg
             className={`h-3 w-3 opacity-70 transition ${open ? "rotate-180" : ""}`}
             viewBox="0 0 12 12"
@@ -157,12 +172,14 @@ export default function HeaderShopMegaMenu({ label }: Props) {
                 {t.allProducts} →
               </LocalizedLink>
             </div>
-            <div className="grid grid-cols-2 gap-x-6 gap-y-8 px-6 py-7 md:grid-cols-3 xl:grid-cols-6 xl:gap-x-5 xl:px-8 xl:py-8">
-              {menu.columns.map((column) => {
+            <div
+              className={`grid grid-cols-2 gap-x-6 gap-y-8 px-6 py-7 md:grid-cols-3 xl:gap-x-5 xl:px-8 xl:py-8 ${xlCols}`}
+            >
+              {menuColumns.map((column) => {
                 const titleActive = column.href ? pathMatches(pathname, column.href) : false;
                 const columnTitle = column.title;
                 return (
-                  <div key={columnTitle}>
+                  <div key={`${column.href ?? ""}-${columnTitle}`}>
                     {column.href ? (
                       <LocalizedLink
                         href={column.href}
@@ -174,14 +191,16 @@ export default function HeaderShopMegaMenu({ label }: Props) {
                         {columnTitle}
                       </LocalizedLink>
                     ) : (
-                      <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-white">{columnTitle}</p>
+                      <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-white">
+                        {columnTitle}
+                      </p>
                     )}
                     {column.links.length > 0 ? (
                       <ul className="mt-3 space-y-0.5">
                         {column.links.map((link) => {
                           const active = pathMatches(pathname, link.href);
                           return (
-                            <li key={link.href}>
+                            <li key={`${link.href}-${link.label}`}>
                               <LocalizedLink
                                 href={link.href}
                                 className={`${columnLinkClass} ${active ? columnLinkActiveClass : ""}`}
