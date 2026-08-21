@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "node scripts/run-next.mjs dev",
-    "build": "prisma generate && node scripts/run-next.mjs build",
-    "start": "next start -p 3060",
+    "dev": "node api.js && node scripts/run-next.mjs dev",
+    "build": "node api.js && prisma generate && node scripts/run-next.mjs build",
+    "start": "node api.js && next start -p 3060",
     "lint": "eslint",
     "postinstall": "prisma db push",
     "import:wordpress": "npx tsx scripts/import-wordpress.ts",
