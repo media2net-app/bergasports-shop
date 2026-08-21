@@ -96,7 +96,7 @@ export const NL_TO_WC_SLUG: Record<string, string> = {
   fietsgroepen: "group-sets",
   "groep-sets": "group-sets",
   "bike-groups": "group-sets",
-  "schoenen-kleding": "cycling-shoes",
+  "schoenen-kleding": "schoenen-kleding",
 };
 
 /** EN public → preferred WC slug */
@@ -127,7 +127,7 @@ export const EN_TO_WC_SLUG: Record<string, string> = {
   cleats: "cleats",
   "group-sets": "group-sets",
   "gravel-bike": "gravelbike",
-  "schoenen-kleding": "cycling-shoes",
+  "schoenen-kleding": "schoenen-kleding",
 };
 
 export function normalizeCategorySlug(slug: string): string {

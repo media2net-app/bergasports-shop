@@ -68,7 +68,6 @@ const nextConfig = {
         { source: "/product-categorie/lafuga-wear", destination: "/kleding", statusCode: 301 },
         { source: "/product-category/lafuga", destination: "/kleding", statusCode: 301 },
         { source: "/product-categorie/lafuga", destination: "/kleding", statusCode: 301 },
-        { source: "/schoenen-kleding", destination: "/wielrenschoenen", statusCode: 301 },
         { source: "/schoenen", destination: "/wielrenschoenen", statusCode: 301 },
       ],
       loadRedirectFile("redirect-map.json"),

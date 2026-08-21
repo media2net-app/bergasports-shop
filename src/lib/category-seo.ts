@@ -200,35 +200,25 @@ export function buildCategorySeoContent(params: {
       : locale === "en"
         ? `${displayName} – online at ${SITE_BRAND_SHORT}`
         : `${displayName} – online bij ${SITE_BRAND_SHORT}`;
-  const hasOfficialFooter = Boolean(params.customFooterHtml?.trim()) && isLafuga;
 
-  const footerParagraphs = hasOfficialFooter
+  // Alleen LaFuga mag rijke HTML-footer; elders curated body (voorkomt dubbele + EN Woo-teksten).
+  const customFooter =
+    isLafuga && params.customFooterHtml?.trim() ? params.customFooterHtml.trim() : null;
+  const curatedBody = copy?.body?.filter((p) => p.trim()) ?? [];
+
+  const footerParagraphs = customFooter
     ? []
-    : locale === "en"
-      ? [
-          `At ${SITE_BRAND_SHORT} the ${displayName} category offers a selection of ${topic} for serious cyclists and athletes. ` +
-            `Compare models, sizes and specs on the site — from road bikes to wheels, shoes and accessories.`,
-          `Ordering is simple: add products to your cart, enter your delivery details and pay securely with iDEAL, Apple Pay or card. ` +
-            `Check the product description for size, materials and technical details before you order.`,
-          count > 0
-            ? `This category currently lists ${count} items in the webshop. ` +
-              `Use the colour and size filters on the left to find the right variant quickly.`
-            : `The range in this category is updated regularly. Check back later or browse other categories in the shop.`,
-          `Questions about availability or delivery? Contact us via the contact page. ` +
-            `${SITE_BRAND_SHORT} is here with personal advice and a secure online shopping experience.`,
-        ]
-      : [
-          `Bij ${SITE_BRAND_SHORT} vind je in de categorie ${displayName} een selectie ${topic} voor serieuze fietsers en atleten. ` +
-            `Vergelijk modellen, maten en specificaties direct op de site — van racefiets tot wielen, schoenen en accessoires.`,
-          `Bestellen is eenvoudig: voeg producten toe aan je winkelwagen, vul je bezorggegevens in en betaal veilig met iDEAL, Apple Pay of creditcard. ` +
-            `Controleer de productbeschrijving voor maat, materiaal en technische details vóór je bestelt.`,
-          count > 0
-            ? `In deze categorie staan nu ${count} artikelen in de webshop. ` +
-              `Gebruik de filters voor kleur en maat links om snel de juiste variant te vinden.`
-            : `Het assortiment in deze categorie wordt regelmatig bijgewerkt. Kom later terug of bekijk andere categorieën in de webshop.`,
-          `Vragen over beschikbaarheid of levering? Neem contact op via de contactpagina. ` +
-            `${SITE_BRAND_SHORT} helpt je met persoonlijk advies en een veilige online winkelervaring.`,
-        ];
+    : curatedBody.length > 0
+      ? curatedBody
+      : locale === "en"
+        ? [
+            `At ${SITE_BRAND_SHORT} you’ll find ${topic} with personal advice from Dedemsvaart.`,
+            `Compare models online or visit the shop. Secure checkout with iDEAL, Apple Pay or card.`,
+          ]
+        : [
+            `Bij ${SITE_BRAND_SHORT} vind je ${topic} met persoonlijk advies vanuit Dedemsvaart.`,
+            `Vergelijk online of kom langs in de zaak. Veilig betalen met iDEAL, Apple Pay of creditcard.`,
+          ];
 
   return {
     intro,
@@ -237,6 +227,6 @@ export function buildCategorySeoContent(params: {
     footerParagraphs,
     productLinks,
     relatedCategoryLinks,
-    customFooterHtml: params.customFooterHtml?.trim() || null,
+    customFooterHtml: customFooter,
   };
 }

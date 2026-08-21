@@ -32,6 +32,7 @@ export const CANONICAL_LIVE_PATHS = new Set([
   "/account",
   "/lafuga",
   "/kleding",
+  "/schoenen-kleding",
   "/nimbl",
 ]);
 
@@ -116,7 +117,6 @@ const EXACT_STATIC: Record<string, string> = {
   "/scope-wheels-2": "/wielen",
   "/lafuga-kleding": "/kleding",
   "/lafuga-collectie": "/kleding",
-  "/schoenen-kleding": "/wielrenschoenen",
   "/schoenen": "/wielrenschoenen",
   "/bike-repair": "/onderhoud",
   "/about-bergasports": "/over-ons",
