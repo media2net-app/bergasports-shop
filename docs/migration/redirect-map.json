@@ -23,7 +23,6 @@
     { "source": "/lafuga-wear", "destination": "/kleding", "permanent": true },
     { "source": "/lafuga-kleding", "destination": "/kleding", "permanent": true },
     { "source": "/lafuga-collectie", "destination": "/kleding", "permanent": true },
-    { "source": "/schoenen-kleding", "destination": "/wielrenschoenen", "permanent": true },
     { "source": "/schoenen", "destination": "/wielrenschoenen", "permanent": true },
     { "source": "/glasses", "destination": "/brillen", "permanent": true },
     { "source": "/accessories", "destination": "/accessoires", "permanent": true },

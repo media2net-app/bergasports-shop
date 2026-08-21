@@ -580,10 +580,22 @@ import { isProductInStock } from "@/lib/stock";
 export { isProductInStock, productAvailableStock, hasStockQuantity } from "@/lib/stock";
 
 export function mapTrendyolJsonToProduct(product: TrendyolJsonProduct): Product {
-  const discountedPrice =
-    typeof product.priceDiscounted === "number" ? product.priceDiscounted : undefined;
   const currentPrice = typeof product.priceCurrent === "number" ? product.priceCurrent : 0;
+  const rawDiscounted =
+    typeof product.priceDiscounted === "number" ? product.priceDiscounted : undefined;
+  // Woo zet priceDiscounted vaak gelijk aan de normale prijs → géén echte sale.
+  const discountedPrice =
+    rawDiscounted != null && Number.isFinite(rawDiscounted) && rawDiscounted < currentPrice - 0.005
+      ? rawDiscounted
+      : undefined;
   const oldPrice = typeof product.priceOld === "number" && product.priceOld > 0 ? product.priceOld : undefined;
+  const effectiveOld =
+    oldPrice && oldPrice > (discountedPrice ?? currentPrice) + 0.005
+      ? oldPrice
+      : discountedPrice != null && currentPrice > discountedPrice + 0.005
+        ? currentPrice
+        : undefined;
+  const onSale = Boolean(discountedPrice != null && effectiveOld != null);
 
   return {
     id: product.id,
@@ -593,7 +605,7 @@ export function mapTrendyolJsonToProduct(product: TrendyolJsonProduct): Product 
     brand: product.brand,
     brandId: typeof product.brandId === "number" && product.brandId > 0 ? product.brandId : undefined,
     price: discountedPrice ?? currentPrice,
-    oldPrice: oldPrice && oldPrice > (discountedPrice ?? currentPrice) ? oldPrice : undefined,
+    oldPrice: onSale ? effectiveOld : undefined,
     currency: product.currency || "EUR",
     image: product.image,
     images: product.images && product.images.length > 0 ? product.images : [product.image],
@@ -604,7 +616,7 @@ export function mapTrendyolJsonToProduct(product: TrendyolJsonProduct): Product 
     hasFastDeliveryTag: product.hasFastDeliveryTag,
     hasFlashSaleTag: product.hasFlashSaleTag,
     socialProof: typeof product.socialProof === "string" ? product.socialProof : undefined,
-    tag: discountedPrice ? "Aanbieding" : undefined,
+    tag: onSale ? "Aanbieding" : undefined,
     landingPromo: product.landingPromo,
     cartBundlePromos: product.cartBundlePromos,
     catalogSource: normalizeCatalogSource(product.catalogSource),
